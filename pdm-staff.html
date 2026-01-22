@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>PDM Staff</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="./favicon.png?v=2">
+  <style>
+    body{margin:0;background:#07080b;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .card{width:min(520px,100%);border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(12,14,18,.75);padding:22px}
+    h1{margin:0 0 6px;font-size:22px;letter-spacing:.08em;text-transform:uppercase}
+    p{margin:0 0 16px;color:rgba(255,255,255,.65);font-size:14px}
+    input{width:100%;box-sizing:border-box;margin:10px 0;padding:12px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0b0d12;color:#fff;outline:none}
+    button{width:100%;padding:12px 14px;border-radius:999px;border:1px solid rgba(212,175,55,.45);background:linear-gradient(135deg,#d4af37,#f1d58b);color:#111;font-weight:800;cursor:pointer}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row button{flex:1}
+    .msg{margin-top:12px;font-size:13px;color:rgba(241,213,139,.85)}
+    .err{color:#ffb4b4}
+    .small{margin-top:10px;font-size:12px;color:rgba(255,255,255,.55)}
+    a{color:rgba(241,213,139,.95);text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Accès Staff</h1>
+      <p>Connexion réservée au personnel Premium Deluxe Motorsport.</p>
+
+      <input id="email" type="text" placeholder="Identifiant (ex: pdm-john@pdm.local)" autocomplete="username">
+      <input id="password" type="password" placeholder="Mot de passe" autocomplete="current-password">
+
+      <div class="row">
+        <button id="loginBtn" type="button">Se connecter</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+      <div class="small">
+        Si tu n’as pas d’accès, contacte le PDG.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    // 1) COLLE ICI TA CONFIG FIREBASE
+    const firebaseConfig = {
+      // apiKey: "...",
+      // authDomain: "...",
+      // projectId: "...",
+      // storageBucket: "...",
+      // messagingSenderId: "...",
+      // appId: "..."
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const msg = document.getElementById("msg");
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) window.location.href = "./pdm-dashboard.html";
+    });
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      msg.textContent = "";
+      msg.classList.remove("err");
+      try {
+        await signInWithEmailAndPassword(auth, email.value.trim(), password.value);
+        window.location.href = "./pdm-dashboard.html";
+      } catch (e) {
+        msg.textContent = "Connexion refusée. Vérifie l’identifiant et le mot de passe.";
+        msg.classList.add("err");
+      }
+    });
+  </script>
+</body>
+</html>
