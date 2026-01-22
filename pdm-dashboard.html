@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>PDM Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="./favicon.png?v=2">
+  <style>
+    body{margin:0;background:#07080b;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    header{position:sticky;top:0;z-index:5;background:rgba(7,8,11,.88);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .bar{max-width:1200px;margin:0 auto;padding:14px 18px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{font-weight:900;letter-spacing:.10em;text-transform:uppercase}
+    .tag{color:rgba(241,213,139,.9);border:1px solid rgba(241,213,139,.25);padding:6px 10px;border-radius:999px;font-size:12px}
+    main{max-width:1200px;margin:0 auto;padding:18px}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    .card{border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(12,14,18,.70);padding:14px}
+    h2{margin:0 0 10px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select{padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0b0d12;color:#fff;outline:none}
+    input{min-width:220px;flex:1}
+    .btn{padding:10px 14px;border-radius:999px;border:1px solid rgba(212,175,55,.45);background:linear-gradient(135deg,#d4af37,#f1d58b);color:#111;font-weight:800;cursor:pointer}
+    .btn2{padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#fff;cursor:pointer}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px;vertical-align:top}
+    th{color:rgba(255,255,255,.65);text-align:left;font-weight:700}
+    .muted{color:rgba(255,255,255,.6)}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(241,213,139,.25);color:rgba(241,213,139,.95);font-size:12px}
+    .right{margin-left:auto}
+    .danger{border-color:rgba(255,120,120,.35);color:#ffb4b4}
+    @media (max-width:700px){
+      .bar,main{padding-left:12px;padding-right:12px}
+      input{min-width:0;width:100%}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="brand">PDM Admin</div>
+      <div id="who" class="tag">—</div>
+      <button id="logout" class="btn2 right" type="button">Déconnexion</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="card">
+        <h2>Nouvelle entrée</h2>
+        <div class="row">
+          <select id="type">
+            <option value="vente">Vente</option>
+            <option value="reservation">Réservation</option>
+          </select>
+          <input id="clientNom" placeholder="Client (Nom RP)" />
+          <input id="vehicule" placeholder="Véhicule (Marque + Modèle)" />
+          <input id="prix" placeholder="Prix" inputmode="numeric" />
+          <select id="statut">
+            <option value="en attente">En attente</option>
+            <option value="payé">Payé</option>
+            <option value="livré">Livré</option>
+          </select>
+          <input id="notes" placeholder="Notes (optionnel)" />
+          <button id="add" class="btn" type="button">Ajouter</button>
+        </div>
+        <div class="muted" style="margin-top:10px">
+          Les staff ne peuvent modifier que leurs propres entrées. Le PDG peut tout gérer.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Historique</h2>
+        <div class="row" style="margin-bottom:10px">
+          <input id="q" placeholder="Rechercher (client, véhicule, vendeur)..." />
+          <select id="filterType">
+            <option value="all">Tous types</option>
+            <option value="vente">Ventes</option>
+            <option value="reservation">Réservations</option>
+          </select>
+          <select id="filterMine">
+            <option value="all">Toutes</option>
+            <option value="mine">Mes entrées</option>
+          </select>
+          <div id="count" class="pill">0</div>
+        </div>
+
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Client</th>
+                <th>Véhicule</th>
+                <th>Prix</th>
+                <th>Statut</th>
+                <th>Vendeur</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, doc, getDoc, onSnapshot,
+      query, orderBy, updateDoc, deleteDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // 1) COLLE ICI TA CONFIG FIREBASE (même que dans pdm-staff.html)
+    const firebaseConfig = {
+      // apiKey: "...",
+      // authDomain: "...",
+      // projectId: "...",
+      // storageBucket: "...",
+      // messagingSenderId: "...",
+      // appId: "..."
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const who = document.getElementById("who");
+    const rows = document.getElementById("rows");
+    const count = document.getElementById("count");
+
+    const qEl = document.getElementById("q");
+    const filterType = document.getElementById("filterType");
+    const filterMine = document.getElementById("filterMine");
+
+    let me = null;        // { uid, name, role }
+    let allDocs = [];     // snapshot cache
+
+    function fmtDate(ts){
+      if (!ts) return "";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString("fr-FR");
+    }
+
+    function euro(n){
+      const x = Number(n);
+      if (!Number.isFinite(x)) return "";
+      return x.toLocaleString("fr-FR") + " €";
+    }
+
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;").replaceAll("<","&lt;")
+        .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function applyFilters(){
+      const needle = (qEl.value || "").trim().toLowerCase();
+      const t = filterType.value;
+      const mine = filterMine.value;
+
+      const filtered = allDocs.filter(d => {
+        if (t !== "all" && d.type !== t) return false;
+        if (mine === "mine" && d.vendeurUid !== me.uid) return false;
+
+        if (!needle) return true;
+        const hay = `${d.clientNom} ${d.vehicule} ${d.vendeurNom} ${d.type} ${d.statut}`.toLowerCase();
+        return hay.includes(needle);
+      });
+
+      count.textContent = filtered.length;
+
+      rows.innerHTML = filtered.map(d => {
+        const canEdit = (me.role === "admin") || (d.vendeurUid === me.uid);
+        const actions = canEdit
+          ? `<button data-edit="${d.id}" class="btn2">Modifier</button>
+             ${me.role === "admin" ? `<button data-del="${d.id}" class="btn2 danger">Supprimer</button>` : ""}`
+          : `<span class="muted">—</span>`;
+
+        return `
+          <tr>
+            <td class="muted">${escapeHtml(fmtDate(d.createdAt))}</td>
+            <td><span class="pill">${escapeHtml(d.type)}</span></td>
+            <td>${escapeHtml(d.clientNom)}</td>
+            <td>${escapeHtml(d.vehicule)}</td>
+            <td>${escapeHtml(euro(d.prix))}</td>
+            <td>${escapeHtml(d.statut)}</td>
+            <td>${escapeHtml(d.vendeurNom)}</td>
+            <td class="muted">${escapeHtml(d.notes || "")}</td>
+            <td>${actions}</td>
+          </tr>
+        `;
+      }).join("");
+
+      // bind actions
+      rows.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.addEventListener("click", () => openEdit(btn.getAttribute("data-edit")));
+      });
+      rows.querySelectorAll("[data-del]").forEach(btn => {
+        btn.addEventListener("click", () => doDelete(btn.getAttribute("data-del")));
+      });
+    }
+
+    async function openEdit(id){
+      const d = allDocs.find(x => x.id === id);
+      if (!d) return;
+
+      const canEdit = (me.role === "admin") || (d.vendeurUid === me.uid);
+      if (!canEdit) return;
+
+      const newStatut = prompt("Statut (en attente / payé / livré) :", d.statut);
+      if (newStatut === null) return;
+
+      const newNotes = prompt("Notes :", d.notes || "");
+      if (newNotes === null) return;
+
+      await updateDoc(doc(db, "transactions", id), {
+        statut: newStatut.trim(),
+        notes: newNotes,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    async function doDelete(id){
+      if (me.role !== "admin") return;
+      if (!confirm("Supprimer définitivement cette entrée ?")) return;
+      await deleteDoc(doc(db, "transactions", id));
+    }
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "./pdm-staff.html";
+    });
+
+    document.getElementById("add").addEventListener("click", async () => {
+      const type = document.getElementById("type").value;
+      const clientNom = document.getElementById("clientNom").value.trim();
+      const vehicule = document.getElementById("vehicule").value.trim();
+      const prix = Number((document.getElementById("prix").value || "").toString().replace(/[^\d.]/g,""));
+      const statut = document.getElementById("statut").value;
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!clientNom || !vehicule || !Number.isFinite(prix)) {
+        alert("Client, véhicule et prix sont obligatoires.");
+        return;
+      }
+
+      // vendeurUid DOIT être l'UID connecté (sinon Firestore refuse, grâce à tes règles)
+      await addDoc(collection(db, "transactions"), {
+        type,
+        clientNom,
+        vehicule,
+        prix,
+        statut,
+        notes,
+        vendeurUid: me.uid,
+        vendeurNom: me.name,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      // reset form
+      document.getElementById("clientNom").value = "";
+      document.getElementById("vehicule").value = "";
+      document.getElementById("prix").value = "";
+      document.getElementById("notes").value = "";
+    });
+
+    // auth gate + load my role
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "./pdm-staff.html";
+        return;
+      }
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists()) {
+        alert("Accès non configuré. Contacte le PDG.");
+        await signOut(auth);
+        window.location.href = "./pdm-staff.html";
+        return;
+      }
+      me = { uid: user.uid, ...snap.data() };
+      who.textContent = `${me.name} — ${me.role.toUpperCase()}`;
+
+      // live list
+      const qy = query(collection(db, "transactions"), orderBy("createdAt", "desc"));
+      onSnapshot(qy, (s) => {
+        allDocs = s.docs.map(docu => ({ id: docu.id, ...docu.data() }));
+        applyFilters();
+      });
+    });
+
+    [qEl, filterType, filterMine].forEach(el => {
+      el.addEventListener("input", applyFilters);
+      el.addEventListener("change", applyFilters);
+    });
+  </script>
+</body>
+</html>
