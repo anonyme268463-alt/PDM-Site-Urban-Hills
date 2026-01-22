@@ -113,15 +113,16 @@
       query, orderBy, updateDoc, deleteDoc, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // 1) COLLE ICI TA CONFIG FIREBASE (même que dans pdm-staff.html)
     const firebaseConfig = {
-      // apiKey: "...",
-      // authDomain: "...",
-      // projectId: "...",
-      // storageBucket: "...",
-      // messagingSenderId: "...",
-      // appId: "..."
-    };
+  apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
+  authDomain: "pdm-urban-hills.firebaseapp.com",
+  projectId: "pdm-urban-hills",
+  storageBucket: "pdm-urban-hills.firebasestorage.app",
+  messagingSenderId: "426355558661",
+  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
+  measurementId: "G-RGM2DWVFLT"
+};
+
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
