@@ -1236,55 +1236,53 @@
       `).join("") || `<div class="item"><div class="meta"><b>Aucun log</b><span>Le journal se remplira avec les actions staff/admin.</span></div></div>`;
     }
 
-    // Auth boot
     onAuthStateChanged(auth, async (user) => {
-      if(!user){
-        window.location.href = "./pdm-staff.html";
-        return;
-      }
-      // load profile
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
+  // refs UI (si pas déjà en haut chez toi)
+  const meBadge = document.getElementById("meBadge");
 
-      if(!snap.exists()){
-        // profil manquant -> blocage propre
-        meBadge.textContent = "Profil manquant";
-        rightsHint.textContent = "Créer users/{uid} dans Firestore";
-        showToast("Profil manquant", "Crée ton document users/{uid} (name, role, active).");
-        return;
-      }
+  if (!user) {
+    window.location.href = "./pdm-staff.html";
+    return;
+  }
 
-      const data = snap.data();
-      me = { uid:user.uid, name:data.name || "—", role:data.role || "staff", active: !!data.active };
+  // Affichage temporaire (et sûr)
+  if (meBadge) meBadge.textContent = "Chargement...";
 
-      if(!me.active){
-        showToast("Compte désactivé", "Contacte l’admin.");
-        await signOut(auth);
-        window.location.href = "./pdm-staff.html";
-        return;
-      }
+  try {
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
 
-      meBadge.textContent = `${me.name} · ${me.role}`;
-      rightsHint.textContent = isAdmin()
-        ? "Admin : gestion complète + staff + journal"
-        : "Staff : gestion de vos entrées";
+    if (!snap.exists()) {
+      if (meBadge) meBadge.textContent = "Compte non configuré";
+      return;
+    }
 
-      // show/hide admin tabs
-      document.querySelector('[data-tab="staff"]').style.display = canManageStaff() ? "inline-flex" : "none";
-      document.querySelector('[data-tab="audit"]').style.display = canReadAudit() ? "inline-flex" : "none";
+    const data = snap.data();
 
-      // Default filter for staff
-      if(!isAdmin()){
-        mineOnly.checked = true;
-      }
+    // ⚠️ toi tu as: Active / name / role
+    const isActive = data.Active === true || data.active === true;
+    const name = data.name || "Utilisateur";
+    const role = (data.role || "staff").toLowerCase(); // "admin" ou "staff"
 
-      // Start listeners
-      startListeners();
-      applyFilters();
-      render();
-      showToast("Connexion", `Bienvenue ${me.name}.`);
-    });
+    if (!isActive) {
+      if (meBadge) meBadge.textContent = "Compte désactivé";
+      return;
+    }
 
+    // ✅ Affichage badge propre
+    if (meBadge) {
+      meBadge.textContent = role === "admin" ? `${name} — ADMIN` : `${name} — STAFF`;
+    }
+
+    // ✅ (Optionnel) sécurité: empêcher un staff d’accéder au dashboard admin
+    // si ton dashboard est "admin only", décommente :
+    // if (role !== "admin") window.location.href = "./pdm-staff.html";
+
+  } catch (e) {
+    console.error("Erreur chargement profil:", e);
+    if (meBadge) meBadge.textContent = "Erreur profil";
+  }
+});
     // Responsive rerender
     window.addEventListener("resize", () => render());
   </script>
