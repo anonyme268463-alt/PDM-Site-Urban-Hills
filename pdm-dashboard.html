@@ -581,6 +581,25 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    // Boutons topbar (TES IDs)
+const btnSite = document.getElementById("toSite");
+const btnLogout = document.getElementById("logout");
+
+// Aller au site (catalogue)
+if (btnSite) {
+  btnSite.addEventListener("click", () => {
+    window.location.href = "./index.html";
+  });
+}
+
+// Déconnexion
+if (btnLogout) {
+  btnLogout.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "./pdm-staff.html";
+  });
+}
+
     const meBadge = document.getElementById("meBadge");
 
 // petit toast (optionnel mais utile)
