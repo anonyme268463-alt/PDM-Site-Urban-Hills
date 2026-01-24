@@ -578,6 +578,67 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const meBadge = document.getElementById("meBadge");
+
+// petit toast (optionnel mais utile)
+const toast = (title, msg) => {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  document.getElementById("toastTitle").innerHTML = `<b>${title}</b>`;
+  document.getElementById("toastMsg").textContent = msg;
+  el.classList.add("show");
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(() => el.classList.remove("show"), 2200);
+};
+
+async function loadProfile(uid) {
+  meBadge.textContent = "Chargement…";
+  meBadge.classList.remove("is-admin", "is-staff");
+
+  const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    meBadge.textContent = "Profil introuvable";
+    toast("Accès refusé", "Profil Firestore manquant.");
+    return null;
+  }
+
+  const data = snap.data();
+  const name = data.name || "Utilisateur";
+  const role = (data.role || "staff").toLowerCase();
+  const active = data.active !== false;
+
+  if (!active) {
+    meBadge.textContent = "Compte désactivé";
+    toast("Accès refusé", "Compte désactivé.");
+    return null;
+  }
+
+  if (role === "admin") {
+    meBadge.textContent = `${name} — ADMIN`;
+    meBadge.classList.add("is-admin");
+  } else {
+    meBadge.textContent = `${name} — STAFF`;
+    meBadge.classList.add("is-staff");
+  }
+
+  toast("UID reconnu", `Bienvenue ${name}`);
+  return { uid, name, role };
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "./pdm-staff.html";
+    return;
+  }
+  try {
+    window.__me = await loadProfile(user.uid);
+  } catch (e) {
+    console.error(e);
+    meBadge.textContent = "Erreur profil";
+  }
+});
 
     // UI refs
     const meBadge = document.getElementById("meBadge");
