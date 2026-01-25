@@ -709,7 +709,7 @@
     prevPage.addEventListener("click", () => { if(currentPage>1){ currentPage--; render(); } });
     nextPage.addEventListener("click", () => {
       const ps = Number(pageSize.value);
-      const maxP = Math.max(1, Math.ceil(filtered.length/ps));
+      const maxPage = Math.max(1, Math.ceil(filtered.length/ps));
       if(currentPage<maxP){ currentPage++; render(); }
     });
 
@@ -819,7 +819,7 @@
             status: normalizeStatus((r.status ?? r.Statut ?? "en_attente").toString()),
             notes: (r.notes ?? r.Notes ?? "").toString(),
             sellerId: me.uid,
-            sellerName: (r.sellerName ?? r.Vendeur ?? me.name || "Admin").toString(),
+            sellerName: (r.sellerName ?? r.Vendeur ?? me.name ||"Admin").toString(),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           };
@@ -871,7 +871,7 @@
       const so = sortBy.value;
       const mine = mineOnly.checked;
       const minP = minPrice.value ? Number(minPrice.value) : null;
-      const maxP = maxPrice.value ? Number(maxPrice.value) : null;
+      const maxPages = maxPrice.value ? Number(maxPrice.value) : null;
       const fd = fromDate.value ? new Date(fromDate.value + "T00:00:00") : null;
       const td = toDate.value ? new Date(toDate.value + "T23:59:59") : null;
       const seller = isAdmin() ? (filterSeller.value || "all") : "all";
@@ -925,7 +925,7 @@
       statAvgS.textContent = (filterStatus.value !== "all") ? `Statut : ${filterStatus.options[filterStatus.selectedIndex].text}` : "—";
 
       const ps = Number(pageSize.value);
-      const maxP = Math.max(1, Math.ceil(filtered.length/ps));
+      const maxPage = Math.max(1, Math.ceil(filtered.length/ps));
       if(currentPage > maxP) currentPage = maxP;
 
       countInfo.textContent = `${filtered.length} résultat(s)`;
@@ -933,11 +933,11 @@
 
     function render(){
       const ps = Number(pageSize.value);
-      const maxP = Math.max(1, Math.ceil(filtered.length/ps));
+      const maxPages = Math.max(1, Math.ceil(filtered.length / ps));
       const start = (currentPage-1)*ps;
       const pageItems = filtered.slice(start, start+ps);
 
-      pageInfo.textContent = `Page ${currentPage} / ${maxP}`;
+      pageInfo.textContent = `Page ${currentPage} / ${maxPages}`;
 
       rowsTbody.innerHTML = pageItems.map(x => {
         const canEdit = isAdmin() || x.sellerId === me.uid;
@@ -1141,11 +1141,11 @@
       auditList.innerHTML = logs.map(l => `
         <div class="item">
           <div class="meta">
-            <b>${escapeHtml(l.actorName || "—")} · ${escapeHtml(l.action || "")}</b>
-            <span>${fmtDate(l.createdAt)} · ${escapeHtml(l.entity || "")} · ${escapeHtml(l.entityId || "")}</span>
+            <b>${escapeHtml(l.actorName ||"—")} · ${escapeHtml(l.action ||"")}</b>
+            <span>${fmtDate(l.createdAt)} · ${escapeHtml(l.entity ||"")} · ${escapeHtml(l.entityId ||"")}</span>
           </div>
           <div class="tools">
-            <span class="badge">${escapeHtml(l.entity || "")}</span>
+            <span class="badge">${escapeHtml(l.entity ||"")}</span>
           </div>
         </div>
       `).join("") || `<div class="item"><div class="meta"><b>Aucun log</b><span>Le journal se remplira avec les actions staff/admin.</span></div></div>`;
