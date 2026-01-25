@@ -63,3 +63,19 @@ body{
   color:#eee;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
+/* ---- PDM theme bridge (prevents flashbang) ---- */
+body.pdm{
+  margin:0;
+  background: #05070b;
+  color: rgba(255,255,255,.9);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* main zone looks like dashboard panels */
+body.pdm .main{
+  padding: 28px;
+}
+
+body.pdm h1, body.pdm h2, body.pdm h3{
+  color: rgba(255,255,255,.92);
+}
