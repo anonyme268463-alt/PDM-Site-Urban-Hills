@@ -1290,35 +1290,9 @@ function startClientsListener(){
 }
     // ===== Clients helpers =====
 
-    function openClientModal(){
-      if(!clientModal) return;
-      clientModal.style.display = "block";
-      cName.value = "";
-      cPhone.value = "";
-      cLicense.value = "";
-      cCar.checked = false;
-      cMoto.checked = false;
-      cTruck.checked = false;
-      cPurchase.value = "";
-      cName.focus();
-    }
     function closeClientModal(){
       if(!clientModal) return;
       clientModal.style.display = "none";
-    }
-
-    function renderClientSelect(){
-      if(!fClientSelect) return;
-      const current = fClientSelect.value || "";
-      const list = clients
-        .filter(c => c && (c.active !== false))
-        .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
-
-      fClientSelect.innerHTML =
-        '<option value="">Sélectionner un client...</option>' +
-        list.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}${c.phone ? " • " + escapeHtml(c.phone) : ""}</option>`).join("");
-
-      if(current && list.some(c => c.id === current)) fClientSelect.value = current;
     }
 
     function startClientsListener(){
