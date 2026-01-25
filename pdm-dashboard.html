@@ -582,7 +582,6 @@
     // ===== Clients refs =====
     const fClientSelect = document.getElementById("fClientSelect");
     const addClientBtn = document.getElementById("addClientBtn");
-
     const clientModal = document.getElementById("clientModal");
     const cName = document.getElementById("cName");
     const cPhone = document.getElementById("cPhone");
@@ -1236,7 +1235,7 @@ cSave?.addEventListener("click", async () => {
     let unsubTx = null;
     let unsubUsers = null;
     let unsubAudit = null;
-    let clients = []; // {id, name, phone, licenseStatus, needsCar, needsMoto, needsTruck, purchaseCount, active}
+  // {id, name, phone, licenseStatus, needsCar, needsMoto, needsTruck, purchaseCount, active}
 
 function openClientModal(){
   clientModal.style.display = "block";
@@ -1249,7 +1248,6 @@ function openClientModal(){
   cPurchase.value = "";
   cName.focus();
 }
-function closeClientModal(){
   clientModal.style.display = "none";
 }
 
@@ -1279,7 +1277,6 @@ function startClientsListener(){
   });
 }
     // ===== Clients helpers =====
-function openClientModal(){
   if(!clientModal) return;
   clientModal.style.display = "block";
   cName.value = "";
@@ -1296,8 +1293,6 @@ function closeClientModal(){
   if(!clientModal) return;
   clientModal.style.display = "none";
 }
-
-function renderClientsSelect(){
   if(!fClientSelect) return;
 
   const current = fClientSelect.value || "";
@@ -1311,8 +1306,6 @@ function renderClientsSelect(){
 
   if(current && list.some(c => c.id === current)) fClientSelect.value = current;
 }
-
-function startClientsListener(){
   const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
   return onSnapshot(qClients, (snap) => {
     clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
