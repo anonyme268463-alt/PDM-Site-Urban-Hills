@@ -353,7 +353,7 @@
             </div>
             <div class="stat">
               <div class="k">Panier moyen</div>
-              <div class="v" id="statAvg">€ 0</div>
+              <div class="v" id="statAvg">$ 0</div>
               <div class="s" id="statAvgS">—</div>
             </div>
             <div class="stat">
@@ -654,7 +654,7 @@
     // ===== Helpers =====
     function euro(n){
       const x = Number(n || 0);
-      return "€ " + x.toLocaleString("fr-FR");
+      return "$ " + x.toLocaleString("fr-FR");
     }
     function fmtDate(ts){
       if(!ts) return "—";
