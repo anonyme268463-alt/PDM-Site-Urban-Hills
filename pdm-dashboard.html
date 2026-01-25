@@ -800,21 +800,35 @@ cSave?.addEventListener("click", async () => {
           showToast("Session", "Profil en cours de chargement.");
           return;
         }
-
         const type = fType.value;
-        const client = fClient.value.trim();
+
+        // Client depuis la liste (ou fallback ancien champ texte si présent)
+        let clientId = "";
+        let clientName = "";
+        if(typeof fClientSelect !== "undefined" && fClientSelect){
+          clientId = (fClientSelect.value || "").trim();
+          const found = clients.find(c => c.id === clientId);
+          clientName = (found?.name || fClientSelect.options[fClientSelect.selectedIndex]?.textContent || "").trim();
+        }else if(typeof fClient !== "undefined" && fClient){
+          clientName = fClient.value.trim();
+        }
+
         const vehicle = fVehicle.value.trim();
         const price = Number(fPrice.value);
         const status = fStatus.value;
         const notes = fNotes.value.trim();
 
-        if(!client || !vehicle || !Number.isFinite(price)){
+        if(!clientName || !vehicle || !Number.isFinite(price)){
           showToast("Champs manquants", "Client, véhicule et prix sont obligatoires.");
           return;
         }
 
-        const payload = {
-          type, client, vehicle, price,
+const payload = {
+          type,
+          client: clientName,
+          clientId: clientId || null,
+          vehicle,
+          price,
           status,
           notes,
           sellerId: me.uid,
@@ -1275,44 +1289,56 @@ function startClientsListener(){
   });
 }
     // ===== Clients helpers =====
-  if(!clientModal) return;
-  clientModal.style.display = "block";
-  cName.value = "";
-  cPhone.value = "";
-  cLicense.value = "oui";
-  cCar.checked = false;
-  cMoto.checked = false;
-  cTruck.checked = false;
-  cPurchase.value = "";
-  cName.focus();
-}
+    let clients = [];
+    let unsubClients = null;
 
-function closeClientModal(){
-  if(!clientModal) return;
-  clientModal.style.display = "none";
-}
-  if(!fClientSelect) return;
+    function openClientModal(){
+      if(!clientModal) return;
+      clientModal.style.display = "block";
+      cName.value = "";
+      cPhone.value = "";
+      cLicense.value = "";
+      cCar.checked = false;
+      cMoto.checked = false;
+      cTruck.checked = false;
+      cPurchase.value = "";
+      cName.focus();
+    }
+    function closeClientModal(){
+      if(!clientModal) return;
+      clientModal.style.display = "none";
+    }
 
-  const current = fClientSelect.value || "";
-  const list = clients
-    .filter(c => c.active !== false)
-    .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
+    function renderClientSelect(){
+      if(!fClientSelect) return;
+      const current = fClientSelect.value || "";
+      const list = clients
+        .filter(c => c && (c.active !== false))
+        .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
 
-  fClientSelect.innerHTML =
-    `<option value="">Sélectionner un client…</option>` +
-    list.map(c => `<option value="${c.id}">${escapeHtml(c.name)}${c.phone ? " · " + escapeHtml(c.phone) : ""}</option>`).join("");
+      fClientSelect.innerHTML =
+        '<option value="">Sélectionner un client...</option>' +
+        list.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}${c.phone ? " • " + escapeHtml(c.phone) : ""}</option>`).join("");
 
-  if(current && list.some(c => c.id === current)) fClientSelect.value = current;
-}
-  const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
-  return onSnapshot(qClients, (snap) => {
-    clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderClientsSelect();
-  }, (err) => {
-    console.error(err);
-    showToast("Erreur clients", err?.message || "Impossible de charger les clients.");
-  });
-}
+      if(current && list.some(c => c.id === current)) fClientSelect.value = current;
+    }
+
+    function startClientsListener(){
+      if(unsubClients) return;
+      const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
+      unsubClients = onSnapshot(qClients, (snap) => {
+        clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        renderClientSelect();
+      }, (err) => {
+        console.error(err);
+        showToast("Erreur clients", err?.message || "Impossible de charger les clients.");
+      });
+    }
+    function stopClientsListener(){
+      if(unsubClients){ unsubClients(); unsubClients = null; }
+    }
+
+
     function startListeners(){
       if(unsubTx) unsubTx();
       if(unsubUsers) unsubUsers();
