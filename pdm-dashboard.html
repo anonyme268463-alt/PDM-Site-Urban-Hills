@@ -819,7 +819,7 @@
             status: normalizeStatus((r.status ?? r.Statut ?? "en_attente").toString()),
             notes: (r.notes ?? r.Notes ?? "").toString(),
             sellerId: me.uid,
-            sellerName: (r.sellerName ?? r.Vendeur ?? me.name || "Admin").toString(),
+            sellerName: String(r.sellerName ?? r.Vendeur ?? (me?.name ?? "Admin")),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           };
