@@ -103,13 +103,7 @@
       color:#1a0606;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      margin-top: 18px;
-    }
-
+    .grid{display:grid; grid-template-columns: 1fr; gap:16px; margin-top:18px;}
     .panel{
       border:1px solid var(--line);
       border-radius: var(--radius);
@@ -127,27 +121,15 @@
         rgba(0,0,0,.18);
     }
     .panelHead h2{
-      margin:0;
-      font-size:12px;
-      letter-spacing:.18em;
-      text-transform:uppercase;
-      color:rgba(255,255,255,.9);
+      margin:0; font-size:12px; letter-spacing:.18em;
+      text-transform:uppercase; color:rgba(255,255,255,.9);
     }
     .panelBody{padding: 16px 18px;}
     .muted{color:var(--muted)}
     .note{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.4}
 
-    .stats{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .stat{
-      border:1px solid var(--line);
-      border-radius: var(--radius2);
-      background: rgba(0,0,0,.22);
-      padding: 12px 14px;
-    }
+    .stats{display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;}
+    .stat{border:1px solid var(--line); border-radius: var(--radius2); background: rgba(0,0,0,.22); padding:12px 14px;}
     .stat .k{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
     .stat .v{margin-top:6px; font-size:18px; font-weight:800}
     .stat .s{margin-top:2px; font-size:12px; color:var(--muted)}
@@ -156,8 +138,7 @@
     .formGrid{
       display:grid;
       grid-template-columns: 140px 1.2fr 1.4fr 140px 160px 140px;
-      gap: 10px;
-      align-items:center;
+      gap:10px; align-items:center;
     }
     .field, select, input, textarea{
       width:100%;
@@ -168,47 +149,32 @@
       color:var(--text);
       outline:none;
     }
-    textarea{
-      border-radius: 14px;
-      min-height: 42px;
-      resize: vertical;
-    }
+    textarea{border-radius:14px; min-height:42px; resize: vertical;}
     .field:focus, select:focus, input:focus, textarea:focus{
       box-shadow: var(--ring);
       border-color: rgba(212,175,55,.35);
     }
-    .rowActions{
-      display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;
-    }
+    .rowActions{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;}
 
     .toolbar{
       display:grid;
       grid-template-columns: 1.6fr 160px 160px 160px 160px 1fr;
-      gap: 10px;
-      align-items:center;
-      margin-bottom: 12px;
+      gap:10px; align-items:center; margin-bottom:12px;
     }
-    .toolbar .mini{
-      font-size:11px; color:var(--muted);
-      display:flex; gap:8px; align-items:center;
-    }
+    .toolbar .mini{font-size:11px; color:var(--muted); display:flex; gap:8px; align-items:center;}
     .chip{
-      padding: 8px 10px;
-      border-radius: 999px;
+      padding: 8px 10px; border-radius: 999px;
       border:1px solid var(--line);
       background: rgba(0,0,0,.22);
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 12px; color: var(--muted);
       display:inline-flex; gap:8px; align-items:center;
       user-select:none;
     }
     .chip input{accent-color: var(--gold2); width:16px; height:16px}
 
     table{
-      width:100%;
-      border-collapse: collapse;
-      overflow:hidden;
-      border-radius: 14px;
+      width:100%; border-collapse: collapse;
+      overflow:hidden; border-radius: 14px;
       border:1px solid var(--line);
       background: rgba(0,0,0,.18);
     }
@@ -219,37 +185,27 @@
       vertical-align: top;
     }
     th{
-      text-align:left;
-      color: rgba(255,255,255,.8);
-      letter-spacing:.12em;
-      text-transform: uppercase;
-      font-size: 11px;
-      background: rgba(255,255,255,.03);
+      text-align:left; color: rgba(255,255,255,.8);
+      letter-spacing:.12em; text-transform: uppercase;
+      font-size: 11px; background: rgba(255,255,255,.03);
     }
     tr:hover td{background: rgba(255,255,255,.02)}
     .nowrap{white-space:nowrap}
     .price{font-weight:800; color:var(--gold1)}
     .badge{
       display:inline-flex; padding:6px 10px;
-      border-radius: 999px;
-      border:1px solid var(--line);
+      border-radius: 999px; border:1px solid var(--line);
       background: rgba(0,0,0,.25);
       color: var(--muted);
-      font-size: 11px;
-      white-space:nowrap;
+      font-size: 11px; white-space:nowrap;
     }
     .badge.ok{border-color: rgba(212,175,55,.25); color: var(--gold1)}
     .badge.wait{border-color: rgba(11,43,91,.35); color:#b7c7ff}
     .badge.no{border-color: rgba(255,130,130,.35); color:#ffb0b0}
 
-    .pagination{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px; margin-top: 10px; flex-wrap:wrap;
-    }
+    .pagination{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; flex-wrap:wrap;}
 
-    .tabs{
-      display:flex; gap:8px; flex-wrap:wrap;
-    }
+    .tabs{display:flex; gap:8px; flex-wrap:wrap;}
     .tab{
       padding: 8px 12px;
       border-radius: 999px;
@@ -257,8 +213,7 @@
       background: rgba(0,0,0,.22);
       color: var(--muted);
       font-size: 12px;
-      cursor:pointer;
-      user-select:none;
+      cursor:pointer; user-select:none;
     }
     .tab.active{
       background: linear-gradient(180deg, rgba(245,224,163,.18), rgba(212,175,55,.12));
@@ -267,11 +222,7 @@
       box-shadow: var(--ring);
     }
 
-    .twoCol{
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 14px;
-    }
+    .twoCol{display:grid; grid-template-columns: 1.1fr .9fr; gap:14px;}
     .list{
       border:1px solid var(--line);
       border-radius: 14px;
@@ -291,8 +242,7 @@
     .item .tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
 
     .toast{
-      position: fixed;
-      right: 16px; bottom: 16px;
+      position: fixed; right: 16px; bottom: 16px;
       background: rgba(0,0,0,.78);
       border: 1px solid rgba(255,255,255,.10);
       color: var(--text);
@@ -334,11 +284,12 @@
       .kv div b{color:var(--text); font-weight:700}
       .cardRow .tools{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap}
     }
-    #meBadge.is-admin { border-color: rgba(241,213,139,.55); color: #f1d58b; }
-#meBadge.is-staff { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.86); }
 
+    #meBadge.is-admin { border-color: rgba(241,213,139,.55); color: #f1d58b; }
+    #meBadge.is-staff { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.86); }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -560,113 +511,32 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, signOut
-    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
     import {
       getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
       query, orderBy, limit, onSnapshot, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-     const firebaseConfig = {
-   apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
-   authDomain: "pdm-urban-hills.firebaseapp.com",
-   projectId: "pdm-urban-hills",
-   storageBucket: "pdm-urban-hills.firebasestorage.app",
-   messagingSenderId: "426355558661",
-   appId: "1:426355558661:web:8364782043dd5ad2270f6c",
-   measurementId: "G-RGM2DWVFLT"
- };
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
+      authDomain: "pdm-urban-hills.firebaseapp.com",
+      projectId: "pdm-urban-hills",
+      storageBucket: "pdm-urban-hills.firebasestorage.app",
+      messagingSenderId: "426355558661",
+      appId: "1:426355558661:web:8364782043dd5ad2270f6c",
+      measurementId: "G-RGM2DWVFLT"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    // Boutons topbar (TES IDs)
-const btnSite = document.getElementById("toSite");
-const btnLogout = document.getElementById("logout");
 
-// Aller au site (catalogue)
-if (btnSite) {
-  btnSite.addEventListener("click", () => {
-    window.location.href = "./index.html";
-  });
-}
-
-// Déconnexion
-if (btnLogout) {
-  btnLogout.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "./pdm-staff.html";
-  });
-}
-
-    const meBadge = document.getElementById("meBadge");
-
-// petit toast (optionnel mais utile)
-const toast = (title, msg) => {
-  const el = document.getElementById("toast");
-  if (!el) return;
-  document.getElementById("toastTitle").innerHTML = `<b>${title}</b>`;
-  document.getElementById("toastMsg").textContent = msg;
-  el.classList.add("show");
-  clearTimeout(window.__toastT);
-  window.__toastT = setTimeout(() => el.classList.remove("show"), 2200);
-};
-
-async function loadProfile(uid) {
-  meBadge.textContent = "Chargement…";
-  meBadge.classList.remove("is-admin", "is-staff");
-
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    meBadge.textContent = "Profil introuvable";
-    toast("Accès refusé", "Profil Firestore manquant.");
-    return null;
-  }
-
-  const data = snap.data();
-  const name = data.name || "Utilisateur";
-  const role = (data.role || "staff").toLowerCase();
-  const active = data.active !== false;
-
-  if (!active) {
-    meBadge.textContent = "Compte désactivé";
-    toast("Accès refusé", "Compte désactivé.");
-    return null;
-  }
-
-  if (role === "admin") {
-    meBadge.textContent = `${name} — ADMIN`;
-    meBadge.classList.add("is-admin");
-  } else {
-    meBadge.textContent = `${name} — STAFF`;
-    meBadge.classList.add("is-staff");
-  }
-
-  toast("UID reconnu", `Bienvenue ${name}`);
-  return { uid, name, role };
-}
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "./pdm-staff.html";
-    return;
-  }
-  try {
-    window.__me = await loadProfile(user.uid);
-  } catch (e) {
-    console.error(e);
-    meBadge.textContent = "Erreur profil";
-  }
-});
-
-    // UI refs
+    // ===== DOM refs (UNE SEULE FOIS) =====
     const meBadge = document.getElementById("meBadge");
     const rightsHint = document.getElementById("rightsHint");
-    const toSite = document.getElementById("toSite");
-    const logout = document.getElementById("logout");
+    const toSiteBtn = document.getElementById("toSite");
+    const logoutBtn = document.getElementById("logout");
 
     const tabs = [...document.querySelectorAll(".tab")];
     const tabTransactions = document.getElementById("tab-transactions");
@@ -696,7 +566,7 @@ onAuthStateChanged(auth, async (user) => {
     const pageSize = document.getElementById("pageSize");
     const countInfo = document.getElementById("countInfo");
 
-    const rows = document.getElementById("rows");
+    const rowsTbody = document.getElementById("rows");
     const cards = document.getElementById("cards");
 
     const prevPage = document.getElementById("prevPage");
@@ -707,7 +577,6 @@ onAuthStateChanged(auth, async (user) => {
     const importLabel = document.getElementById("importLabel");
     const importCsv = document.getElementById("importCsv");
 
-    // Stats
     const statTotal = document.getElementById("statTotal");
     const statCount = document.getElementById("statCount");
     const statAvg = document.getElementById("statAvg");
@@ -717,7 +586,6 @@ onAuthStateChanged(auth, async (user) => {
     const statAvgS = document.getElementById("statAvgS");
     const statTopS = document.getElementById("statTopS");
 
-    // Staff
     const staffList = document.getElementById("staffList");
     const uUid = document.getElementById("uUid");
     const uName = document.getElementById("uName");
@@ -725,23 +593,24 @@ onAuthStateChanged(auth, async (user) => {
     const uActive = document.getElementById("uActive");
     const saveUser = document.getElementById("saveUser");
 
-    // Audit
     const auditList = document.getElementById("auditList");
 
     // Toast
-    const toast = document.getElementById("toast");
+    const toastEl = document.getElementById("toast");
     const toastTitle = document.getElementById("toastTitle");
     const toastMsg = document.getElementById("toastMsg");
     let toastT = null;
 
     function showToast(title, msg){
+      if(!toastEl) return;
       toastTitle.innerHTML = "<b>" + title + "</b>";
       toastMsg.textContent = msg || "";
-      toast.style.display = "block";
+      toastEl.style.display = "block";
       clearTimeout(toastT);
-      toastT = setTimeout(() => toast.style.display = "none", 2800);
+      toastT = setTimeout(() => toastEl.style.display = "none", 2600);
     }
 
+    // ===== Helpers =====
     function euro(n){
       const x = Number(n || 0);
       return "€ " + x.toLocaleString("fr-FR");
@@ -759,24 +628,49 @@ onAuthStateChanged(auth, async (user) => {
     function typeLabel(v){
       return v === "reservation" ? "Réservation" : "Vente";
     }
+    function escapeHtml(s){
+      return (s||"").toString()
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+    function stripHtml(s){
+      return (s||"").toString().replace(/<[^>]*>/g,"").trim();
+    }
     function norm(s){ return (s||"").toString().toLowerCase().trim(); }
+    function normalizeStatus(s){
+      const v = norm(s);
+      if(v.includes("pay")) return "paye";
+      if(v.includes("ann")) return "annule";
+      return "en_attente";
+    }
 
-    // State
-    let me = null;           // {uid, name, role, active}
-    let allTx = [];          // raw snapshot docs mapped
-    let filtered = [];       // after client-side filters
+    // ===== State =====
+    let me = null;           // {uid, name, role}
+    let allTx = [];
+    let filtered = [];
     let currentPage = 1;
 
     function isAdmin(){ return me?.role === "admin"; }
-    function canManageStaff(){ return me?.role === "admin"; }
-    function canReadAudit(){ return me?.role === "admin"; }
+    function canManageStaff(){ return isAdmin(); }
+    function canReadAudit(){ return isAdmin(); }
 
-    // Tabs
+    // ===== Topbar buttons (UNE SEULE FOIS) =====
+    toSiteBtn.addEventListener("click", () => {
+      window.location.href = "./index.html";
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      try{
+        await signOut(auth);
+      } finally {
+        window.location.href = "./pdm-staff.html";
+      }
+    });
+
+    // ===== Tabs =====
     function setTab(name){
       tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-      // always visible
       tabTransactions.style.display = (name === "transactions") ? "block" : "none";
-      // admin only
       tabStaff.style.display = (name === "staff" && canManageStaff()) ? "block" : "none";
       tabAudit.style.display = (name === "audit" && canReadAudit()) ? "block" : "none";
       if(name === "staff" && !canManageStaff()) showToast("Accès refusé", "Admin uniquement.");
@@ -784,12 +678,11 @@ onAuthStateChanged(auth, async (user) => {
     }
     tabs.forEach(t => t.addEventListener("click", () => setTab(t.dataset.tab)));
 
-    toSite.addEventListener("click", () => window.location.href = "./index.html");
-    logout.addEventListener("click", async () => { await signOut(auth); window.location.href = "./pdm-staff.html"; });
-
-    // Filters listeners
+    // ===== Filters listeners =====
     const filterInputs = [qEl, filterType, filterStatus, sortBy, mineOnly, minPrice, maxPrice, fromDate, toDate, pageSize, filterSeller];
     filterInputs.forEach(el => el && el.addEventListener("input", () => { currentPage = 1; applyFilters(); render(); }));
+    filterInputs.forEach(el => el && el.addEventListener("change", () => { currentPage = 1; applyFilters(); render(); }));
+
     resetBtn.addEventListener("click", () => {
       qEl.value = "";
       filterType.value = "all";
@@ -800,12 +693,14 @@ onAuthStateChanged(auth, async (user) => {
       fromDate.value = "";
       toDate.value = "";
       pageSize.value = "25";
+
       if(isAdmin()){
         mineOnly.checked = false;
         filterSeller.value = "all";
       } else {
         mineOnly.checked = true;
       }
+
       currentPage = 1;
       applyFilters(); render();
       showToast("Filtres", "Réinitialisés.");
@@ -818,9 +713,14 @@ onAuthStateChanged(auth, async (user) => {
       if(currentPage<maxP){ currentPage++; render(); }
     });
 
-    // Add transaction
+    // ===== Add transaction =====
     addBtn.addEventListener("click", async () => {
       try{
+        if(!me){
+          showToast("Session", "Profil en cours de chargement.");
+          return;
+        }
+
         const type = fType.value;
         const client = fClient.value.trim();
         const vehicle = fVehicle.value.trim();
@@ -832,6 +732,7 @@ onAuthStateChanged(auth, async (user) => {
           showToast("Champs manquants", "Client, véhicule et prix sont obligatoires.");
           return;
         }
+
         const payload = {
           type, client, vehicle, price,
           status,
@@ -844,6 +745,7 @@ onAuthStateChanged(auth, async (user) => {
 
         const ref = await addDoc(collection(db, "transactions"), payload);
         await addAudit("create", "transaction", ref.id, payload);
+
         fClient.value = ""; fVehicle.value = ""; fPrice.value = ""; fNotes.value = "";
         showToast("Ajout", "Transaction enregistrée.");
       }catch(err){
@@ -852,7 +754,7 @@ onAuthStateChanged(auth, async (user) => {
       }
     });
 
-    // Export CSV
+    // ===== CSV Export =====
     exportCsv.addEventListener("click", () => {
       const rows = filtered.map(x => ({
         date: x.createdAt ? fmtDate(x.createdAt) : "",
@@ -885,7 +787,7 @@ onAuthStateChanged(auth, async (user) => {
       showToast("Export", "CSV généré.");
     });
 
-    // Import CSV (admin only)
+    // ===== CSV Import (admin only) =====
     importCsv.addEventListener("change", async (e) => {
       const file = e.target.files?.[0];
       e.target.value = "";
@@ -902,7 +804,6 @@ onAuthStateChanged(auth, async (user) => {
           return;
         }
 
-        // Mapping accepté : client, vehicle, price, type, status, notes, sellerName (optionnel)
         let ok = 0;
         for(const r of parsed.rows){
           const client = (r.client ?? r.Client ?? r.CLIENT ?? "").toString().trim();
@@ -933,15 +834,7 @@ onAuthStateChanged(auth, async (user) => {
       }
     });
 
-    function normalizeStatus(s){
-      const v = norm(s);
-      if(v.includes("pay")) return "paye";
-      if(v.includes("ann")) return "annule";
-      return "en_attente";
-    }
-
     function parseCSV(text){
-      // simple parser compatible with quotes
       const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length);
       if(lines.length === 0) return {header:[], rows:[]};
 
@@ -970,7 +863,7 @@ onAuthStateChanged(auth, async (user) => {
       return out;
     }
 
-    // Render + filters
+    // ===== Filters + render =====
     function applyFilters(){
       const q = norm(qEl.value);
       const t = filterType.value;
@@ -1003,7 +896,6 @@ onAuthStateChanged(auth, async (user) => {
         return true;
       });
 
-      // Sort
       const byDate = (a,b) => (a._ms||0) - (b._ms||0);
       const byPrice = (a,b) => (Number(a.price||0) - Number(b.price||0));
       if(so === "date_desc") filtered.sort((a,b)=> byDate(b,a));
@@ -1011,7 +903,6 @@ onAuthStateChanged(auth, async (user) => {
       if(so === "price_desc") filtered.sort((a,b)=> byPrice(b,a));
       if(so === "price_asc") filtered.sort((a,b)=> byPrice(a,b));
 
-      // Stats
       const sum = filtered.reduce((acc,x)=> acc + Number(x.price||0), 0);
       statTotal.textContent = euro(sum);
       statCount.textContent = String(filtered.length);
@@ -1048,8 +939,7 @@ onAuthStateChanged(auth, async (user) => {
 
       pageInfo.textContent = `Page ${currentPage} / ${maxP}`;
 
-      // Desktop table
-      rows.innerHTML = pageItems.map(x => {
+      rowsTbody.innerHTML = pageItems.map(x => {
         const canEdit = isAdmin() || x.sellerId === me.uid;
         const canDelete = isAdmin() || x.sellerId === me.uid;
         return `
@@ -1070,7 +960,6 @@ onAuthStateChanged(auth, async (user) => {
         `;
       }).join("");
 
-      // Mobile cards
       const isMobile = window.matchMedia("(max-width: 640px)").matches;
       if(isMobile){
         cards.style.display = "grid";
@@ -1089,7 +978,7 @@ onAuthStateChanged(auth, async (user) => {
               <div class="kv">
                 <div><b>Date</b><br>${fmtDate(x.createdAt)}</div>
                 <div><b>Type</b><br>${typeLabel(x.type)}</div>
-                <div><b>Statut</b><br>${stripHtml(statusBadge(x.status))}</div>
+                <div><b>Statut</b><br>${escapeHtml(stripHtml(statusBadge(x.status)))}</div>
                 <div><b>Vendeur</b><br>${escapeHtml(x.sellerName||"—")}</div>
               </div>
               ${x.notes ? `<div class="muted" style="margin-top:8px">${escapeHtml(x.notes)}</div>` : ""}
@@ -1105,7 +994,6 @@ onAuthStateChanged(auth, async (user) => {
         document.querySelector("table").style.display = "table";
       }
 
-      // bind row actions
       [...document.querySelectorAll("[data-act]")].forEach(b => {
         b.addEventListener("click", async () => {
           const id = b.dataset.id;
@@ -1153,16 +1041,7 @@ onAuthStateChanged(auth, async (user) => {
       });
     }
 
-    function escapeHtml(s){
-      return (s||"").toString()
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
-    function stripHtml(s){
-      return (s||"").toString().replace(/<[^>]*>/g,"").trim();
-    }
-
-    // Audit logs
+    // ===== Audit logs =====
     async function addAudit(action, entity, entityId, payload){
       try{
         await addDoc(collection(db, "auditLogs"), {
@@ -1175,12 +1054,11 @@ onAuthStateChanged(auth, async (user) => {
           payload: payload ?? null
         });
       }catch(e){
-        // ne bloque jamais l'app si audit échoue
         console.warn("audit failed", e);
       }
     }
 
-    // Staff management (admin)
+    // ===== Staff management (admin) =====
     saveUser.addEventListener("click", async () => {
       if(!isAdmin()){
         showToast("Accès refusé", "Admin uniquement.");
@@ -1204,52 +1082,6 @@ onAuthStateChanged(auth, async (user) => {
         showToast("Erreur", err?.message || "Impossible d'enregistrer.");
       }
     });
-
-    // Realtime listeners
-    let unsubTx = null;
-    let unsubUsers = null;
-    let unsubAudit = null;
-
-    function startListeners(){
-      // Transactions
-      const txQ = query(collection(db, "transactions"), orderBy("createdAt","desc"), limit(800));
-      unsubTx = onSnapshot(txQ, (snap) => {
-        allTx = snap.docs.map(d => {
-          const data = d.data();
-          const ms = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : 0;
-          return { id:d.id, ...data, _ms: ms };
-        });
-        applyFilters();
-        render();
-      }, (err) => {
-        console.error(err);
-        showToast("Erreur Firestore", err?.message || "Lecture impossible.");
-      });
-
-      // Users for admin + seller filter
-      if(isAdmin()){
-        filterSeller.style.display = "block";
-        importLabel.style.display = "inline-flex";
-
-        const uQ = query(collection(db, "users"), orderBy("name","asc"), limit(300));
-        unsubUsers = onSnapshot(uQ, (snap) => {
-          const users = snap.docs.map(d => ({ uid:d.id, ...d.data() }));
-          buildSellerFilter(users);
-          renderStaff(users);
-        });
-
-        // Audit
-        const aQ = query(collection(db, "auditLogs"), orderBy("createdAt","desc"), limit(200));
-        unsubAudit = onSnapshot(aQ, (snap) => {
-          const logs = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-          renderAudit(logs);
-        });
-      } else {
-        mineOnly.checked = true; // staff default
-        filterSeller.style.display = "none";
-        importLabel.style.display = "none";
-      }
-    }
 
     function buildSellerFilter(users){
       const current = filterSeller.value || "all";
@@ -1319,54 +1151,125 @@ onAuthStateChanged(auth, async (user) => {
       `).join("") || `<div class="item"><div class="meta"><b>Aucun log</b><span>Le journal se remplira avec les actions staff/admin.</span></div></div>`;
     }
 
+    // ===== Firestore listeners =====
+    let unsubTx = null;
+    let unsubUsers = null;
+    let unsubAudit = null;
+
+    function startListeners(){
+      if(unsubTx) unsubTx();
+      if(unsubUsers) unsubUsers();
+      if(unsubAudit) unsubAudit();
+
+      // Transactions
+      const txQ = query(collection(db, "transactions"), orderBy("createdAt","desc"), limit(800));
+      unsubTx = onSnapshot(txQ, (snap) => {
+        allTx = snap.docs.map(d => {
+          const data = d.data();
+          const ms = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : 0;
+          return { id:d.id, ...data, _ms: ms };
+        });
+        applyFilters();
+        render();
+      }, (err) => {
+        console.error(err);
+        showToast("Erreur Firestore", err?.message || "Lecture impossible.");
+      });
+
+      // Admin extras
+      if(isAdmin()){
+        filterSeller.style.display = "block";
+        importLabel.style.display = "inline-flex";
+        rightsHint.textContent = "Admin : accès complet";
+
+        const uQ = query(collection(db, "users"), orderBy("name","asc"), limit(300));
+        unsubUsers = onSnapshot(uQ, (snap) => {
+          const users = snap.docs.map(d => ({ uid:d.id, ...d.data() }));
+          buildSellerFilter(users);
+          renderStaff(users);
+        });
+
+        const aQ = query(collection(db, "auditLogs"), orderBy("createdAt","desc"), limit(200));
+        unsubAudit = onSnapshot(aQ, (snap) => {
+          const logs = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+          renderAudit(logs);
+        });
+      } else {
+        mineOnly.checked = true;
+        filterSeller.style.display = "none";
+        importLabel.style.display = "none";
+        rightsHint.textContent = "Staff : uniquement tes entrées";
+      }
+    }
+
+    // ===== AUTH BOOT (UN SEUL) =====
+    async function loadProfile(uid){
+      meBadge.textContent = "Chargement…";
+      meBadge.classList.remove("is-admin","is-staff");
+
+      const ref = doc(db, "users", uid);
+      const snap = await getDoc(ref);
+
+      if(!snap.exists()){
+        meBadge.textContent = "Profil introuvable";
+        showToast("Accès refusé", "Profil Firestore manquant.");
+        return null;
+      }
+
+      const data = snap.data();
+      const name = data.name || "Utilisateur";
+      const role = (data.role || "staff").toLowerCase();
+      const active = (data.active !== false) && (data.Active !== false);
+
+      if(!active){
+        meBadge.textContent = "Compte désactivé";
+        showToast("Accès refusé", "Compte désactivé.");
+        return null;
+      }
+
+      if(role === "admin"){
+        meBadge.textContent = `${name} — ADMIN`;
+        meBadge.classList.add("is-admin");
+      } else {
+        meBadge.textContent = `${name} — STAFF`;
+        meBadge.classList.add("is-staff");
+      }
+
+      showToast("UID reconnu", `Bienvenue ${name}`);
+      return { uid, name, role, active: true };
+    }
+
     onAuthStateChanged(auth, async (user) => {
-  // refs UI (si pas déjà en haut chez toi)
-  const meBadge = document.getElementById("meBadge");
+      if(!user){
+        window.location.href = "./pdm-staff.html";
+        return;
+      }
 
-  if (!user) {
-    window.location.href = "./pdm-staff.html";
-    return;
-  }
+      try{
+        const profile = await loadProfile(user.uid);
+        if(!profile){
+          // profil absent / désactivé
+          return;
+        }
 
-  // Affichage temporaire (et sûr)
-  if (meBadge) meBadge.textContent = "Chargement...";
+        me = profile;
 
-  try {
-    const ref = doc(db, "users", user.uid);
-    const snap = await getDoc(ref);
+        // Tab visible par défaut
+        setTab("transactions");
 
-    if (!snap.exists()) {
-      if (meBadge) meBadge.textContent = "Compte non configuré";
-      return;
-    }
+        // Démarre Firestore après profil OK
+        startListeners();
 
-    const data = snap.data();
+        // Applique filtres au boot
+        applyFilters();
+        render();
+      }catch(e){
+        console.error(e);
+        meBadge.textContent = "Erreur profil";
+        showToast("Erreur", "Impossible de charger le profil.");
+      }
+    });
 
-    // ⚠️ toi tu as: Active / name / role
-    const isActive = data.Active === true || data.active === true;
-    const name = data.name || "Utilisateur";
-    const role = (data.role || "staff").toLowerCase(); // "admin" ou "staff"
-
-    if (!isActive) {
-      if (meBadge) meBadge.textContent = "Compte désactivé";
-      return;
-    }
-
-    // ✅ Affichage badge propre
-    if (meBadge) {
-      meBadge.textContent = role === "admin" ? `${name} — ADMIN` : `${name} — STAFF`;
-    }
-
-    // ✅ (Optionnel) sécurité: empêcher un staff d’accéder au dashboard admin
-    // si ton dashboard est "admin only", décommente :
-    // if (role !== "admin") window.location.href = "./pdm-staff.html";
-
-  } catch (e) {
-    console.error("Erreur chargement profil:", e);
-    if (meBadge) meBadge.textContent = "Erreur profil";
-  }
-});
-    // Responsive rerender
     window.addEventListener("resize", () => render());
   </script>
 </body>
