@@ -79,3 +79,53 @@ body.pdm .main{
 body.pdm h1, body.pdm h2, body.pdm h3{
   color: rgba(255,255,255,.92);
 }
+/* ---- Sidebar dark/glass ---- */
+body.pdm .layout{
+  display:flex;
+  min-height:100vh;
+}
+
+body.pdm .sidebar{
+  width: 240px;
+  padding: 18px;
+  background: rgba(255,255,255,.06);
+  border-right: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(12px);
+}
+
+body.pdm .sb-title{
+  font-weight: 800;
+  letter-spacing: .08em;
+  opacity: .9;
+  margin-bottom: 14px;
+}
+
+body.pdm .sb-link{
+  display:block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: rgba(255,255,255,.86);
+  text-decoration:none;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.20);
+  margin-bottom: 10px;
+}
+
+body.pdm .sb-link:hover{
+  background: rgba(255,255,255,.08);
+}
+
+body.pdm .sb-link.active{
+  outline: 2px solid rgba(212,175,55,.35);
+}
+
+body.pdm .sb-btn{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 800;
+  background: linear-gradient(180deg,#ffbb4b,#ff5e5e);
+  color: #1a0606;
+}
