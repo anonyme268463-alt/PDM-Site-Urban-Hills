@@ -1294,8 +1294,6 @@ function startClientsListener(){
       if(!clientModal) return;
       clientModal.style.display = "none";
     }
-
-    function startClientsListener(){
       if(unsubClients) return;
       const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
       unsubClients = onSnapshot(qClients, (snap) => {
