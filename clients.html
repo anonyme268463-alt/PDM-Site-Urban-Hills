@@ -1,1 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM — Base clients</title>
 
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sb-title">PDM ADMIN</div>
+
+    <a class="sb-link" href="pdm-dashboard.html">Dashboard</a>
+    <a class="sb-link" href="clients.html">Base clients</a>
+    <a class="sb-link" href="vehicles.html">Base véhicules</a>
+    <a class="sb-link" href="stock.html">Stock & réservations</a>
+    <a class="sb-link" href="compta.html">Comptabilité</a>
+
+    <div class="sb-spacer"></div>
+    <button class="sb-btn" id="logoutBtn">Déconnexion</button>
+  </aside>
+
+  <main class="main">
+    <h1>Base clients</h1>
+    <p>Si tu vois la sidebar à gauche + ce texte, l’étape 2 est OK.</p>
+  </main>
+</div>
+
+<script type="module">
+  import { wireSidebar } from "./app.js";
+
+  // Firebase logout ici (pas dans app.js)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  // 🔥 Mets EXACTEMENT la même config que dans pdm-dashboard.html
+  const firebaseConfig = {
+  apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
+  authDomain: "pdm-urban-hills.firebaseapp.com",
+  projectId: "pdm-urban-hills",
+  storageBucket: "pdm-urban-hills.firebasestorage.app",
+  messagingSenderId: "426355558661",
+  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
+  measurementId: "G-RGM2DWVFLT"
+};
+
+  initializeApp(firebaseConfig);
+  const auth = getAuth();
+
+  wireSidebar({
+    onLogout: async () => {
+      await signOut(auth);
+      location.href = "index.html";
+    }
+  });
+</script>
+
+</body>
+</html>
