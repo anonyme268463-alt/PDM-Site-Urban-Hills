@@ -819,7 +819,7 @@
             status: normalizeStatus((r.status ?? r.Statut ?? "en_attente").toString()),
             notes: (r.notes ?? r.Notes ?? "").toString(),
             sellerId: me.uid,
-            sellerName: (r.sellerName ?? r.Vendeur ?? me.name ||"Admin").toString(),
+            sellerName: (r.sellerName ?? r.Vendeur ?? me.name || "Admin").toString(),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           };
@@ -871,7 +871,7 @@
       const so = sortBy.value;
       const mine = mineOnly.checked;
       const minP = minPrice.value ? Number(minPrice.value) : null;
-      const maxPages = maxPrice.value ? Number(maxPrice.value) : null;
+      const maxP = maxPrice.value ? Number(maxPrice.value) : null;
       const fd = fromDate.value ? new Date(fromDate.value + "T00:00:00") : null;
       const td = toDate.value ? new Date(toDate.value + "T23:59:59") : null;
       const seller = isAdmin() ? (filterSeller.value || "all") : "all";
