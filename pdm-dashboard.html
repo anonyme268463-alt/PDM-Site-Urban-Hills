@@ -289,7 +289,31 @@
     #meBadge.is-staff { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.86); }
   </style>
 </head>
+ <div class="toast" id="clientModal" style="display:none; right:16px; bottom:16px; max-width:560px;">
+   <div><b>Ajouter un client</b></div>
+   <div class="small" style="margin-top:10px; display:grid; gap:10px;">
+     <input id="cName" class="field" placeholder="Nom/Prénom (obligatoire)" />
+     <input id="cPhone" class="field" placeholder="Téléphone (optionnel)" />
+     <select id="cLicense" class="field">
+       <option value="oui">Permis : Oui</option>
+       <option value="non">Permis : Non</option>
+       <option value="indisponible">Permis : Indisponible</option>
+       <option value="non_demande">Permis : Non demandé</option>
+     </select>
+     <div style="display:flex; gap:12px; flex-wrap:wrap;">
+       <label class="chip"><input type="checkbox" id="cCar" /> Voiture</label>
+       <label class="chip"><input type="checkbox" id="cMoto" /> Moto</label>
+       <label class="chip"><input type="checkbox" id="cTruck" /> Camion</label>
+     </div>
 
+     <input id="cPurchase" class="field" type="number" placeholder="Achat (nombre)" />
+
+     <div style="display:flex; gap:10px; justify-content:flex-end;">
+       <button class="btn secondary" id="cCancel" type="button">Annuler</button>
+       <button class="btn" id="cSave" type="button">Enregistrer</button>
+     </div>
+   </div>
+ </div>
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -353,7 +377,11 @@
               <option value="vente">Vente</option>
               <option value="reservation">Réservation</option>
             </select>
-            <input id="fClient" class="field" placeholder="Client (nom RP)" />
+            <select id="fClientSelect" class="field">
+  <option value="">Sélectionner un client…</option>
+</select>
+
+<button class="btn secondary" id="addClientBtn" type="button">+ Client</button>
             <input id="fVehicle" class="field" placeholder="Véhicule (Marque + Modèle)" />
             <input id="fPrice" class="field" type="number" placeholder="Prix" />
             <select id="fStatus">
@@ -550,6 +578,22 @@
     const fStatus = document.getElementById("fStatus");
     const fNotes = document.getElementById("fNotes");
     const addBtn = document.getElementById("addBtn");
+    
+    // ===== Clients refs =====
+    const fClientSelect = document.getElementById("fClientSelect");
+    const addClientBtn = document.getElementById("addClientBtn");
+
+    const clientModal = document.getElementById("clientModal");
+    const cName = document.getElementById("cName");
+    const cPhone = document.getElementById("cPhone");
+    const cLicense = document.getElementById("cLicense");
+    const cCar = document.getElementById("cCar");
+    const cMoto = document.getElementById("cMoto");
+    const cTruck = document.getElementById("cTruck");
+    const cPurchase = document.getElementById("cPurchase");
+    const cCancel = document.getElementById("cCancel");
+    const cSave = document.getElementById("cSave");
+
 
     const qEl = document.getElementById("q");
     const filterType = document.getElementById("filterType");
@@ -594,6 +638,20 @@
     const saveUser = document.getElementById("saveUser");
 
     const auditList = document.getElementById("auditList");
+    const fClientSelect = document.getElementById("fClientSelect");
+    const addClientBtn = document.getElementById("addClientBtn");
+
+    const clientModal = document.getElementById("clientModal");
+    const cName = document.getElementById("cName");
+    const cPhone = document.getElementById("cPhone");
+    const cLicense = document.getElementById("cLicense");
+    const cCar = document.getElementById("cCar");
+    const cMoto = document.getElementById("cMoto");
+    const cTruck = document.getElementById("cTruck");
+    const cPurchase = document.getElementById("cPurchase");
+    const cCancel = document.getElementById("cCancel");
+    const cSave = document.getElementById("cSave");
+
 
     // Toast
     const toastEl = document.getElementById("toast");
@@ -649,6 +707,11 @@
     let allTx = [];
     let filtered = [];
     let currentPage = 1;
+    
+    // ===== Clients state =====
+    let clients = [];        // liste clients Firestore
+    let unsubClients = null; // unsubscribe listener
+
 
     function isAdmin(){ return me?.role === "admin"; }
     function canManageStaff(){ return isAdmin(); }
@@ -666,7 +729,41 @@
         window.location.href = "./pdm-staff.html";
       }
     });
+    // ===== Clients events =====
+addClientBtn?.addEventListener("click", openClientModal);
+cCancel?.addEventListener("click", closeClientModal);
 
+cSave?.addEventListener("click", async () => {
+  const name = cName.value.trim();
+  if(!name){
+    showToast("Client", "Nom/Prénom obligatoire.");
+    return;
+  }
+
+  try{
+    const payload = {
+      name,
+      phone: cPhone.value.trim(),
+      licenseStatus: cLicense.value,
+      needsCar: !!cCar.checked,
+      needsMoto: !!cMoto.checked,
+      needsTruck: !!cTruck.checked,
+      purchaseCount: Number(cPurchase.value || 0),
+      active: true,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    const ref = await addDoc(collection(db, "clients"), payload);
+    closeClientModal();
+    showToast("Client", "Ajouté.");
+
+    if (fClientSelect) fClientSelect.value = ref.id;
+  }catch(err){
+    console.error(err);
+    showToast("Erreur", err?.message || "Ajout client impossible.");
+  }
+});
     // ===== Tabs =====
     function setTab(name){
       tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
@@ -1155,11 +1252,97 @@
     let unsubTx = null;
     let unsubUsers = null;
     let unsubAudit = null;
+    let clients = []; // {id, name, phone, licenseStatus, needsCar, needsMoto, needsTruck, purchaseCount, active}
 
+function openClientModal(){
+  clientModal.style.display = "block";
+  cName.value = "";
+  cPhone.value = "";
+  cLicense.value = "oui";
+  cCar.checked = false;
+  cMoto.checked = false;
+  cTruck.checked = false;
+  cPurchase.value = "";
+  cName.focus();
+}
+function closeClientModal(){
+  clientModal.style.display = "none";
+}
+
+function renderClientsSelect(){
+  if(!fClientSelect) return;
+  const current = fClientSelect.value || "";
+
+  const list = clients
+    .filter(c => c.active !== false)
+    .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
+
+  fClientSelect.innerHTML =
+    `<option value="">Sélectionner un client…</option>` +
+    list.map(c => `<option value="${c.id}">${escapeHtml(c.name)}${c.phone ? " · " + escapeHtml(c.phone) : ""}</option>`).join("");
+
+  if(current && list.some(c => c.id === current)) fClientSelect.value = current;
+}
+
+function startClientsListener(){
+  const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
+  return onSnapshot(qClients, (snap) => {
+    clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderClientsSelect();
+  }, (err) => {
+    console.error(err);
+    showToast("Erreur clients", err?.message || "Impossible de charger les clients.");
+  });
+}
+    // ===== Clients helpers =====
+function openClientModal(){
+  if(!clientModal) return;
+  clientModal.style.display = "block";
+  cName.value = "";
+  cPhone.value = "";
+  cLicense.value = "oui";
+  cCar.checked = false;
+  cMoto.checked = false;
+  cTruck.checked = false;
+  cPurchase.value = "";
+  cName.focus();
+}
+
+function closeClientModal(){
+  if(!clientModal) return;
+  clientModal.style.display = "none";
+}
+
+function renderClientsSelect(){
+  if(!fClientSelect) return;
+
+  const current = fClientSelect.value || "";
+  const list = clients
+    .filter(c => c.active !== false)
+    .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
+
+  fClientSelect.innerHTML =
+    `<option value="">Sélectionner un client…</option>` +
+    list.map(c => `<option value="${c.id}">${escapeHtml(c.name)}${c.phone ? " · " + escapeHtml(c.phone) : ""}</option>`).join("");
+
+  if(current && list.some(c => c.id === current)) fClientSelect.value = current;
+}
+
+function startClientsListener(){
+  const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
+  return onSnapshot(qClients, (snap) => {
+    clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderClientsSelect();
+  }, (err) => {
+    console.error(err);
+    showToast("Erreur clients", err?.message || "Impossible de charger les clients.");
+  });
+}
     function startListeners(){
       if(unsubTx) unsubTx();
       if(unsubUsers) unsubUsers();
       if(unsubAudit) unsubAudit();
+      unsubClients = startClientsListener();
 
       // Transactions
       const txQ = query(collection(db, "transactions"), orderBy("createdAt","desc"), limit(800));
