@@ -1,1 +1,520 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin — Base véhicules</title>
+  <style>
+    :root{
+      --bg1:#081021; --bg2:#240b0b; --card:rgba(10,14,18,.72);
+      --line:rgba(255,255,255,.12); --text:#e9eef7; --muted:rgba(233,238,247,.65);
+      --gold1:#f6d36a; --gold2:#b88b1f;
+      --bad1:#ffb4b4; --bad2:#ff5e5e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 700px at 20% 30%, rgba(40,110,255,.22), transparent 55%),
+        radial-gradient(900px 600px at 80% 35%, rgba(255,55,55,.22), transparent 55%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+    }
+    .wrap{max-width:1180px; margin:0 auto; padding:26px 18px 60px;}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      background:rgba(0,0,0,.30); border:1px solid var(--line); border-radius:999px;
+      padding:10px 12px; backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; align-items:center; gap:10px;}
+    .title{
+      font-weight:800; letter-spacing:.12em; text-transform:uppercase; font-size:12px;
+      padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(0,0,0,.25);
+    }
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:9px 12px;
+      border:1px solid var(--line); border-radius:999px; background:rgba(0,0,0,.25); color:var(--muted);
+      font-size:12px;
+    }
+    .right{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      padding:10px 14px; border-radius:999px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+      font-size:11px;
+    }
+    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--line);}
+    .btn.primary{
+      background:linear-gradient(180deg,var(--gold1),var(--gold2)); color:#1a1606;
+      box-shadow:0 10px 25px rgba(246,211,106,.20);
+    }
+    .btn.danger{
+      background:linear-gradient(180deg,var(--bad1),var(--bad2)); color:#1a0606;
+    }
+    .grid{display:grid; gap:14px; margin-top:16px;}
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:18px;
+      padding:16px 16px 14px; backdrop-filter: blur(14px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+    h2{
+      margin:0 0 10px; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .field{
+      display:flex; flex-direction:column; gap:6px; min-width:180px; flex:1;
+    }
+    label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase}
+    input, select{
+      width:100%;
+      padding:10px 12px; border-radius:999px;
+      border:1px solid var(--line); background:rgba(0,0,0,.25); color:var(--text);
+      outline:none;
+    }
+    input::placeholder{color:rgba(233,238,247,.35)}
+    .hint{font-size:12px; color:var(--muted); margin-top:8px}
+    table{width:100%; border-collapse:collapse; margin-top:10px;}
+    th,td{padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.08); font-size:13px;}
+    th{font-size:11px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; text-align:left;}
+    td.actions{white-space:nowrap; width:1%}
+    .chip{
+      display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line); background:rgba(0,0,0,.22); color:var(--text); font-size:12px;
+    }
+    .toast{
+      position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+      background:rgba(0,0,0,.72); color:var(--text); border:1px solid var(--line);
+      padding:10px 12px; border-radius:14px; width:min(620px, calc(100vw - 32px));
+      backdrop-filter: blur(12px); display:none;
+    }
+    .toast strong{display:block; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+    .toast p{margin:6px 0 0; font-size:13px;}
+    .modalOverlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:18px;}
+    .modal{width:min(720px, 100%); background:rgba(12,16,24,.92); border:1px solid var(--line); border-radius:18px; padding:16px; backdrop-filter: blur(14px);}
+    .modalHead{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;}
+    .modalHead h3{margin:0; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="title">PDM Admin</div>
+        <div class="pill" id="mePill">Chargement…</div>
+      </div>
+      <div class="right">
+        <div class="pill" id="envBadge">Firestore • Live</div>
+        <button class="btn secondary" id="toDashboard">Dashboard</button>
+        <button class="btn danger" id="logout">Déconnexion</button>
+      </div>
+    </div>
 
+    <div class="grid">
+      <div class="card">
+        <h2>Base véhicules</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>Recherche</label>
+            <input id="q" placeholder="Marque, modèle, type…" />
+          </div>
+          <div class="field" style="max-width:220px">
+            <label>Type</label>
+            <select id="filterType">
+              <option value="all">Tous</option>
+            </select>
+          </div>
+          <div class="field" style="max-width:240px">
+            <label>Tri</label>
+            <select id="sortBy">
+              <option value="type_asc">Type (A→Z)</option>
+              <option value="type_desc">Type (Z→A)</option>
+              <option value="price_asc">Prix de vente (↑)</option>
+              <option value="price_desc">Prix de vente (↓)</option>
+              <option value="brand_asc">Marque (A→Z)</option>
+              <option value="brand_desc">Marque (Z→A)</option>
+            </select>
+          </div>
+          <div class="field" style="max-width:200px">
+            <label>&nbsp;</label>
+            <button class="btn secondary" id="reset">Réinitialiser</button>
+          </div>
+        </div>
+
+        <div class="hint" id="countInfo">—</div>
+
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Marque</th>
+                <th>Modèle</th>
+                <th>Prix d'achat</th>
+                <th>Prix de vente</th>
+                <th class="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ajouter un véhicule</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>Type de véhicule</label>
+            <input id="vType" placeholder="Ex: Compact, Sedans, SUV…" />
+          </div>
+          <div class="field">
+            <label>Marque</label>
+            <input id="vBrand" placeholder="Ex: Benefactor, Dinka…" />
+          </div>
+          <div class="field">
+            <label>Modèle</label>
+            <input id="vModel" placeholder="Ex: Panto, Blista…" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Prix de vente ($)</label>
+            <input id="vSell" type="number" min="0" step="1" placeholder="Ex: 32000" />
+          </div>
+          <div class="field">
+            <label>Prix d'achat ($)</label>
+            <input id="vBuy" type="number" min="0" step="1" placeholder="Auto: vente / 2" />
+          </div>
+          <div class="field" style="max-width:240px">
+            <label>&nbsp;</label>
+            <button class="btn primary" id="add">Ajouter</button>
+          </div>
+        </div>
+
+        <div class="hint">Règle: <span class="chip">Prix d'achat = Prix de vente / 2</span> (auto si vide).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modalOverlay" id="editOverlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modalHead">
+        <h3>Modifier véhicule</h3>
+        <button class="btn secondary" id="closeEdit">Fermer</button>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Type</label>
+          <input id="eType" />
+        </div>
+        <div class="field">
+          <label>Marque</label>
+          <input id="eBrand" />
+        </div>
+        <div class="field">
+          <label>Modèle</label>
+          <input id="eModel" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Prix de vente ($)</label>
+          <input id="eSell" type="number" min="0" step="1" />
+        </div>
+        <div class="field">
+          <label>Prix d'achat ($)</label>
+          <input id="eBuy" type="number" min="0" step="1" />
+        </div>
+        <div class="field" style="max-width:260px">
+          <label>&nbsp;</label>
+          <button class="btn primary" id="saveEdit">Enregistrer</button>
+        </div>
+      </div>
+
+      <div class="hint muted">Astuce: si tu laisses le prix d'achat vide, on recalculera automatiquement vente / 2.</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <strong id="toastTitle">Info</strong>
+    <p id="toastMsg">—</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
+      onSnapshot, query
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ✅ Colle ici EXACTEMENT la même config que dans pdm-dashboard.html
+    const firebaseConfig = {
+      apiKey: "REPLACE_ME",
+      authDomain: "REPLACE_ME",
+      projectId: "REPLACE_ME",
+      storageBucket: "REPLACE_ME",
+      messagingSenderId: "REPLACE_ME",
+      appId: "REPLACE_ME"
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+    const toastTitle = $("toastTitle");
+    const toastMsg = $("toastMsg");
+    let toastT = null;
+
+    function showToast(title, msg){
+      toastTitle.textContent = title;
+      toastMsg.textContent = msg;
+      toastEl.style.display = "block";
+      clearTimeout(toastT);
+      toastT = setTimeout(() => (toastEl.style.display="none"), 2600);
+    }
+
+    const money = (n) => {
+      const v = Number(n);
+      if(!Number.isFinite(v)) return "—";
+      return new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 }).format(v);
+    };
+    const norm = (s) => (s ?? "").toString().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"").trim();
+    const escapeHtml = (s) => (s ?? "").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let me = null;
+    let allVehicles = [];
+    let filtered = [];
+
+    const mePill = $("mePill");
+    $("toDashboard").addEventListener("click", () => window.location.href = "pdm-dashboard.html");
+    $("logout").addEventListener("click", async () => { await signOut(auth); window.location.href = "index.html"; });
+
+    const qEl = $("q");
+    const filterType = $("filterType");
+    const sortBy = $("sortBy");
+    const rowsBody = $("rows");
+    const countInfo = $("countInfo");
+
+    const vType = $("vType");
+    const vBrand = $("vBrand");
+    const vModel = $("vModel");
+    const vSell = $("vSell");
+    const vBuy = $("vBuy");
+    const addBtn = $("add");
+
+    const editOverlay = $("editOverlay");
+    $("closeEdit").addEventListener("click", () => { editOverlay.style.display="none"; editingId=null; });
+    editOverlay.addEventListener("click", (e) => { if(e.target===editOverlay){ editOverlay.style.display="none"; editingId=null; } });
+
+    const eType = $("eType"), eBrand = $("eBrand"), eModel = $("eModel"), eSell = $("eSell"), eBuy = $("eBuy");
+    const saveEdit = $("saveEdit");
+    let editingId = null;
+
+    function autoCalcBuyIfEmpty(sellInput, buyInput){
+      const sell = Number(sellInput.value);
+      if(!buyInput.value && Number.isFinite(sell) && sell > 0){
+        buyInput.value = String(Math.round(sell / 2));
+      }
+    }
+    vSell.addEventListener("input", () => autoCalcBuyIfEmpty(vSell, vBuy));
+    eSell.addEventListener("input", () => autoCalcBuyIfEmpty(eSell, eBuy));
+
+    function rebuildTypeFilterOptions(){
+      const types = Array.from(new Set(allVehicles.map(v => (v.type ?? "").toString().trim()).filter(Boolean)));
+      types.sort((a,b)=>a.localeCompare(b));
+      const current = filterType.value || "all";
+      filterType.innerHTML = `<option value="all">Tous</option>` + types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+      if([ "all", ...types ].includes(current)) filterType.value = current;
+    }
+
+    function applyFilters(){
+      const q = norm(qEl.value);
+      const t = filterType.value;
+      const so = sortBy.value;
+
+      filtered = allVehicles.filter(v => {
+        if(t !== "all" && (v.type ?? "") !== t) return false;
+        if(q){
+          const blob = norm(`${v.type} ${v.brand} ${v.model}`);
+          if(!blob.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const byType = (a,b) => (a.type||"").localeCompare(b.type||"");
+      const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
+      const byPrice = (a,b) => (Number(a.sellPrice||0) - Number(b.sellPrice||0));
+
+      switch(so){
+        case "type_desc": filtered.sort((a,b)=>-byType(a,b)); break;
+        case "price_asc": filtered.sort(byPrice); break;
+        case "price_desc": filtered.sort((a,b)=>-byPrice(a,b)); break;
+        case "brand_asc": filtered.sort(byBrand); break;
+        case "brand_desc": filtered.sort((a,b)=>-byBrand(a,b)); break;
+        default: filtered.sort(byType);
+      }
+
+      render();
+    }
+
+    function render(){
+      countInfo.textContent = `${filtered.length} véhicule(s)`;
+      rowsBody.innerHTML = filtered.map(v => `
+        <tr>
+          <td><span class="chip">${escapeHtml(v.type || "—")}</span></td>
+          <td>${escapeHtml(v.brand || "—")}</td>
+          <td>${escapeHtml(v.model || "—")}</td>
+          <td>${money(v.buyPrice)}</td>
+          <td>${money(v.sellPrice)}</td>
+          <td class="actions">
+            <button class="btn secondary" data-act="edit" data-id="${v.id}">Modifier</button>
+            <button class="btn danger" data-act="del" data-id="${v.id}">Supprimer</button>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="6" class="muted">Aucun véhicule.</td></tr>`;
+    }
+
+    rowsBody.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-act]");
+      if(!btn) return;
+      const act = btn.dataset.act;
+      const id = btn.dataset.id;
+      const v = allVehicles.find(x => x.id === id);
+      if(!v) return;
+
+      if(act === "edit"){
+        editingId = v.id;
+        eType.value = v.type || "";
+        eBrand.value = v.brand || "";
+        eModel.value = v.model || "";
+        eSell.value = v.sellPrice ?? "";
+        eBuy.value = v.buyPrice ?? "";
+        editOverlay.style.display = "flex";
+      }else if(act === "del"){
+        if(!confirm("Supprimer ce véhicule ?")) return;
+        try{
+          await deleteDoc(doc(db, "vehicles", id));
+          showToast("Véhicule", "Supprimé.");
+        }catch(err){
+          console.error(err);
+          showToast("Erreur", err?.message || "Suppression impossible.");
+        }
+      }
+    });
+
+    $("reset").addEventListener("click", () => {
+      qEl.value = "";
+      filterType.value = "all";
+      sortBy.value = "type_asc";
+      applyFilters();
+    });
+    qEl.addEventListener("input", applyFilters);
+    filterType.addEventListener("change", applyFilters);
+    sortBy.addEventListener("change", applyFilters);
+
+    addBtn.addEventListener("click", async () => {
+      const type = vType.value.trim();
+      const brand = vBrand.value.trim();
+      const model = vModel.value.trim();
+      const sell = Number(vSell.value);
+      let buy = vBuy.value ? Number(vBuy.value) : NaN;
+
+      if(!type || !brand || !model){
+        showToast("Validation", "Type, Marque et Modèle sont obligatoires.");
+        return;
+      }
+      if(!Number.isFinite(sell) || sell <= 0){
+        showToast("Validation", "Prix de vente invalide.");
+        return;
+      }
+      if(!Number.isFinite(buy) || buy <= 0){
+        buy = Math.round(sell / 2);
+      }
+
+      try{
+        await addDoc(collection(db, "vehicles"), {
+          type, brand, model,
+          sellPrice: Math.round(sell),
+          buyPrice: Math.round(buy),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdBy: me?.uid || null
+        });
+        vType.value=""; vBrand.value=""; vModel.value=""; vSell.value=""; vBuy.value="";
+        showToast("Véhicule", "Ajouté.");
+      }catch(err){
+        console.error(err);
+        showToast("Erreur", err?.message || "Ajout impossible.");
+      }
+    });
+
+    saveEdit.addEventListener("click", async () => {
+      if(!editingId) return;
+      const type = eType.value.trim();
+      const brand = eBrand.value.trim();
+      const model = eModel.value.trim();
+      const sell = Number(eSell.value);
+      let buy = eBuy.value ? Number(eBuy.value) : NaN;
+
+      if(!type || !brand || !model){
+        showToast("Validation", "Type, Marque et Modèle sont obligatoires.");
+        return;
+      }
+      if(!Number.isFinite(sell) || sell <= 0){
+        showToast("Validation", "Prix de vente invalide.");
+        return;
+      }
+      if(!Number.isFinite(buy) || buy <= 0){
+        buy = Math.round(sell / 2);
+      }
+
+      try{
+        await updateDoc(doc(db, "vehicles", editingId), {
+          type, brand, model,
+          sellPrice: Math.round(sell),
+          buyPrice: Math.round(buy),
+          updatedAt: new Date()
+        });
+        showToast("Véhicule", "Modifié.");
+        editOverlay.style.display="none";
+        editingId=null;
+      }catch(err){
+        console.error(err);
+        showToast("Erreur", err?.message || "Modification impossible.");
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if(!user){
+        window.location.href = "index.html";
+        return;
+      }
+      me = { uid: user.uid, email: user.email || "" };
+      mePill.textContent = me.email ? `Connecté: ${me.email}` : "Connecté";
+
+      const qVehicles = query(collection(db, "vehicles"));
+      onSnapshot(qVehicles, (snap) => {
+        allVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        rebuildTypeFilterOptions();
+        applyFilters();
+      }, (err) => {
+        console.error(err);
+        showToast("Firestore", err?.message || "Erreur de lecture (vehicles).");
+      });
+    });
+
+    if(firebaseConfig.apiKey === "REPLACE_ME"){
+      showToast("Config", "⚠️ Colle ta firebaseConfig dans vehicles.html (REPLACE_ME).");
+      console.warn("firebaseConfig not set. Paste your real config in vehicles.html.");
+    }
+  </script>
+</body>
+</html>
