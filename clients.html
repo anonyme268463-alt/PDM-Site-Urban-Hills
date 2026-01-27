@@ -3,41 +3,141 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDM — Base clients</title>
-
-  <link rel="stylesheet" href="app.css">
+  <title>PDM Admin — Base clients</title>
+  <style>
+    :root{
+      --bg:#0b0d10; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.92); --muted:rgba(255,255,255,.65);
+      --gold1:#ffdb6b; --gold2:#ffb84a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:
+        radial-gradient(1200px 800px at 20% 30%, rgba(0,120,255,.20), transparent 60%),
+        radial-gradient(1000px 700px at 80% 40%, rgba(255,0,70,.18), transparent 60%),
+        radial-gradient(900px 600px at 50% 90%, rgba(255,190,0,.12), transparent 55%),
+        var(--bg);
+      min-height:100vh;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:26px 18px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:14px 16px;border:1px solid var(--line);border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      backdrop-filter: blur(12px);
+    }
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.25)}
+    .pill{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--muted)}
+    .btn{
+      appearance:none;border:none;cursor:pointer;
+      padding:10px 14px;border-radius:999px;font-weight:700;letter-spacing:.06em;
+      text-transform:uppercase;font-size:11px;
+    }
+    .btn.primary{background:linear-gradient(180deg,var(--gold1),var(--gold2));color:#1a0606}
+    .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--text)}
+    .grid{display:grid;grid-template-columns:1.3fr .7fr;gap:14px;margin-top:16px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    .card{
+      border:1px solid var(--line);border-radius:18px;padding:14px;background:rgba(255,255,255,.05);
+      backdrop-filter: blur(10px);
+    }
+    h1{margin:0;font-size:16px;letter-spacing:.08em;text-transform:uppercase}
+    h2{margin:0 0 10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .input{
+      width:100%; padding:10px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(0,0,0,.25);color:var(--text);outline:none;
+    }
+    .input::placeholder{color:rgba(255,255,255,.45)}
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .tr{
+      background:rgba(0,0,0,.22);
+      border:1px solid var(--line);
+    }
+    .tr td{padding:10px 10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .tr td:first-child{border-left:1px solid var(--line);border-top-left-radius:14px;border-bottom-left-radius:14px}
+    .tr td:last-child{border-right:1px solid var(--line);border-top-right-radius:14px;border-bottom-right-radius:14px}
+    .tag{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .muted{color:var(--muted)}
+    .toast{
+      position:fixed;right:18px;bottom:18px;min-width:260px;
+      border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.55);
+      padding:12px 12px;backdrop-filter: blur(10px);display:none;
+    }
+    .toast b{display:block;margin-bottom:4px}
+    .actions{display:flex;gap:8px;justify-content:flex-end}
+    .danger{background:transparent;border:1px solid rgba(255,90,90,.45);color:#ffb3b3}
+  </style>
 </head>
-<body class="pdm">
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">PDM ADMIN</div>
+        <div class="pill" id="meBadge">Chargement…</div>
+      </div>
+      <div class="row">
+        <button class="btn secondary" id="toDash">Dashboard</button>
+        <button class="btn secondary" id="logout">Déconnexion</button>
+      </div>
+    </div>
 
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sb-title">PDM ADMIN</div>
+    <div class="grid">
+      <div class="card">
+        <h2>Clients</h2>
+        <div class="row" style="margin-bottom:10px">
+          <input id="q" class="input" placeholder="Rechercher (nom, téléphone, notes…)" />
+          <button class="btn primary" id="newBtn">Ajouter</button>
+        </div>
+        <table class="table" id="tbl"></table>
+        <div class="muted" id="count"></div>
+      </div>
 
-    <a class="sb-link" href="pdm-dashboard.html">Dashboard</a>
-    <a class="sb-link" href="clients.html">Base clients</a>
-    <a class="sb-link" href="vehicles.html">Base véhicules</a>
-    <a class="sb-link" href="stock.html">Stock & réservations</a>
-    <a class="sb-link" href="compta.html">Comptabilité</a>
+      <div class="card">
+        <h2>Fiche client</h2>
+        <div class="row" style="gap:8px">
+          <input class="input" id="name" placeholder="Nom / Prénom" />
+          <input class="input" id="phone" placeholder="Téléphone" />
+          <input class="input" id="notes" placeholder="Notes (optionnel)" />
+          <div class="row" style="width:100%">
+            <label class="tag"><input type="checkbox" id="lic" /> Permis</label>
+            <label class="tag"><input type="checkbox" id="car" /> Voiture</label>
+            <label class="tag"><input type="checkbox" id="moto" /> Moto</label>
+            <label class="tag"><input type="checkbox" id="truck" /> Camion</label>
+          </div>
+        </div>
 
-    <div class="sb-spacer"></div>
-    <button class="sb-btn" id="logoutBtn">Déconnexion</button>
-  </aside>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn secondary" id="cancel">Annuler</button>
+          <button class="btn secondary danger" id="del" style="display:none">Supprimer</button>
+          <button class="btn primary" id="save">Enregistrer</button>
+        </div>
 
-  <main class="main">
-    <h1>Base clients</h1>
-    <p>Si tu vois la sidebar à gauche + ce texte, l’étape 2 est OK.</p>
-  </main>
-</div>
+        <div class="muted" style="margin-top:10px;font-size:12px">
+          Collection Firestore utilisée : <b>clients</b>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script type="module">
-  import { wireSidebar } from "./app.js";
+  <div class="toast" id="toast"><b id="tTitle"></b><div id="tMsg"></div></div>
 
-  // Firebase logout ici (pas dans app.js)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <script type="module">
+    // --- Firebase imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
+      onSnapshot, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
 
-  // 🔥 Mets EXACTEMENT la même config que dans pdm-dashboard.html
-  const firebaseConfig = {
+    // === CONFIG: reprend la même config que ton dashboard ===
+    const firebaseConfig = {
   apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
   authDomain: "pdm-urban-hills.firebaseapp.com",
   projectId: "pdm-urban-hills",
@@ -47,16 +147,198 @@
   measurementId: "G-RGM2DWVFLT"
 };
 
-  initializeApp(firebaseConfig);
-  const auth = getAuth();
+    // ⚠️ IMPORTANT :
+    // Copie-colle EXACTEMENT ta config depuis pdm-dashboard.html (celle qui marche déjà)
+    // et remplace les REPLACE_ME.
 
-  wireSidebar({
-    onLogout: async () => {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- UI refs ---
+    const meBadge = document.getElementById("meBadge");
+    const toDash = document.getElementById("toDash");
+    const logoutBtn = document.getElementById("logout");
+
+    const qEl = document.getElementById("q");
+    const tbl = document.getElementById("tbl");
+    const countEl = document.getElementById("count");
+
+    const newBtn = document.getElementById("newBtn");
+    const nameEl = document.getElementById("name");
+    const phoneEl = document.getElementById("phone");
+    const notesEl = document.getElementById("notes");
+    const licEl = document.getElementById("lic");
+    const carEl = document.getElementById("car");
+    const motoEl = document.getElementById("moto");
+    const truckEl = document.getElementById("truck");
+
+    const cancelBtn = document.getElementById("cancel");
+    const saveBtn = document.getElementById("save");
+    const delBtn = document.getElementById("del");
+
+    const toast = document.getElementById("toast");
+    const tTitle = document.getElementById("tTitle");
+    const tMsg = document.getElementById("tMsg");
+
+    const norm = (s)=> (s??"").toString().trim().toLowerCase();
+
+    let me = null;
+    let clients = [];
+    let currentId = null;
+
+    function showToast(title, msg){
+      tTitle.textContent = title;
+      tMsg.textContent = msg;
+      toast.style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.display="none", 2500);
+    }
+
+    function clearForm(){
+      currentId = null;
+      nameEl.value = "";
+      phoneEl.value = "";
+      notesEl.value = "";
+      licEl.checked = false;
+      carEl.checked = false;
+      motoEl.checked = false;
+      truckEl.checked = false;
+      delBtn.style.display = "none";
+    }
+
+    function fillForm(c){
+      currentId = c.id;
+      nameEl.value = c.name || "";
+      phoneEl.value = c.phone || "";
+      notesEl.value = c.notes || "";
+      licEl.checked = !!c.license;
+      carEl.checked = !!c.car;
+      motoEl.checked = !!c.moto;
+      truckEl.checked = !!c.truck;
+      delBtn.style.display = "inline-block";
+    }
+
+    function render(){
+      const q = norm(qEl.value);
+      const list = clients.filter(c=>{
+        if(!q) return true;
+        const blob = norm(`${c.name} ${c.phone} ${c.notes}`);
+        return blob.includes(q);
+      });
+
+      countEl.textContent = `${list.length} client(s)`;
+
+      tbl.innerHTML = list.map(c=>`
+        <tr class="tr" data-id="${c.id}">
+          <td style="width:35%"><b>${escapeHtml(c.name||"—")}</b><div class="muted">${escapeHtml(c.phone||"")}</div></td>
+          <td style="width:45%" class="muted">${escapeHtml((c.notes||"").slice(0,60))}</td>
+          <td style="width:20%">
+            <span class="tag">${c.license ? "Permis: Oui" : "Permis: Non"}</span>
+          </td>
+        </tr>
+      `).join("");
+
+      [...tbl.querySelectorAll("tr")].forEach(tr=>{
+        tr.addEventListener("click", ()=>{
+          const id = tr.getAttribute("data-id");
+          const c = clients.find(x=>x.id===id);
+          if(c) fillForm(c);
+        });
+      });
+    }
+
+    function escapeHtml(str){
+      return (str??"").toString()
+        .replaceAll("&","&amp;").replaceAll("<","&lt;")
+        .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // --- nav buttons ---
+    toDash.addEventListener("click", ()=> location.href = "pdm-dashboard.html");
+    logoutBtn.addEventListener("click", async ()=>{
       await signOut(auth);
       location.href = "index.html";
-    }
-  });
-</script>
+    });
 
+    // --- form buttons ---
+    newBtn.addEventListener("click", ()=>{
+      clearForm();
+      showToast("Clients", "Nouveau client.");
+      nameEl.focus();
+    });
+
+    cancelBtn.addEventListener("click", ()=>{
+      clearForm();
+      showToast("Clients", "Annulé.");
+    });
+
+    saveBtn.addEventListener("click", async ()=>{
+      if(!me){ showToast("Session", "Non connecté."); return; }
+      const payload = {
+        name: nameEl.value.trim(),
+        phone: phoneEl.value.trim(),
+        notes: notesEl.value.trim(),
+        license: licEl.checked,
+        car: carEl.checked,
+        moto: motoEl.checked,
+        truck: truckEl.checked,
+        updatedAt: serverTimestamp()
+      };
+      if(!payload.name){ showToast("Erreur", "Nom obligatoire."); return; }
+
+      try{
+        if(currentId){
+          await updateDoc(doc(db,"clients",currentId), payload);
+          showToast("Clients", "Client mis à jour.");
+        }else{
+          payload.createdAt = serverTimestamp();
+          payload.createdBy = me.uid;
+          await addDoc(collection(db,"clients"), payload);
+          showToast("Clients", "Client ajouté.");
+        }
+        clearForm();
+      }catch(e){
+        console.error(e);
+        showToast("Erreur", e?.message || "Impossible d'enregistrer.");
+      }
+    });
+
+    delBtn.addEventListener("click", async ()=>{
+      if(!currentId) return;
+      if(!confirm("Supprimer ce client ?")) return;
+      try{
+        await deleteDoc(doc(db,"clients",currentId));
+        showToast("Clients", "Client supprimé.");
+        clearForm();
+      }catch(e){
+        console.error(e);
+        showToast("Erreur", e?.message || "Suppression impossible.");
+      }
+    });
+
+    qEl.addEventListener("input", render);
+
+    // --- auth + live data ---
+    onAuthStateChanged(auth, (u)=>{
+      if(!u){
+        meBadge.textContent = "Déconnecté";
+        location.href = "index.html";
+        return;
+      }
+      me = { uid: u.uid, email: u.email || "" };
+      meBadge.textContent = me.email ? me.email : "Connecté";
+
+      const qClients = query(collection(db,"clients"), orderBy("name","asc"));
+      onSnapshot(qClients, (snap)=>{
+        clients = snap.docs.map(d=>({id:d.id, ...d.data()}));
+        render();
+      }, (err)=>{
+        console.error(err);
+        showToast("Firestore", err?.message || "Impossible de charger clients.");
+      });
+    });
+  </script>
 </body>
 </html>
