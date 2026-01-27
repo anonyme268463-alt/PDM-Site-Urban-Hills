@@ -107,7 +107,43 @@
         <button class="btn danger" id="logout">Déconnexion</button>
       </div>
     </div>
+<div class="card">
+        <h2>Ajouter un véhicule</h2>
 
+        <div class="row">
+          <div class="field">
+            <label>Type de véhicule</label>
+            <input id="vType" placeholder="Ex: Compact, Sedans, SUV…" />
+          </div>
+          <div class="field">
+            <label>Marque</label>
+            <input id="vBrand" placeholder="Ex: Benefactor, Dinka…" />
+          </div>
+          <div class="field">
+            <label>Modèle</label>
+            <input id="vModel" placeholder="Ex: Panto, Blista…" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Prix de vente ($)</label>
+            <input id="vSell" type="number" min="0" step="1" placeholder="Ex: 32000" />
+          </div>
+          <div class="field">
+            <label>Prix d'achat ($)</label>
+            <input id="vBuy" type="number" min="0" step="1" placeholder="Auto: vente / 2" />
+          </div>
+          <div class="field" style="max-width:240px">
+            <label>&nbsp;</label>
+            <button class="btn primary" id="add">Ajouter</button>
+          </div>
+        </div>
+
+        <div class="hint">Règle: <span class="chip">Prix d'achat = Prix de vente / 2</span> (auto si vide).</div>
+      </div>
+    </div>
+  </div>
     <div class="grid">
       <div class="card">
         <h2>Base véhicules</h2>
@@ -158,45 +194,8 @@
           </table>
         </div>
       </div>
-
-      <div class="card">
-        <h2>Ajouter un véhicule</h2>
-
-        <div class="row">
-          <div class="field">
-            <label>Type de véhicule</label>
-            <input id="vType" placeholder="Ex: Compact, Sedans, SUV…" />
-          </div>
-          <div class="field">
-            <label>Marque</label>
-            <input id="vBrand" placeholder="Ex: Benefactor, Dinka…" />
-          </div>
-          <div class="field">
-            <label>Modèle</label>
-            <input id="vModel" placeholder="Ex: Panto, Blista…" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label>Prix de vente ($)</label>
-            <input id="vSell" type="number" min="0" step="1" placeholder="Ex: 32000" />
-          </div>
-          <div class="field">
-            <label>Prix d'achat ($)</label>
-            <input id="vBuy" type="number" min="0" step="1" placeholder="Auto: vente / 2" />
-          </div>
-          <div class="field" style="max-width:240px">
-            <label>&nbsp;</label>
-            <button class="btn primary" id="add">Ajouter</button>
-          </div>
-        </div>
-
-        <div class="hint">Règle: <span class="chip">Prix d'achat = Prix de vente / 2</span> (auto si vide).</div>
-      </div>
     </div>
   </div>
-
   <div class="modalOverlay" id="editOverlay" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modalHead">
