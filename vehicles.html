@@ -204,6 +204,9 @@
           </table>
         </div>
       </div>
+
+      <div class="card">
+
   <div class="modalOverlay" id="editOverlay" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modalHead">
@@ -260,14 +263,13 @@
 
     // ✅ Colle ici EXACTEMENT la même config que dans pdm-dashboard.html
     const firebaseConfig = {
-  apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
-  authDomain: "pdm-urban-hills.firebaseapp.com",
-  projectId: "pdm-urban-hills",
-  storageBucket: "pdm-urban-hills.firebasestorage.app",
-  messagingSenderId: "426355558661",
-  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
-  measurementId: "G-RGM2DWVFLT"
-};
+      apiKey: "REPLACE_ME",
+      authDomain: "REPLACE_ME",
+      projectId: "REPLACE_ME",
+      storageBucket: "REPLACE_ME",
+      messagingSenderId: "REPLACE_ME",
+      appId: "REPLACE_ME"
+    };
 
     const $ = (id) => document.getElementById(id);
     const toastEl = $("toast");
@@ -564,13 +566,6 @@ function applyFilters(){
       }
     });
 
-        vType.value=""; vBrand.value=""; vModel.value=""; vSell.value=""; vBuy.value="";
-        showToast("Véhicule", "Ajouté.");
-      }catch(err){
-        console.error(err);
-        showToast("Erreur", err?.message || "Ajout impossible.");
-      }
-    });
 
     saveEdit.addEventListener("click", async () => {
       if(!editingId) return;
@@ -627,7 +622,7 @@ function applyFilters(){
       });
     });
 
-    if(firebaseConfig.apiKey === "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM"){
+    if(firebaseConfig.apiKey === "REPLACE_ME"){
       showToast("Config", "⚠️ Colle ta firebaseConfig dans vehicles.html (REPLACE_ME).");
       console.warn("firebaseConfig not set. Paste your real config in vehicles.html.");
     }
