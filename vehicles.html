@@ -363,9 +363,7 @@
       return out;
     }
     function parseCSV(text){
-      const lines = text.replace(/
-/g,"").split("
-")
+      const lines = text.replace(/\r/g,"").split("\n")
         // Ignore empty lines AND "phantom" lines like ",,,," from some Sheets exports
         .filter(l => l.trim().length && l.replace(/[\s,;]+/g,"").length);
       if(lines.length === 0) return {header:[], rows:[]};
