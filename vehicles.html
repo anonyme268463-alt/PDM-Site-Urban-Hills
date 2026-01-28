@@ -437,8 +437,17 @@ function applyFilters(){
         return true;
       });
 
-      const byType = (a,b) => (a.type||"").localeCompare(b.type||"");
-      const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
+      const byType = (a,b) => {
+      const t = (a.type||"").localeCompare(b.type||"");
+      if(t !== 0) return t;
+      const pa = Number(a.sellPrice ?? a.price ?? 0);
+      const pb = Number(b.sellPrice ?? b.price ?? 0);
+      if(pa !== pb) return pa - pb; // prix croissant dans le même type
+      const br = (a.brand||"").localeCompare(b.brand||"");
+      if(br !== 0) return br;
+      return (a.model||"").localeCompare(b.model||"");
+    };
+const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
       const byPrice = (a,b) => (Number(a.sellPrice||0) - Number(b.sellPrice||0));
 
       switch(so){
