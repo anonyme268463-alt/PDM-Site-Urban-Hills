@@ -263,14 +263,13 @@
 
     // ✅ Colle ici EXACTEMENT la même config que dans pdm-dashboard.html
     const firebaseConfig = {
-  apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
-  authDomain: "pdm-urban-hills.firebaseapp.com",
-  projectId: "pdm-urban-hills",
-  storageBucket: "pdm-urban-hills.firebasestorage.app",
-  messagingSenderId: "426355558661",
-  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
-  measurementId: "G-RGM2DWVFLT"
-};
+      apiKey: "REPLACE_ME",
+      authDomain: "REPLACE_ME",
+      projectId: "REPLACE_ME",
+      storageBucket: "REPLACE_ME",
+      messagingSenderId: "REPLACE_ME",
+      appId: "REPLACE_ME"
+    };
 
     const $ = (id) => document.getElementById(id);
     const toastEl = $("toast");
@@ -330,7 +329,7 @@
     let editingId = null;
 
     function autoCalcBuyIfEmpty(sellInput, buyInput){
-      const sell = Number(sellInput.value);
+      const sell = parseMoney(sellInput.value);
       if(!buyInput.value && Number.isFinite(sell) && sell > 0){
         buyInput.value = String(Math.round(sell / 2));
       }
@@ -387,8 +386,39 @@
       return "";
     }
     function parseMoney(v){
-      const s = (v ?? "").toString().replace(/\s/g,"").replace(/[$€]/g,"").replace(/,/g,"");
-      const n = Number(s.replace(/[^0-9.\-]/g,""));
+      let s = (v ?? "").toString().trim();
+      if(!s) return NaN;
+
+      // remove spaces + currency symbols, keep digits and separators
+      s = s.replace(/\s/g,"").replace(/[$€]/g,"").replace(/[^0-9.,\-]/g,"");
+
+      const hasDot = s.includes(".");
+      const hasComma = s.includes(",");
+
+      if(hasDot && hasComma){
+        // The last separator is the decimal separator
+        if(s.lastIndexOf(".") > s.lastIndexOf(",")){
+          // dot is decimal -> remove thousands commas
+          s = s.replace(/,/g,"");
+        } else {
+          // comma is decimal -> remove thousands dots, then convert comma to dot
+          s = s.replace(/\./g,"").replace(/,/g,".");
+        }
+      } else if(hasComma && !hasDot){
+        // likely European decimal comma
+        const parts = s.split(",");
+        if(parts.length === 2 && parts[1].length <= 2){
+          s = parts[0].replace(/,/g,"") + "." + parts[1];
+        } else {
+          // treat commas as thousands separators
+          s = s.replace(/,/g,"");
+        }
+      } else {
+        // only dot or no separator
+        s = s.replace(/,/g,"");
+      }
+
+      const n = Number(s);
       return Number.isFinite(n) ? n : NaN;
     }
 
@@ -485,9 +515,10 @@ function applyFilters(){
         const brand = (vBrand.value || "").trim();
         const model = (vModel.value || "").trim();
 
-        const sellPrice = Number((vSell.value || "").toString().replace(/[^0-9.\-]/g,""));
-        let buyPrice = (vBuy.value || "").toString().trim();
-        buyPrice = buyPrice ? Number(buyPrice.replace(/[^0-9.\-]/g,"")) : NaN;
+        const sellPrice = parseMoney(vSell.value);
+        let buyPrice = parseMoney(vBuy.value);
+          // if empty/invalid, auto buy = sell / 2
+          if(!Number.isFinite(buyPrice) && Number.isFinite(sellPrice)) buyPrice = Math.round(sellPrice/2);
 
         if(!type || !brand || !model || !Number.isFinite(sellPrice)){
           showToast("Ajout", "Type / Marque / Modèle / Prix de vente requis.");
@@ -625,7 +656,7 @@ function applyFilters(){
       });
     });
 
-    if(firebaseConfig.apiKey === "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM"){
+    if(firebaseConfig.apiKey === "REPLACE_ME"){
       showToast("Config", "⚠️ Colle ta firebaseConfig dans vehicles.html (REPLACE_ME).");
       console.warn("firebaseConfig not set. Paste your real config in vehicles.html.");
     }
