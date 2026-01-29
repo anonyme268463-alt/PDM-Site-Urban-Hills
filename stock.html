@@ -1,1 +1,1102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PDM Admin — Stock & Réservations</title>
+  <style>
+    :root{
+      --bg:#07080c;
+      --card:rgba(10,12,18,.62);
+      --card2:rgba(10,12,18,.52);
+      --stroke:rgba(255,255,255,.08);
+      --stroke2:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.55);
+      --muted2:rgba(255,255,255,.42);
+      --gold1:#f6d26b;
+      --gold2:#b88222;
+      --danger:#ff6b6b;
+      --ok:#47e6a6;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --radius2:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
+                  radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
+                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    /* soft vignette like catalogue public */
+    body:before{
+      content:"";
+      position:fixed; inset:-20px;
+      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
+      pointer-events:none;
+      z-index:-1;
+    }
+    a{color:inherit; text-decoration:none}
+    .app{
+      display:flex;
+      min-height:100vh;
+      gap:22px;
+      padding:18px 18px 26px;
+    }
+    /* Sidebar */
+    .sidebar{
+      width:250px;
+      min-width:250px;
+      background: rgba(10,12,18,.46);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding:14px;
+      box-shadow: var(--shadow);
+      position:sticky;
+      top:18px;
+      height: calc(100vh - 44px);
+      display:flex;
+      flex-direction:column;
+      backdrop-filter: blur(10px);
+    }
+    .brand{
+      font-weight:800;
+      letter-spacing:.12em;
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      margin-bottom:10px;
+    }
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+    }
+    .nav a{
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.18);
+      color:rgba(255,255,255,.76);
+      font-size:13px;
+    }
+    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
+    .nav a.active{
+      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
+      border-color: rgba(246,210,107,.22);
+      color: rgba(255,255,255,.9);
+    }
+    .spacer{flex:1}
+    .side-actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+      transition:.12s transform ease, .12s background ease, .12s border-color ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
+      border-color: rgba(246,210,107,.30);
+      color:#1b1306;
+      box-shadow: 0 10px 22px rgba(184,130,34,.18);
+    }
+    .btn.danger{
+      background: rgba(255,80,80,.12);
+      border-color: rgba(255,80,80,.24);
+      color: rgba(255,210,210,.95);
+    }
+    .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
+    /* Main */
+    .main{
+      flex:1;
+      max-width: 980px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius: 16px;
+      background: rgba(10,12,18,.44);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .chips{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .chip{
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.8);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .chip.muted{color:rgba(255,255,255,.6)}
+    .top-actions{display:flex; gap:10px; align-items:center}
+    .layout{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:14px;
+    }
+    .card{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.75);
+    }
+    .sub{
+      font-size:12px;
+      color: var(--muted);
+      margin:-4px 0 10px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1.1fr .7fr 1.1fr;
+      gap:10px;
+      align-items:end;
+    }
+    label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
+    input, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
+      outline:none;
+    }
+    input::placeholder{color: rgba(255,255,255,.32)}
+    .row-actions{display:flex; gap:10px; justify-content:flex-end}
+    .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .tools{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .tools .left, .tools .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.75);
+      font-size:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    thead th{
+      text-align:left;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.62);
+      padding:10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.02)}
+    tbody tr:last-child td{border-bottom:none}
+    .tag{
+      display:inline-flex;
+      padding:6px 9px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      font-size:12px;
+      color: rgba(255,255,255,.72);
+    }
+    .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
+    .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
+    .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
+    .td-actions{white-space:nowrap; text-align:right}
+    .toast{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 460px;
+      background: rgba(10,12,18,.82);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:none;
+      z-index:50;
+    }
+    .toast.show{display:block}
+    .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
+    .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
+    .modal-overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:18px;
+    }
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(740px, 96vw);
+      border-radius: 18px;
+      background: rgba(10,12,18,.86);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .modal h4{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.72);
+    }
+    .modal .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px}
+    @media (max-width: 980px){
+      .app{flex-direction:column}
+      .sidebar{position:relative; width:100%; height:auto; min-width:unset}
+      .main{max-width:100%}
+      .two{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">PDM ADMIN</div>
+      <nav class="nav">
+        <a href="pdm-dashboard.html">Dashboard</a>
+        <a href="clients.html">Base clients</a>
+        <a href="vehicles.html">Base véhicules</a>
+        <a class="active" href="stock.html">Stock & réservations</a>
+        <a href="compta.html">Comptabilité</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="side-actions">
+        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
+      </div>
+    </aside>
 
+    <main class="main">
+      <div class="topbar">
+        <div class="chips">
+          <div class="chip">PDM ADMIN</div>
+          <div id="chipUser" class="chip muted">Chargement…</div>
+          <div id="chipEnv" class="chip muted">Firestore • Live</div>
+        </div>
+        <div class="top-actions">
+          <a class="btn small" href="pdm-dashboard.html">Dashboard</a>
+          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <section class="card">
+          <h3>Ajouter / réserver</h3>
+          <div class="sub">Si un <b>client</b> est renseigné, l’entrée devient une <b>réservation</b>. Sinon, elle va au <b>stock</b>.</div>
+          <div class="grid">
+            <div>
+              <label>Marque</label>
+              <input id="inBrand" placeholder="Ex: Pfister, Benefactor…" />
+            </div>
+            <div>
+              <label>Modèle</label>
+              <input id="inModel" placeholder="Ex: Comet S2 Cabriolet…" />
+            </div>
+            <div>
+              <label>Nombre</label>
+              <input id="inQty" type="number" min="1" step="1" value="1"/>
+            </div>
+            <div>
+              <label>Client (optionnel)</label>
+              <input id="inClient" placeholder="Nom du client (pour réservation)"/>
+            </div>
+          </div>
+          <div class="row-actions" style="margin-top:10px">
+            <button id="btnAdd" class="btn gold">Ajouter</button>
+            <button id="btnResetAdd" class="btn">Réinitialiser</button>
+          </div>
+          <div class="hint">Astuce : tu peux aussi importer ton CSV Sheets ci-dessous (stock + réservations). Tout est sauvegardé dans Firestore (mémoire).</div>
+        </section>
+
+        <section class="card">
+          <h3>Importer CSV (Google Sheets)</h3>
+          <div class="tools">
+            <div class="left">
+              <input id="csvFile" type="file" accept=".csv,text/csv" />
+              <button id="btnImport" class="btn gold">Importer</button>
+              <span id="importStatus" class="pill">Prêt</span>
+            </div>
+            <div class="right">
+              <button id="btnPurgeAll" class="btn danger">Vider stock + réservations</button>
+            </div>
+          </div>
+          <div class="hint">
+            Formats acceptés :
+            <b>1)</b> ton onglet “Stock / Reservations” (multi-blocs) ; <b>2)</b> un CSV simple avec colonnes Marque/Modèle/Nombre et optionnellement Demandeur/Client.
+          </div>
+        </section>
+
+        <div class="two">
+          <section class="card">
+            <h3>Stock</h3>
+            <div class="tools">
+              <div class="left">
+                <input id="qStock" placeholder="Rechercher marque/modèle…" />
+                <select id="sortStock">
+                  <option value="brand">Tri: Marque (A→Z)</option>
+                  <option value="model">Tri: Modèle (A→Z)</option>
+                  <option value="qty_desc">Tri: Nombre (↓)</option>
+                  <option value="qty_asc">Tri: Nombre (↑)</option>
+                </select>
+              </div>
+              <div class="right">
+                <span id="stockCount" class="pill">0</span>
+                <button id="btnRefresh" class="btn">Rafraîchir</button>
+              </div>
+            </div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Marque</th>
+                    <th>Modèle</th>
+                    <th>Nombre</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyStock"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Réservations</h3>
+            <div class="tools">
+              <div class="left">
+                <input id="qResa" placeholder="Rechercher marque/modèle/client…" />
+                <select id="sortResa">
+                  <option value="created_desc">Tri: Récent</option>
+                  <option value="created_asc">Tri: Ancien</option>
+                  <option value="client">Tri: Client (A→Z)</option>
+                  <option value="brand">Tri: Marque (A→Z)</option>
+                </select>
+              </div>
+              <div class="right">
+                <span id="resaCount" class="pill">0</span>
+              </div>
+            </div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Marque</th>
+                    <th>Modèle</th>
+                    <th>Nombre</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyResa"></tbody>
+              </table>
+            </div>
+            <div class="hint">Quand le client vient récupérer : clique “Convertir en vente”. La réservation disparaît et une transaction “Vente depuis réservation” est créée (dashboard).</div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">
+    <div id="toastTitle" class="t"></div>
+    <div id="toastMsg" class="m"></div>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h4 id="modalTitle">Modifier</h4>
+      <div class="grid" style="grid-template-columns: 1fr 1fr .6fr 1fr">
+        <div>
+          <label>Marque</label>
+          <input id="mBrand"/>
+        </div>
+        <div>
+          <label>Modèle</label>
+          <input id="mModel"/>
+        </div>
+        <div>
+          <label>Nombre</label>
+          <input id="mQty" type="number" min="1" step="1"/>
+        </div>
+        <div id="mClientWrap">
+          <label>Client</label>
+          <input id="mClient"/>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnModalCancel" class="btn">Annuler</button>
+        <button id="btnModalSave" class="btn gold">Enregistrer</button>
+      </div>
+      <div class="hint" id="modalHint"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // ===== Firebase (remplace ta config ici) =====
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, query, where, orderBy, getDocs, addDoc, doc,
+      updateDoc, deleteDoc, serverTimestamp, writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
+  authDomain: "pdm-urban-hills.firebaseapp.com",
+  projectId: "pdm-urban-hills",
+  storageBucket: "pdm-urban-hills.firebasestorage.app",
+  messagingSenderId: "426355558661",
+  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
+  measurementId: "G-RGM2DWVFLT"
+}:
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ===== Helpers UI =====
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+    const toastTitle = $("toastTitle");
+    const toastMsg = $("toastMsg");
+    let toastTimer = null;
+
+    function toast(title, msg){
+      toastTitle.textContent = title;
+      toastMsg.textContent = msg || "";
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> toastEl.classList.remove("show"), 4200);
+    }
+
+    function norm(s){ return (s ?? "").toString().trim(); }
+
+    function normKey(s){
+      return norm(s).toLowerCase()
+        .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+        .replace(/\s+/g," ")
+        .trim();
+    }
+
+    function parseIntSafe(v, def=1){
+      const n = Number(String(v ?? "").replace(/[^0-9-]/g,""));
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : def;
+    }
+
+    // ===== Auth =====
+    const chipUser = $("chipUser");
+    function bindLogout(btn){
+      btn.addEventListener("click", async ()=>{
+        try{ await signOut(auth); }catch(e){ console.warn(e); }
+      });
+    }
+    bindLogout($("btnLogoutTop"));
+    bindLogout($("btnLogoutSide"));
+
+    onAuthStateChanged(auth, (user)=>{
+      if(!user){
+        // si besoin: redirection vers index.html/login
+        chipUser.textContent = "Non connecté";
+        toast("Connexion requise", "Connecte-toi pour accéder au stock.");
+        return;
+      }
+      chipUser.textContent = `Connecté: ${user.email || user.uid}`;
+      refreshAll();
+    });
+
+    // ===== Firestore model =====
+    // Collection unique "inventory":
+    // { status: "stock"|"reservation", brand, model, qty, clientName? , createdAt, updatedAt }
+    const invCol = collection(db, "inventory");
+    const txCol = collection(db, "transactions");
+
+    async function upsertInventory({status, brand, model, qty, clientName}){
+      // Merge: Stock -> clé (status, brand, model)
+      // Reservation -> clé (status, brand, model, clientName)
+      const b = norm(brand);
+      const m = norm(model);
+      const c = norm(clientName);
+      const q = Math.max(1, parseIntSafe(qty, 1));
+
+      if(!b || !m) throw new Error("Marque et modèle requis.");
+
+      let qref;
+      if(status === "stock"){
+        qref = query(invCol,
+          where("status","==","stock"),
+          where("brandKey","==", normKey(b)),
+          where("modelKey","==", normKey(m))
+        );
+      }else{
+        if(!c) throw new Error("Client requis pour une réservation.");
+        qref = query(invCol,
+          where("status","==","reservation"),
+          where("brandKey","==", normKey(b)),
+          where("modelKey","==", normKey(m)),
+          where("clientKey","==", normKey(c))
+        );
+      }
+      const snap = await getDocs(qref);
+      if(!snap.empty){
+        const d0 = snap.docs[0];
+        const cur = d0.data();
+        const newQty = (cur.qty || 0) + q;
+        await updateDoc(d0.ref, { qty: newQty, updatedAt: serverTimestamp() });
+        return { id: d0.id, merged: true, qty: newQty };
+      }
+      const payload = {
+        status,
+        brand: b,
+        brandKey: normKey(b),
+        model: m,
+        modelKey: normKey(m),
+        qty: q,
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      };
+      if(status === "reservation"){
+        payload.clientName = c;
+        payload.clientKey = normKey(c);
+      }
+      const added = await addDoc(invCol, payload);
+      return { id: added.id, merged: false, qty: q };
+    }
+
+    // ===== Load & render =====
+    let stockItems = [];   // {id, ...data}
+    let resaItems = [];
+
+    function sortStock(items, mode){
+      const coll = [...items];
+      if(mode === "brand") coll.sort((a,b)=> (a.brand||"").localeCompare(b.brand||""));
+      if(mode === "model") coll.sort((a,b)=> (a.model||"").localeCompare(b.model||""));
+      if(mode === "qty_desc") coll.sort((a,b)=> (b.qty||0)-(a.qty||0));
+      if(mode === "qty_asc") coll.sort((a,b)=> (a.qty||0)-(b.qty||0));
+      return coll;
+    }
+    function sortResa(items, mode){
+      const coll = [...items];
+      const ts = (x)=> (x.createdAt?.toMillis?.() ?? 0);
+      if(mode === "created_desc") coll.sort((a,b)=> ts(b)-ts(a));
+      if(mode === "created_asc") coll.sort((a,b)=> ts(a)-ts(b));
+      if(mode === "client") coll.sort((a,b)=> (a.clientName||"").localeCompare(b.clientName||""));
+      if(mode === "brand") coll.sort((a,b)=> (a.brand||"").localeCompare(b.brand||""));
+      return coll;
+    }
+
+    function render(){
+      // Stock
+      const qS = normKey($("qStock").value);
+      const sMode = $("sortStock").value;
+      let s = stockItems.filter(it=>{
+        if(!qS) return true;
+        const hay = normKey(`${it.brand} ${it.model}`);
+        return hay.includes(qS);
+      });
+      s = sortStock(s, sMode);
+
+      $("stockCount").textContent = `${s.length} item(s)`;
+      const tbS = $("tbodyStock");
+      tbS.innerHTML = "";
+      for(const it of s){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(it.brand)}</td>
+          <td>${escapeHtml(it.model)}</td>
+          <td><span class="tag ${it.qty<=0?'bad':it.qty<2?'warn':'ok'}">${it.qty}</span></td>
+          <td class="td-actions">
+            <button class="btn small" data-act="edit" data-id="${it.id}">Modifier</button>
+            <button class="btn small danger" data-act="del" data-id="${it.id}">Supprimer</button>
+          </td>
+        `;
+        tbS.appendChild(tr);
+      }
+
+      // Reservations
+      const qR = normKey($("qResa").value);
+      const rMode = $("sortResa").value;
+      let r = resaItems.filter(it=>{
+        if(!qR) return true;
+        const hay = normKey(`${it.clientName} ${it.brand} ${it.model}`);
+        return hay.includes(qR);
+      });
+      r = sortResa(r, rMode);
+
+      $("resaCount").textContent = `${r.length} résa`;
+      const tbR = $("tbodyResa");
+      tbR.innerHTML = "";
+      for(const it of r){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(it.clientName || "—")}</td>
+          <td>${escapeHtml(it.brand)}</td>
+          <td>${escapeHtml(it.model)}</td>
+          <td><span class="tag warn">${it.qty}</span></td>
+          <td class="td-actions">
+            <button class="btn small gold" data-act="sell" data-id="${it.id}">Convertir en vente</button>
+            <button class="btn small" data-act="edit_resa" data-id="${it.id}">Modifier</button>
+            <button class="btn small danger" data-act="del" data-id="${it.id}">Annuler</button>
+          </td>
+        `;
+        tbR.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    async function refreshAll(){
+      try{
+        // Stock
+        const qs = query(invCol, where("status","==","stock"));
+        const rs = await getDocs(qs);
+        stockItems = rs.docs.map(d=>({id:d.id, ...d.data()}));
+
+        // Resa
+        const qr = query(invCol, where("status","==","reservation"));
+        const rr = await getDocs(qr);
+        resaItems = rr.docs.map(d=>({id:d.id, ...d.data()}));
+
+        render();
+      }catch(e){
+        console.error(e);
+        toast("Erreur Firestore", e.message || String(e));
+      }
+    }
+
+    $("btnRefresh").addEventListener("click", refreshAll);
+    $("qStock").addEventListener("input", render);
+    $("sortStock").addEventListener("change", render);
+    $("qResa").addEventListener("input", render);
+    $("sortResa").addEventListener("change", render);
+
+    // ===== Add flow =====
+    $("btnAdd").addEventListener("click", async ()=>{
+      const brand = $("inBrand").value;
+      const model = $("inModel").value;
+      const qty = $("inQty").value;
+      const client = $("inClient").value;
+      const status = norm(client) ? "reservation" : "stock";
+      try{
+        const res = await upsertInventory({status, brand, model, qty, clientName: client});
+        toast("OK", res.merged ? "Quantité mise à jour." : "Ajouté.");
+        $("inBrand").value = "";
+        $("inModel").value = "";
+        $("inQty").value = "1";
+        $("inClient").value = "";
+        await refreshAll();
+      }catch(e){
+        toast("Impossible", e.message || String(e));
+      }
+    });
+    $("btnResetAdd").addEventListener("click", ()=>{
+      $("inBrand").value = "";
+      $("inModel").value = "";
+      $("inQty").value = "1";
+      $("inClient").value = "";
+    });
+
+    // ===== Row actions =====
+    document.addEventListener("click", async (ev)=>{
+      const btn = ev.target?.closest?.("button[data-act]");
+      if(!btn) return;
+      const act = btn.dataset.act;
+      const id = btn.dataset.id;
+      if(!id) return;
+
+      if(act === "del"){
+        if(!confirm("Supprimer cette ligne ?")) return;
+        try{
+          await deleteDoc(doc(db, "inventory", id));
+          toast("Supprimé", "OK.");
+          await refreshAll();
+        }catch(e){
+          toast("Erreur", e.message || String(e));
+        }
+        return;
+      }
+
+      if(act === "edit" || act === "edit_resa"){
+        const isResa = act === "edit_resa";
+        const item = (isResa ? resaItems : stockItems).find(x=>x.id===id);
+        if(!item) return;
+        openModal({
+          title: isResa ? "Modifier la réservation" : "Modifier le stock",
+          hint: isResa ? "Changer le client, la marque/modèle ou la quantité." : "Changer la marque/modèle ou la quantité.",
+          showClient: isResa,
+          data: {
+            id,
+            brand: item.brand,
+            model: item.model,
+            qty: item.qty,
+            clientName: item.clientName || ""
+          }
+        });
+        return;
+      }
+
+      if(act === "sell"){
+        const item = resaItems.find(x=>x.id===id);
+        if(!item) return;
+        if(!confirm(`Convertir en vente pour ${item.clientName} ?`)) return;
+
+        try{
+          // 1) créer une transaction "Vente depuis réservation"
+          // 2) supprimer la réservation
+          const batch = writeBatch(db);
+          const txRef = doc(txCol); // auto id
+          batch.set(txRef, {
+            type: "sale",
+            detail: "Vente depuis réservation",
+            clientName: item.clientName || "",
+            brand: item.brand,
+            model: item.model,
+            qty: item.qty,
+            source: "reservation",
+            sourceReservationId: item.id,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          batch.delete(doc(db, "inventory", item.id));
+          await batch.commit();
+
+          toast("Vente créée", "Réservation convertie en vente.");
+          await refreshAll();
+        }catch(e){
+          console.error(e);
+          toast("Erreur", e.message || String(e));
+        }
+        return;
+      }
+    });
+
+    // ===== Modal =====
+    const overlay = $("modalOverlay");
+    let modalState = null;
+    function openModal({title, hint, showClient, data}){
+      modalState = { ...data, showClient };
+      $("modalTitle").textContent = title;
+      $("modalHint").textContent = hint || "";
+      $("mBrand").value = data.brand || "";
+      $("mModel").value = data.model || "";
+      $("mQty").value = String(data.qty ?? 1);
+      $("mClient").value = data.clientName || "";
+      $("mClientWrap").style.display = showClient ? "block" : "none";
+      overlay.classList.add("show");
+    }
+    function closeModal(){
+      overlay.classList.remove("show");
+      modalState = null;
+    }
+    $("btnModalCancel").addEventListener("click", closeModal);
+    overlay.addEventListener("click", (e)=>{ if(e.target === overlay) closeModal(); });
+
+    $("btnModalSave").addEventListener("click", async ()=>{
+      if(!modalState) return;
+      try{
+        const brand = norm($("mBrand").value);
+        const model = norm($("mModel").value);
+        const qty = Math.max(1, parseIntSafe($("mQty").value, 1));
+        const client = norm($("mClient").value);
+
+        if(!brand || !model) throw new Error("Marque et modèle requis.");
+        if(modalState.showClient && !client) throw new Error("Client requis.");
+
+        const ref = doc(db, "inventory", modalState.id);
+
+        // Si on change les clés (brand/model/client), la meilleure approche est:
+        // - supprimer l'ancien doc
+        // - upsert sur la nouvelle clé
+        // pour garder la fusion de quantité si besoin.
+        const prev = modalState;
+        const changedKey =
+          normKey(prev.brand) !== normKey(brand) ||
+          normKey(prev.model) !== normKey(model) ||
+          (prev.showClient && normKey(prev.clientName) !== normKey(client));
+
+        if(!changedKey){
+          await updateDoc(ref, {
+            brand, brandKey:normKey(brand),
+            model, modelKey:normKey(model),
+            qty,
+            clientName: prev.showClient ? client : undefined,
+            clientKey: prev.showClient ? normKey(client) : undefined,
+            updatedAt: serverTimestamp()
+          });
+        }else{
+          const batch = writeBatch(db);
+          batch.delete(ref);
+          // recréation/merge
+          const status = prev.showClient ? "reservation" : "stock";
+          // upsertInventory fait ses propres writes, donc on fait version "manuelle" en batch:
+          // -> on fait un query puis add/update; mais Firestore ne supporte pas query dans batch.
+          // -> donc on fait en 2 étapes sans batch.
+          await batch.commit();
+          await upsertInventory({ status, brand, model, qty, clientName: client });
+        }
+
+        toast("Enregistré", "Modifications appliquées.");
+        closeModal();
+        await refreshAll();
+      }catch(e){
+        toast("Erreur", e.message || String(e));
+      }
+    });
+
+    // ===== CSV parsing =====
+    function parseCSV(text){
+      // simple CSV parser with quotes
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
+
+      for(let i=0; i<text.length; i++){
+        const ch = text[i];
+        const next = text[i+1];
+        if(ch === '"' ){
+          if(inQuotes && next === '"'){ cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+          continue;
+        }
+        if(ch === ',' && !inQuotes){
+          row.push(cur);
+          cur = "";
+          continue;
+        }
+        if((ch === '\n' || ch === '\r') && !inQuotes){
+          // handle CRLF
+          if(ch === '\r' && next === '\n') i++;
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      row.push(cur);
+      rows.push(row);
+      return rows;
+    }
+
+    function findHeaderRow(rows){
+      // find row containing "Marque" and "Modèle" at least once
+      for(let r=0; r<Math.min(rows.length, 30); r++){
+        const cells = rows[r].map(c=>normKey(c));
+        if(cells.includes("marque") && (cells.includes("modele") || cells.includes("modèle"))){
+          return r;
+        }
+      }
+      return -1;
+    }
+
+    function extractBlocks(rows){
+      // returns arrays: stockLines {brand, model, qty, client?}
+      const headerRow = findHeaderRow(rows);
+      if(headerRow < 0) throw new Error("Impossible de trouver l'entête (Marque/Modèle).");
+
+      const header = rows[headerRow].map(c=>normKey(c));
+      // detect multi-block style: there are multiple "marque" occurrences.
+      const marqueIdx = [];
+      for(let i=0;i<header.length;i++){
+        if(header[i]==="marque") marqueIdx.push(i);
+      }
+
+      const out = [];
+      const startData = headerRow + 1;
+
+      // helper to read table starting at col index
+      function readTable(colBrand, colModel, colQty, colClient){
+        for(let r=startData; r<rows.length; r++){
+          const brand = norm(rows[r][colBrand]);
+          const model = norm(rows[r][colModel]);
+          const qtyRaw = rows[r][colQty];
+          const client = colClient != null ? norm(rows[r][colClient]) : "";
+
+          // stop if completely empty line for this table
+          if(!brand && !model && !norm(qtyRaw) && !client){
+            // but sometimes there are empty holes; if we haven't started, continue; else break when big empty run
+            continue;
+          }
+          if(!brand && !model){
+            // ignore
+            continue;
+          }
+          const qty = parseIntSafe(qtyRaw, 1);
+          out.push({ brand, model, qty, client });
+        }
+      }
+
+      if(marqueIdx.length >= 2){
+        // likely your sheet layout
+        // assume stock table at first marque occurrence: marque, modele, nombre
+        // assume reservations at second marque occurrence: marque, modele, nombre, demandeur
+        const stockStart = marqueIdx[0];
+        const resaStart = marqueIdx[1];
+
+        const colStockBrand = stockStart;
+        const colStockModel = stockStart + 1;
+        const colStockQty = stockStart + 2;
+
+        // reservations header might be at resaStart,resaStart+1,resaStart+2,resaStart+3
+        const colResaBrand = resaStart;
+        const colResaModel = resaStart + 1;
+        const colResaQty = resaStart + 2;
+        const colResaClient = resaStart + 3;
+
+        readTable(colStockBrand, colStockModel, colStockQty, null);
+        readTable(colResaBrand, colResaModel, colResaQty, colResaClient);
+        return out;
+      }
+
+      // fallback: single-table CSV, map columns by name
+      const col = {};
+      for(let i=0;i<header.length;i++){
+        const k = header[i];
+        if(!k) continue;
+        if(["marque","brand"].includes(k)) col.brand = i;
+        if(["modele","modèle","model"].includes(k)) col.model = i;
+        if(["nombre","qty","quantite","quantité","quantity"].includes(k)) col.qty = i;
+        if(["demandeur","client","acheteur","buyer"].includes(k)) col.client = i;
+      }
+      if(col.brand==null || col.model==null) throw new Error("Colonnes Marque/Modèle manquantes.");
+      if(col.qty==null) col.qty = header.findIndex(x=>x==="nombre");
+      for(let r=startData; r<rows.length; r++){
+        const brand = norm(rows[r][col.brand]);
+        const model = norm(rows[r][col.model]);
+        const qty = parseIntSafe(rows[r][col.qty], 1);
+        const client = col.client!=null ? norm(rows[r][col.client]) : "";
+        if(!brand && !model) continue;
+        out.push({brand, model, qty, client});
+      }
+      return out;
+    }
+
+    async function importLines(lines){
+      const statusEl = $("importStatus");
+      statusEl.textContent = "Import…";
+      let ok=0, skip=0;
+      for(const l of lines){
+        try{
+          const client = norm(l.client);
+          const status = client ? "reservation" : "stock";
+          await upsertInventory({ status, brand: l.brand, model: l.model, qty: l.qty, clientName: client });
+          ok++;
+        }catch(e){
+          console.warn("skip line", l, e);
+          skip++;
+        }
+      }
+      statusEl.textContent = `OK: ${ok} / skip: ${skip}`;
+      toast("Import terminé", `Ajoutées: ${ok} • Ignorées: ${skip}`);
+      await refreshAll();
+    }
+
+    $("btnImport").addEventListener("click", async ()=>{
+      const f = $("csvFile").files?.[0];
+      if(!f){
+        toast("CSV", "Choisis un fichier CSV d'abord.");
+        return;
+      }
+      try{
+        const text = await f.text();
+        const rows = parseCSV(text);
+        const lines = extractBlocks(rows);
+
+        // rules: if client present -> reservation else stock
+        await importLines(lines);
+      }catch(e){
+        console.error(e);
+        toast("Import impossible", e.message || String(e));
+      }
+    });
+
+    $("btnPurgeAll").addEventListener("click", async ()=>{
+      if(!confirm("Ça supprime tout le stock ET toutes les réservations (Firestore). Continuer ?")) return;
+      try{
+        const snap = await getDocs(invCol);
+        const batch = writeBatch(db);
+        snap.docs.forEach(d=>batch.delete(d.ref));
+        await batch.commit();
+        toast("OK", "Stock + réservations vidés.");
+        await refreshAll();
+      }catch(e){
+        toast("Erreur", e.message || String(e));
+      }
+    });
+
+  </script>
+</body>
+</html>
