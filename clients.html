@@ -190,7 +190,21 @@
       .topbar{max-width:none; margin: 0 0 12px;}
       .wrap{max-width:none;}
     }
-  </style>
+  
+/* ===== Modal ===== */
+.modal.hidden{display:none}
+.modal{position:fixed;inset:0;z-index:9999}
+.modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px)}
+.modal__panel{position:relative;max-width:980px;width:min(980px,calc(100% - 24px));margin:64px auto;background:rgba(10,12,16,.78);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+.modal__head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.modal__title{font-weight:800;letter-spacing:.4px}
+.modal__sub{opacity:.75;font-size:12px;margin-top:2px}
+.modal__body{padding:14px 18px 18px}
+.modal__stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.pill{display:flex;align-items:baseline;gap:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(255,255,255,.03)}
+.pill span{opacity:.75;font-size:12px}
+.pill strong{font-weight:800}
+</style>
 </head>
 <body>
   <div class="app">
@@ -309,6 +323,7 @@
                     <th>Nom</th>
                     <th>Téléphone</th>
                     <th>Permis</th>
+              <th>ACHATS</th>
                     <th>Voiture</th>
                     <th>Moto</th>
                     <th>Camion</th>
@@ -409,6 +424,50 @@
     let unsub = null;
 
     let all = [];
+
+  // ===== Transactions index (for achat count + fiche client) =====
+  let txCounts = new Map();      // key -> count
+  let txByClient = new Map();    // key -> [tx]
+  let txUnsub = null;
+
+  const normKey = (s) => (s || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+  const money = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+    .format(Number.isFinite(Number(n)) ? Number(n) : 0);
+
+  function purchaseCountFor(c){
+    const key = normKey(c?.name);
+    return txCounts.get(key) || 0;
+  }
+
+  function buildTxIndex(snapshot){
+    const counts = new Map();
+    const lists = new Map();
+    snapshot.forEach(docu => {
+      const d = docu.data() || {};
+      const key = normKey(d.client || d.customer || d.nom || d.name);
+      if(!key) return;
+      counts.set(key, (counts.get(key) || 0) + 1);
+      const arr = lists.get(key) || [];
+      arr.push({ id: docu.id, ...d });
+      lists.set(key, arr);
+    });
+    // Sort each list by createdAt (if present)
+    lists.forEach((arr, k) => {
+      arr.sort((a,b)=>{
+        const ta = a.createdAt?.seconds ? a.createdAt.seconds : (typeof a.createdAt === "number" ? a.createdAt : 0);
+        const tb = b.createdAt?.seconds ? b.createdAt.seconds : (typeof b.createdAt === "number" ? b.createdAt : 0);
+        return tb - ta;
+      });
+    });
+    txCounts = counts;
+    txByClient = lists;
+  }
+
     let filtered = [];
 
     function norm(s){ return (s ?? "").toString().trim().toLowerCase(); }
@@ -499,15 +558,25 @@
             <td>${escapeHtml(c.name||"")}</td>
             <td>${escapeHtml(c.phone||"")}</td>
             <td>${escapeHtml(licenseLabel(c.license))}</td>
+            <td>${purchaseCountFor(c)}</td>
             <td>${yes(c.car)}</td>
             <td>${yes(c.moto)}</td>
             <td>${yes(c.truck)}</td>
             <td style="white-space:nowrap">
+              <button class="tbtn" data-view="${c.id}">Fiche</button>
               <button class="tbtn" data-edit="${c.id}">Modifier</button>
               <button class="tbtn red" data-del="${c.id}">Supprimer</button>
             </td>
           </tr>`;
       }).join("");
+
+      tbody.querySelectorAll("button[data-view]").forEach(b => {
+        b.onclick = () => {
+          const id = b.dataset.view;
+          const c = all.find(x => x.id === id);
+          if(c) openClientModal(c);
+        };
+      });
 
       tbody.querySelectorAll("button[data-edit]").forEach(b => {
         b.onclick = () => {
@@ -666,5 +735,42 @@
     refreshBtn.onclick = () => applyFilters();
 
   </script>
+
+<!-- ===== Client detail modal ===== -->
+<div id="clientModal" class="modal hidden" aria-hidden="true">
+  <div class="modal__backdrop" data-close="1"></div>
+  <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="clientModalTitle">
+    <div class="modal__head">
+      <div>
+        <div id="clientModalTitle" class="modal__title">Fiche client</div>
+        <div id="clientModalSub" class="modal__sub"></div>
+      </div>
+      <button id="clientModalClose" class="btn btn--ghost">Fermer</button>
+    </div>
+    <div class="modal__body">
+      <div class="modal__stats">
+        <div class="pill"><span>Achats</span><strong id="clientModalCount">0</strong></div>
+        <div class="pill"><span>Total</span><strong id="clientModalTotal">$0</strong></div>
+      </div>
+      <div class="tableWrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Véhicule</th>
+              <th>Prix</th>
+              <th>Statut</th>
+              <th>Vendeur</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="clientModalRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
