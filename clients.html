@@ -2,141 +2,346 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PDM Admin — Base clients</title>
   <style>
     :root{
-      --bg:#0b0d10; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.10);
-      --text:rgba(255,255,255,.92); --muted:rgba(255,255,255,.65);
-      --gold1:#ffdb6b; --gold2:#ffb84a;
+      --bg0:#05070c;
+      --glass: rgba(10,14,22,.55);
+      --glass2: rgba(10,14,22,.35);
+      --border: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.6);
+      --muted2: rgba(255,255,255,.4);
+      --gold: #d6b25e;
+      --gold2:#f1d58a;
+      --red:#ff5b5b;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --r: 18px;
+      --r2: 26px;
+      --sbw: 260px;
     }
+
     *{box-sizing:border-box}
-    body{
-      margin:0; color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; color:var(--text); background:var(--bg0); min-height:100vh; overflow-x:hidden;}
+
+    /* Fond “catalogue public” (dégradés doux) */
+    body:before{
+      content:""; position:fixed; inset:-20vh -20vw; z-index:-3;
       background:
-        radial-gradient(1200px 800px at 20% 30%, rgba(0,120,255,.20), transparent 60%),
-        radial-gradient(1000px 700px at 80% 40%, rgba(255,0,70,.18), transparent 60%),
-        radial-gradient(900px 600px at 50% 90%, rgba(255,190,0,.12), transparent 55%),
-        var(--bg);
-      min-height:100vh;
+        radial-gradient(60vw 60vw at 20% 30%, rgba(20,60,140,.45), transparent 60%),
+        radial-gradient(55vw 55vw at 85% 35%, rgba(170,30,40,.38), transparent 62%),
+        radial-gradient(45vw 45vw at 55% 85%, rgba(160,130,0,.25), transparent 65%),
+        radial-gradient(55vw 55vw at 40% 55%, rgba(0,0,0,.55), transparent 70%),
+        linear-gradient(180deg, #04060a 0%, #060a12 55%, #04060a 100%);
+      filter: blur(18px) saturate(110%);
     }
-    .wrap{max-width:1100px;margin:0 auto;padding:26px 18px}
+
+    .app{display:flex; min-height:100vh;}
+
+    /* Sidebar */
+    .sidebar{
+      width: var(--sbw);
+      padding: 18px;
+      position: sticky; top: 0; height: 100vh;
+    }
+    .sbCard{
+      height:100%;
+      background: rgba(10,14,22,.45);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+      display:flex; flex-direction:column;
+      gap: 10px;
+    }
+    .brand{font-weight:800; letter-spacing:.14em; font-size:12px; opacity:.85; margin: 4px 6px 10px;}
+    .nav{display:flex; flex-direction:column; gap: 8px; margin-top:4px;}
+    .nav a{
+      text-decoration:none; color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.03);
+      transition: .15s ease;
+      font-size: 13px;
+    }
+    .nav a:hover{transform: translateY(-1px); color: var(--text); border-color: rgba(255,255,255,.10);}
+    .nav a.active{
+      color: #1b1406;
+      border-color: rgba(214,178,94,.55);
+      background: linear-gradient(180deg, rgba(241,213,138,.95), rgba(214,178,94,.92));
+      font-weight: 700;
+    }
+    .sbSpacer{flex:1}
+    .sbBtn{
+      width:100%;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+    }
+
+    /* Main */
+    .main{flex:1; padding: 18px 18px 30px;}
+
+    /* Topbar */
     .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:14px 16px;border:1px solid var(--line);border-radius:18px;
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      backdrop-filter: blur(12px);
+      display:flex; align-items:center; gap:10px;
+      background: rgba(10,14,22,.35);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      max-width: 1100px;
+      margin: 0 auto 14px;
     }
-    .brand{display:flex;gap:10px;align-items:center}
-    .logo{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.25)}
-    .pill{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--muted)}
+    .pill{padding: 7px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); font-size: 12px; color: var(--muted);}
+    .pill strong{color: var(--text); font-weight: 700;}
+    .sp{flex:1}
     .btn{
-      appearance:none;border:none;cursor:pointer;
-      padding:10px 14px;border-radius:999px;font-weight:700;letter-spacing:.06em;
-      text-transform:uppercase;font-size:11px;
+      border:none; cursor:pointer;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.10);
+      font-size: 12px;
     }
-    .btn.primary{background:linear-gradient(180deg,var(--gold1),var(--gold2));color:#1a0606}
-    .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--text)}
-    .grid{display:grid;grid-template-columns:1.3fr .7fr;gap:14px;margin-top:16px}
-    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(241,213,138,.95), rgba(214,178,94,.92));
+      color: #1b1406;
+      border-color: rgba(214,178,94,.55);
+      font-weight: 800;
+    }
+
+    /* Cards */
+    .wrap{max-width: 1100px; margin: 0 auto;}
+    .centerCol{display:flex; flex-direction:column; align-items:center; gap: 14px;}
     .card{
-      border:1px solid var(--line);border-radius:18px;padding:14px;background:rgba(255,255,255,.05);
+      width: min(1100px, 100%);
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding: 14px;
+    }
+    .card h3{margin: 0 0 8px; letter-spacing:.12em; font-size: 11px; text-transform: uppercase; color: var(--muted);}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .field{flex:1; min-width: 220px;}
+    label{display:block; font-size: 11px; color: var(--muted2); margin: 0 0 6px; letter-spacing:.06em; text-transform: uppercase;}
+    input, select, textarea{
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      outline:none;
+      font-size: 13px;
+    }
+    textarea{border-radius: 16px; resize: vertical; min-height: 90px;}
+    .hint{font-size: 12px; color: var(--muted2); margin-top: 6px;}
+
+    .actions{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex:1; min-width: 260px;}
+
+    /* Table */
+    .tableWrap{overflow:auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.08);}
+    table{width:100%; border-collapse: collapse; min-width: 860px;}
+    thead th{
+      text-align:left;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 12px 12px;
+      background: rgba(255,255,255,.03);
+      position: sticky; top: 0;
       backdrop-filter: blur(10px);
     }
-    h1{margin:0;font-size:16px;letter-spacing:.08em;text-transform:uppercase}
-    h2{margin:0 0 10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .input{
-      width:100%; padding:10px 12px;border-radius:999px;border:1px solid var(--line);
-      background:rgba(0,0,0,.25);color:var(--text);outline:none;
+    tbody td{padding: 12px; border-top: 1px solid rgba(255,255,255,.06); font-size: 13px; color: rgba(255,255,255,.86);}
+
+    .tag{display:inline-flex; align-items:center; gap:6px; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04); font-size: 12px; color: var(--muted);}
+
+    .tbtn{
+      padding: 8px 10px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      font-size: 12px;
     }
-    .input::placeholder{color:rgba(255,255,255,.45)}
-    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
-    .tr{
-      background:rgba(0,0,0,.22);
-      border:1px solid var(--line);
+    .tbtn.red{background: rgba(255,90,90,.12); border-color: rgba(255,90,90,.35); color: rgba(255,200,200,.95); font-weight:700;}
+
+    /* Toast */
+    .toast{position: fixed; right: 16px; bottom: 16px; z-index: 50; width: min(420px, calc(100vw - 32px));}
+    .toast .box{background: rgba(10,14,22,.92); border: 1px solid rgba(255,255,255,.10); border-radius: 16px; padding: 12px 14px; box-shadow: var(--shadow);}
+    .toast .title{font-weight: 800; margin:0 0 4px;}
+    .toast .msg{margin:0; color: var(--muted); font-size: 13px;}
+
+    @media (max-width: 980px){
+      .sidebar{display:none;}
+      .main{padding: 14px 12px 26px;}
+      .topbar{max-width:none; margin: 0 0 12px;}
+      .wrap{max-width:none;}
     }
-    .tr td{padding:10px 10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-    .tr td:first-child{border-left:1px solid var(--line);border-top-left-radius:14px;border-bottom-left-radius:14px}
-    .tr td:last-child{border-right:1px solid var(--line);border-top-right-radius:14px;border-bottom-right-radius:14px}
-    .tag{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}
-    .muted{color:var(--muted)}
-    .toast{
-      position:fixed;right:18px;bottom:18px;min-width:260px;
-      border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.55);
-      padding:12px 12px;backdrop-filter: blur(10px);display:none;
-    }
-    .toast b{display:block;margin-bottom:4px}
-    .actions{display:flex;gap:8px;justify-content:flex-end}
-    .danger{background:transparent;border:1px solid rgba(255,90,90,.45);color:#ffb3b3}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">PDM ADMIN</div>
-        <div class="pill" id="meBadge">Chargement…</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sbCard">
+        <div class="brand">PDM ADMIN</div>
+        <nav class="nav">
+          <a href="pdm-dashboard.html">Dashboard</a>
+          <a class="active" href="clients.html">Base clients</a>
+          <a href="vehicles.html">Base véhicules</a>
+          <a href="stock.html">Stock &amp; réservations</a>
+          <a href="compta.html">Comptabilité</a>
+        </nav>
+        <div class="sbSpacer"></div>
+        <button id="sbLogout" class="sbBtn">Déconnexion</button>
       </div>
-      <div class="row">
-        <button class="btn secondary" id="toDash">Dashboard</button>
-        <button class="btn secondary" id="logout">Déconnexion</button>
-      </div>
-    </div>
+    </aside>
 
-    <div class="grid">
-      <div class="card">
-        <h2>Clients</h2>
-        <div class="row" style="margin-bottom:10px">
-          <input id="q" class="input" placeholder="Rechercher (nom, téléphone, notes…)" />
-          <button class="btn primary" id="newBtn">Ajouter</button>
-        </div>
-        <table class="table" id="tbl"></table>
-        <div class="muted" id="count"></div>
+    <main class="main">
+      <div class="topbar">
+        <span class="pill"><strong id="rolePill">PDM ADMIN</strong></span>
+        <span class="pill" id="mePill">Chargement…</span>
+        <div class="sp"></div>
+        <a class="btn" href="pdm-dashboard.html">Dashboard</a>
+        <button id="logoutBtn" class="btn gold">Déconnexion</button>
       </div>
 
-      <div class="card">
-        <h2>Fiche client</h2>
-        <div class="row" style="gap:8px">
-          <input class="input" id="name" placeholder="Nom / Prénom" />
-          <input class="input" id="phone" placeholder="Téléphone" />
-          <input class="input" id="notes" placeholder="Notes (optionnel)" />
-          <div class="row" style="width:100%">
-            <label class="tag"><input type="checkbox" id="lic" /> Permis</label>
-            <label class="tag"><input type="checkbox" id="car" /> Voiture</label>
-            <label class="tag"><input type="checkbox" id="moto" /> Moto</label>
-            <label class="tag"><input type="checkbox" id="truck" /> Camion</label>
-          </div>
-        </div>
+      <div class="wrap">
+        <div class="centerCol">
 
-        <div class="actions" style="margin-top:10px">
-          <button class="btn secondary" id="cancel">Annuler</button>
-          <button class="btn secondary danger" id="del" style="display:none">Supprimer</button>
-          <button class="btn primary" id="save">Enregistrer</button>
-        </div>
+          <section class="card" id="addCard">
+            <h3>Ajouter un client</h3>
+            <div class="row">
+              <div class="field">
+                <label>Nom / Prénom</label>
+                <input id="cName" placeholder="Ex. Max Dupont" />
+              </div>
+              <div class="field">
+                <label>Téléphone</label>
+                <input id="cPhone" placeholder="Ex. (089)3363" />
+              </div>
+              <div class="field">
+                <label>Permis</label>
+                <select id="cLicense">
+                  <option value="oui">Oui</option>
+                  <option value="non">Non</option>
+                  <option value="indisponible">Indisponible</option>
+                  <option value="non_demande">Non demandé</option>
+                </select>
+              </div>
+            </div>
 
-        <div class="muted" style="margin-top:10px;font-size:12px">
-          Collection Firestore utilisée : <b>clients</b>
+            <div class="row" style="margin-top:10px">
+              <div class="field">
+                <label>Autorisations</label>
+                <div class="row" style="gap:12px">
+                  <label style="display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; color: var(--muted); margin:0">
+                    <input id="cCar" type="checkbox" style="width:auto" /> Voiture
+                  </label>
+                  <label style="display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; color: var(--muted); margin:0">
+                    <input id="cMoto" type="checkbox" style="width:auto" /> Moto
+                  </label>
+                  <label style="display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; color: var(--muted); margin:0">
+                    <input id="cTruck" type="checkbox" style="width:auto" /> Camion
+                  </label>
+                </div>
+                <div class="hint">Ces cases viennent de ta base Sheets (voiture / moto / camion).</div>
+              </div>
+              <div class="actions">
+                <button id="saveBtn" class="btn gold" style="min-width:160px">Enregistrer</button>
+                <button id="resetBtn" class="btn" style="min-width:160px">Réinitialiser</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Importer CSV (Google Sheets)</h3>
+            <div class="row">
+              <div class="field">
+                <label>Fichier CSV</label>
+                <input id="csvFile" type="file" accept=".csv,text/csv" />
+                <div class="hint">Colonnes attendues : <b>Nom/Prénom</b>, <b>Numéro de Téléphone</b>, <b>Permis de Conduire</b>, <b>Voiture</b>, <b>Moto</b>, <b>Camion</b> (les autres colonnes sont ignorées).</div>
+              </div>
+              <div class="actions">
+                <button id="importBtn" class="btn gold" style="min-width:160px">Importer</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Base clients</h3>
+            <div class="row">
+              <div class="field" style="min-width:280px; flex:2">
+                <label>Recherche</label>
+                <input id="q" placeholder="Nom, téléphone…" />
+              </div>
+              <div class="field">
+                <label>Tri</label>
+                <select id="sortBy">
+                  <option value="name_asc">Nom (A→Z)</option>
+                  <option value="name_desc">Nom (Z→A)</option>
+                  <option value="phone_asc">Téléphone (A→Z)</option>
+                  <option value="created_desc">Ajout (récent)</option>
+                </select>
+              </div>
+              <div class="actions">
+                <span class="tag" id="countTag">0 client</span>
+                <button id="refreshBtn" class="btn">Rafraîchir</button>
+              </div>
+            </div>
+
+            <div class="tableWrap" style="margin-top:12px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Téléphone</th>
+                    <th>Permis</th>
+                    <th>Voiture</th>
+                    <th>Moto</th>
+                    <th>Camion</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody">
+                  <tr><td colspan="7" style="color:var(--muted)">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
         </div>
       </div>
-    </div>
+
+    </main>
   </div>
 
-  <div class="toast" id="toast"><b id="tTitle"></b><div id="tMsg"></div></div>
+  <div id="toast" class="toast" style="display:none"></div>
 
   <script type="module">
-    // --- Firebase imports ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+    // ===== Firebase (modular) =====
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getAuth, onAuthStateChanged, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
+      getFirestore, collection, addDoc, doc, deleteDoc, updateDoc,
       onSnapshot, query, orderBy, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // === CONFIG: reprend la même config que ton dashboard ===
+    // 🔧 Colle ici ta config Firebase (celle de TON projet)
     const firebaseConfig = {
   apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
   authDomain: "pdm-urban-hills.firebaseapp.com",
@@ -147,198 +352,319 @@
   measurementId: "G-RGM2DWVFLT"
 };
 
-    // ⚠️ IMPORTANT :
-    // Copie-colle EXACTEMENT ta config depuis pdm-dashboard.html (celle qui marche déjà)
-    // et remplace les REPLACE_ME.
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- UI refs ---
-    const meBadge = document.getElementById("meBadge");
-    const toDash = document.getElementById("toDash");
-    const logoutBtn = document.getElementById("logout");
+    // ===== UI helpers =====
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+    function showToast(title, msg){
+      toastEl.style.display = "block";
+      toastEl.innerHTML = `
+        <div class="box">
+          <p class="title">${escapeHtml(title)}</p>
+          <p class="msg">${escapeHtml(msg)}</p>
+        </div>`;
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toastEl.style.display = "none", 3200);
+    }
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
 
-    const qEl = document.getElementById("q");
-    const tbl = document.getElementById("tbl");
-    const countEl = document.getElementById("count");
+    const logoutBtn = $("logoutBtn");
+    const sbLogout = $("sbLogout");
+    logoutBtn.onclick = sbLogout.onclick = async () => { await signOut(auth); location.href = "index.html"; };
 
-    const newBtn = document.getElementById("newBtn");
-    const nameEl = document.getElementById("name");
-    const phoneEl = document.getElementById("phone");
-    const notesEl = document.getElementById("notes");
-    const licEl = document.getElementById("lic");
-    const carEl = document.getElementById("car");
-    const motoEl = document.getElementById("moto");
-    const truckEl = document.getElementById("truck");
+    // ===== Data model =====
+    // Firestore: collection "clients"
+    // { name, phone, license, car, moto, truck, createdAt, updatedAt }
 
-    const cancelBtn = document.getElementById("cancel");
-    const saveBtn = document.getElementById("save");
-    const delBtn = document.getElementById("del");
+    const cName = $("cName");
+    const cPhone = $("cPhone");
+    const cLicense = $("cLicense");
+    const cCar = $("cCar");
+    const cMoto = $("cMoto");
+    const cTruck = $("cTruck");
 
-    const toast = document.getElementById("toast");
-    const tTitle = document.getElementById("tTitle");
-    const tMsg = document.getElementById("tMsg");
+    const saveBtn = $("saveBtn");
+    const resetBtn = $("resetBtn");
 
-    const norm = (s)=> (s??"").toString().trim().toLowerCase();
+    const csvFile = $("csvFile");
+    const importBtn = $("importBtn");
+
+    const qEl = $("q");
+    const sortBy = $("sortBy");
+    const refreshBtn = $("refreshBtn");
+    const tbody = $("tbody");
+    const countTag = $("countTag");
 
     let me = null;
-    let clients = [];
-    let currentId = null;
+    let unsub = null;
 
-    function showToast(title, msg){
-      tTitle.textContent = title;
-      tMsg.textContent = msg;
-      toast.style.display = "block";
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=> toast.style.display="none", 2500);
+    let all = [];
+    let filtered = [];
+
+    function norm(s){ return (s ?? "").toString().trim().toLowerCase(); }
+
+    function licenseLabel(v){
+      const x = norm(v);
+      if(x === "oui") return "Permis: Oui";
+      if(x === "non") return "Permis: Non";
+      if(x === "indisponible") return "Permis: Indisponible";
+      if(x === "non_demande" || x === "non demandé" || x === "non_demande") return "Permis: Non demandé";
+      return v || "—";
     }
 
-    function clearForm(){
-      currentId = null;
-      nameEl.value = "";
-      phoneEl.value = "";
-      notesEl.value = "";
-      licEl.checked = false;
-      carEl.checked = false;
-      motoEl.checked = false;
-      truckEl.checked = false;
-      delBtn.style.display = "none";
+    function resetForm(){
+      cName.value = "";
+      cPhone.value = "";
+      cLicense.value = "oui";
+      cCar.checked = false;
+      cMoto.checked = false;
+      cTruck.checked = false;
+      saveBtn.dataset.editId = "";
+      saveBtn.textContent = "Enregistrer";
     }
+    resetBtn.onclick = resetForm;
 
-    function fillForm(c){
-      currentId = c.id;
-      nameEl.value = c.name || "";
-      phoneEl.value = c.phone || "";
-      notesEl.value = c.notes || "";
-      licEl.checked = !!c.license;
-      carEl.checked = !!c.car;
-      motoEl.checked = !!c.moto;
-      truckEl.checked = !!c.truck;
-      delBtn.style.display = "inline-block";
-    }
+    async function saveClient(){
+      const name = cName.value.trim();
+      const phone = cPhone.value.trim();
+      const license = cLicense.value;
+      const car = !!cCar.checked;
+      const moto = !!cMoto.checked;
+      const truck = !!cTruck.checked;
 
-    function render(){
-      const q = norm(qEl.value);
-      const list = clients.filter(c=>{
-        if(!q) return true;
-        const blob = norm(`${c.name} ${c.phone} ${c.notes}`);
-        return blob.includes(q);
-      });
+      if(!name){ showToast("Client", "Nom / Prénom requis."); return; }
 
-      countEl.textContent = `${list.length} client(s)`;
-
-      tbl.innerHTML = list.map(c=>`
-        <tr class="tr" data-id="${c.id}">
-          <td style="width:35%"><b>${escapeHtml(c.name||"—")}</b><div class="muted">${escapeHtml(c.phone||"")}</div></td>
-          <td style="width:45%" class="muted">${escapeHtml((c.notes||"").slice(0,60))}</td>
-          <td style="width:20%">
-            <span class="tag">${c.license ? "Permis: Oui" : "Permis: Non"}</span>
-          </td>
-        </tr>
-      `).join("");
-
-      [...tbl.querySelectorAll("tr")].forEach(tr=>{
-        tr.addEventListener("click", ()=>{
-          const id = tr.getAttribute("data-id");
-          const c = clients.find(x=>x.id===id);
-          if(c) fillForm(c);
-        });
-      });
-    }
-
-    function escapeHtml(str){
-      return (str??"").toString()
-        .replaceAll("&","&amp;").replaceAll("<","&lt;")
-        .replaceAll(">","&gt;").replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    // --- nav buttons ---
-    toDash.addEventListener("click", ()=> location.href = "pdm-dashboard.html");
-    logoutBtn.addEventListener("click", async ()=>{
-      await signOut(auth);
-      location.href = "index.html";
-    });
-
-    // --- form buttons ---
-    newBtn.addEventListener("click", ()=>{
-      clearForm();
-      showToast("Clients", "Nouveau client.");
-      nameEl.focus();
-    });
-
-    cancelBtn.addEventListener("click", ()=>{
-      clearForm();
-      showToast("Clients", "Annulé.");
-    });
-
-    saveBtn.addEventListener("click", async ()=>{
-      if(!me){ showToast("Session", "Non connecté."); return; }
-      const payload = {
-        name: nameEl.value.trim(),
-        phone: phoneEl.value.trim(),
-        notes: notesEl.value.trim(),
-        license: licEl.checked,
-        car: carEl.checked,
-        moto: motoEl.checked,
-        truck: truckEl.checked,
-        updatedAt: serverTimestamp()
-      };
-      if(!payload.name){ showToast("Erreur", "Nom obligatoire."); return; }
+      const payload = { name, phone, license, car, moto, truck, updatedAt: serverTimestamp() };
+      const editId = saveBtn.dataset.editId;
 
       try{
-        if(currentId){
-          await updateDoc(doc(db,"clients",currentId), payload);
-          showToast("Clients", "Client mis à jour.");
+        if(editId){
+          await updateDoc(doc(db, "clients", editId), payload);
+          showToast("Client", "Client mis à jour.");
         }else{
-          payload.createdAt = serverTimestamp();
-          payload.createdBy = me.uid;
-          await addDoc(collection(db,"clients"), payload);
-          showToast("Clients", "Client ajouté.");
+          await addDoc(collection(db, "clients"), { ...payload, createdAt: serverTimestamp() });
+          showToast("Client", "Client ajouté.");
         }
-        clearForm();
+        resetForm();
       }catch(e){
         console.error(e);
         showToast("Erreur", e?.message || "Impossible d'enregistrer.");
       }
-    });
+    }
+    saveBtn.onclick = saveClient;
 
-    delBtn.addEventListener("click", async ()=>{
-      if(!currentId) return;
-      if(!confirm("Supprimer ce client ?")) return;
-      try{
-        await deleteDoc(doc(db,"clients",currentId));
-        showToast("Clients", "Client supprimé.");
-        clearForm();
-      }catch(e){
-        console.error(e);
-        showToast("Erreur", e?.message || "Suppression impossible.");
-      }
-    });
+    function applyFilters(){
+      const q = norm(qEl.value);
+      const so = sortBy.value;
 
-    qEl.addEventListener("input", render);
+      filtered = all.filter(x => {
+        if(!q) return true;
+        const blob = norm(`${x.name} ${x.phone} ${licenseLabel(x.license)}`);
+        return blob.includes(q);
+      });
 
-    // --- auth + live data ---
-    onAuthStateChanged(auth, (u)=>{
-      if(!u){
-        meBadge.textContent = "Déconnecté";
-        location.href = "index.html";
+      const byName = (a,b) => (a.name||"").localeCompare(b.name||"");
+      const byPhone = (a,b) => (a.phone||"").localeCompare(b.phone||"");
+      const byCreated = (a,b) => (b._ms||0) - (a._ms||0);
+
+      if(so === "name_asc") filtered.sort(byName);
+      else if(so === "name_desc") filtered.sort((a,b)=>byName(b,a));
+      else if(so === "phone_asc") filtered.sort(byPhone);
+      else if(so === "created_desc") filtered.sort(byCreated);
+
+      render();
+    }
+
+    function render(){
+      countTag.textContent = `${filtered.length} client${filtered.length>1?"s":""}`;
+      if(filtered.length === 0){
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)">Aucun client</td></tr>`;
         return;
       }
-      me = { uid: u.uid, email: u.email || "" };
-      meBadge.textContent = me.email ? me.email : "Connecté";
 
-      const qClients = query(collection(db,"clients"), orderBy("name","asc"));
-      onSnapshot(qClients, (snap)=>{
-        clients = snap.docs.map(d=>({id:d.id, ...d.data()}));
-        render();
-      }, (err)=>{
-        console.error(err);
-        showToast("Firestore", err?.message || "Impossible de charger clients.");
+      tbody.innerHTML = filtered.map(c => {
+        const yes = (v)=> v ? "✓" : "—";
+        return `
+          <tr>
+            <td>${escapeHtml(c.name||"")}</td>
+            <td>${escapeHtml(c.phone||"")}</td>
+            <td>${escapeHtml(licenseLabel(c.license))}</td>
+            <td>${yes(c.car)}</td>
+            <td>${yes(c.moto)}</td>
+            <td>${yes(c.truck)}</td>
+            <td style="white-space:nowrap">
+              <button class="tbtn" data-edit="${c.id}">Modifier</button>
+              <button class="tbtn red" data-del="${c.id}">Supprimer</button>
+            </td>
+          </tr>`;
+      }).join("");
+
+      tbody.querySelectorAll("button[data-edit]").forEach(b => {
+        b.onclick = () => {
+          const id = b.dataset.edit;
+          const c = all.find(x => x.id === id);
+          if(!c) return;
+          cName.value = c.name || "";
+          cPhone.value = c.phone || "";
+          cLicense.value = c.license || "oui";
+          cCar.checked = !!c.car;
+          cMoto.checked = !!c.moto;
+          cTruck.checked = !!c.truck;
+          saveBtn.dataset.editId = id;
+          saveBtn.textContent = "Mettre à jour";
+          window.scrollTo({top:0, behavior:"smooth"});
+        };
       });
+      tbody.querySelectorAll("button[data-del]").forEach(b => {
+        b.onclick = async () => {
+          const id = b.dataset.del;
+          if(!confirm("Supprimer ce client ?")) return;
+          try{
+            await deleteDoc(doc(db, "clients", id));
+            showToast("Client", "Supprimé.");
+          }catch(e){
+            console.error(e);
+            showToast("Erreur", e?.message || "Suppression impossible.");
+          }
+        };
+      });
+    }
+
+    // ===== CSV import =====
+    function splitCSVLine(line){
+      const out = [];
+      let cur = "";
+      let inQ = false;
+      for(let i=0;i<line.length;i++){
+        const c = line[i];
+        if(c === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
+        if(c === '"'){ inQ = !inQ; continue; }
+        if(c === ',' && !inQ){ out.push(cur); cur = ""; continue; }
+        cur += c;
+      }
+      out.push(cur);
+      return out;
+    }
+
+    function parseCSV(text){
+      const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim().length);
+      if(lines.length === 0) return { header: [], rows: [] };
+      const header = splitCSVLine(lines[0]).map(h => h.trim());
+      const rows = [];
+      for(let i=1;i<lines.length;i++){
+        const cols = splitCSVLine(lines[i]);
+        const obj = {};
+        header.forEach((h, idx) => obj[h] = (cols[idx] ?? "").trim());
+        rows.push(obj);
+      }
+      return { header, rows };
+    }
+
+    function getAny(row, keys){
+      for(const k of keys){
+        if(row[k] != null && row[k] !== "") return row[k];
+      }
+      return "";
+    }
+
+    function parseBool(v){
+      const x = norm(v);
+      if(!x) return false;
+      if(["1","true","vrai","oui","yes","y","x","✓","check"].includes(x)) return true;
+      return false;
+    }
+
+    function normalizeLicense(v){
+      const x = norm(v);
+      if(["oui","yes","true","1"].includes(x)) return "oui";
+      if(["non","no","false","0"].includes(x)) return "non";
+      if(["indisponible","na","n/a","nd","indispo"].includes(x)) return "indisponible";
+      if(["non demandé","non_demande","non demande","pas demandé","pas demande"].includes(x)) return "non_demande";
+      return x || "oui";
+    }
+
+    importBtn.onclick = async () => {
+      const f = csvFile.files?.[0];
+      if(!f){ showToast("Import", "Choisis un CSV."); return; }
+
+      try{
+        const text = await f.text();
+        const parsed = parseCSV(text);
+        if(parsed.rows.length === 0){ showToast("Import", "Aucune ligne détectée."); return; }
+
+        let ok = 0, skipped = 0;
+        for(const r of parsed.rows){
+          const name = getAny(r, ["Nom/Prénom","Nom / Prénom","Nom","Prénom","Prenom","Name","nom/prénom","nom"]).toString().trim();
+          const phone = getAny(r, ["Numéro de Téléphone","Numero de Telephone","Téléphone","Telephone","Phone","phone"]).toString().trim();
+          const license = normalizeLicense(getAny(r, ["Permis de Conduire","Permis","Licence","license"]).toString());
+          const car = parseBool(getAny(r, ["Voiture","Car","car"]).toString());
+          const moto = parseBool(getAny(r, ["Moto","motorbike","moto"]).toString());
+          const truck = parseBool(getAny(r, ["Camion","Truck","camion"]).toString());
+
+          if(!name){ skipped++; continue; }
+
+          await addDoc(collection(db, "clients"), {
+            name,
+            phone,
+            license,
+            car,
+            moto,
+            truck,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          ok++;
+        }
+        showToast("Import", `${ok} client(s) importé(s)${skipped?` — ${skipped} ligne(s) ignorée(s)`:""}.`);
+      }catch(e){
+        console.error(e);
+        showToast("Erreur import", e?.message || "Import impossible.");
+      }
+    };
+
+    // ===== Firestore listener =====
+    function startListener(){
+      if(unsub) unsub();
+      const qy = query(collection(db, "clients"), orderBy("name", "asc"));
+      unsub = onSnapshot(qy, (snap) => {
+        all = snap.docs.map(d => {
+          const data = d.data();
+          const ms = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : 0;
+          return { id: d.id, _ms: ms, ...data };
+        });
+        applyFilters();
+      }, (err) => {
+        console.error(err);
+        showToast("Firestore", err?.message || "Lecture impossible.");
+      });
+    }
+
+    // ===== Auth guard =====
+    onAuthStateChanged(auth, (user) => {
+      if(!user){ location.href = "index.html"; return; }
+      me = user;
+      $("mePill").textContent = user.email || user.uid;
+      if(firebaseConfig.apiKey === "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM"){
+        showToast("Config", "⚠️ Colle ta firebaseConfig dans clients.html (REPLACE_ME). ");
+        console.warn("firebaseConfig not set. Paste your real config in clients.html.");
+      }
+      startListener();
     });
+
+    qEl.oninput = applyFilters;
+    sortBy.onchange = applyFilters;
+    refreshBtn.onclick = () => applyFilters();
+
   </script>
 </body>
 </html>
