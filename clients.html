@@ -723,7 +723,7 @@
       if(!user){ location.href = "index.html"; return; }
       me = user;
       $("mePill").textContent = user.email || user.uid;
-      if(firebaseConfig.apiKey === "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM"){
+      if(firebaseConfig.apiKey === "REPLACE_ME"){
         showToast("Config", "⚠️ Colle ta firebaseConfig dans clients.html (REPLACE_ME). ");
         console.warn("firebaseConfig not set. Paste your real config in clients.html.");
       }
