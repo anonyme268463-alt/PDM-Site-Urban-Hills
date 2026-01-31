@@ -531,20 +531,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "XXX",
-  authDomain: "XXX",
-  projectId: "XXX",
-  storageBucket: "XXX",
-  messagingSenderId: "XXX",
-  appId: "XXX"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-
-    // --- Firebase config (stock.html) ---
+// --- Firebase config (stock.html) ---
 // ✅ Pas besoin d'éditer le code : colle ta config dans la fenêtre qui s'affiche, elle sera sauvegardée (localStorage).
 function loadFirebaseConfig() {
   try {
