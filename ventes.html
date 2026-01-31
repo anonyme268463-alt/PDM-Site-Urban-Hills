@@ -1,1 +1,876 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PDM Admin — Ventes véhicules</title>
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <style>
+    :root{
+      --bg:#07080c;
+      --card:rgba(10,12,18,.62);
+      --card2:rgba(10,12,18,.52);
+      --stroke:rgba(255,255,255,.08);
+      --stroke2:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.55);
+      --muted2:rgba(255,255,255,.42);
+      --gold1:#f6d26b;
+      --gold2:#b88222;
+      --danger:#ff6b6b;
+      --ok:#47e6a6;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --radius2:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
+                  radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
+                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    /* soft vignette like catalogue public */
+    body:before{
+      content:"";
+      position:fixed; inset:-20px;
+      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
+      pointer-events:none;
+      z-index:-1;
+    }
+    a{color:inherit; text-decoration:none}
+    .app{
+      display:flex;
+      min-height:100vh;
+      gap:22px;
+      padding:18px 18px 26px;
+    }
+    /* Sidebar */
+    .sidebar{
+      width:250px;
+      min-width:250px;
+      background: rgba(10,12,18,.46);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding:14px;
+      box-shadow: var(--shadow);
+      position:sticky;
+      top:18px;
+      height: calc(100vh - 44px);
+      display:flex;
+      flex-direction:column;
+      backdrop-filter: blur(10px);
+    }
+    .brand{
+      font-weight:800;
+      letter-spacing:.12em;
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      margin-bottom:10px;
+    }
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+    }
+    .nav a{
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.18);
+      color:rgba(255,255,255,.76);
+      font-size:13px;
+    }
+    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
+    .nav a.active{
+      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
+      border-color: rgba(246,210,107,.22);
+      color: rgba(255,255,255,.9);
+    }
+    .spacer{flex:1}
+    .side-actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+      transition:.12s transform ease, .12s background ease, .12s border-color ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
+      border-color: rgba(246,210,107,.30);
+      color:#1b1306;
+      box-shadow: 0 10px 22px rgba(184,130,34,.18);
+    }
+    .btn.danger{
+      background: rgba(255,80,80,.12);
+      border-color: rgba(255,80,80,.24);
+      color: rgba(255,210,210,.95);
+    }
+    .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
+    /* Main */
+    .main{
+      flex:1;
+      max-width: 980px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius: 16px;
+      background: rgba(10,12,18,.44);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .chips{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .chip{
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.8);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .chip.muted{color:rgba(255,255,255,.6)}
+    .top-actions{display:flex; gap:10px; align-items:center}
+    .layout{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:14px;
+    }
+    .card{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.75);
+    }
+    .sub{
+      font-size:12px;
+      color: var(--muted);
+      margin:-4px 0 10px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1.1fr .7fr 1.1fr;
+      gap:10px;
+      align-items:end;
+    }
+    label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
+    input, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
+      outline:none;
+    }
+    input::placeholder{color: rgba(255,255,255,.32)}
+    .row-actions{display:flex; gap:10px; justify-content:flex-end}
+    .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .tools{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .tools .left, .tools .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.75);
+      font-size:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    thead th{
+      text-align:left;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.62);
+      padding:10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.02)}
+    tbody tr:last-child td{border-bottom:none}
+    .tag{
+      display:inline-flex;
+      padding:6px 9px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      font-size:12px;
+      color: rgba(255,255,255,.72);
+    }
+    .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
+    .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
+    .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
+    .td-actions{white-space:nowrap; text-align:right}
+    .toast{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 460px;
+      background: rgba(10,12,18,.82);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:none;
+      z-index:50;
+    }
+    .toast.show{display:block}
+    .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
+    .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
+    .modal-overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:18px;
+    }
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(740px, 96vw);
+      border-radius: 18px;
+      background: rgba(10,12,18,.86);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .modal h4{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.72);
+    }
+    .modal .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px}
+    @media (max-width: 980px){
+      .app{flex-direction:column}
+      .sidebar{position:relative; width:100%; height:auto; min-width:unset}
+      .main{max-width:100%}
+      .two{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr 1fr; }
+    }
+  
+/* Firebase config modal */
+#firebaseConfigModal{
+  position:fixed; inset:0; z-index:99999;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+}
+#firebaseConfigModal .cfg-card{
+  width:min(720px, 92vw);
+  background: rgba(10,12,18,.92);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+#firebaseConfigModal .cfg-text{
+  width:100%; height:220px; resize:vertical;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:12px;
+  color:#fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  outline:none;
+}
+#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
 
+/* Select readability */
+select, select option{background:#fff;color:#000}
+
+  /* Extra layout for KPIs / form */
+  .kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
+  .kpi{{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}}
+  .kpi .k{{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}}
+  .kpi .v{{margin-top:6px;font-size:18px;font-weight:800}}
+  .kpi .s{{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}}
+  .grid-sale{{display:grid;grid-template-columns:1.1fr 1.1fr .8fr .8fr 1.2fr;gap:10px;align-items:end}}
+  .mono{{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}}
+  .help{{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}}
+  @media (max-width: 980px){{
+    .kpis{{grid-template-columns:repeat(2,1fr)}}
+    .grid-sale{{grid-template-columns:1fr 1fr}}
+  }}
+  @media (max-width: 520px){{
+    .kpis{{grid-template-columns:1fr}}
+  }}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">PDM ADMIN</div>
+      <nav class="nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="clients.html">Base clients</a>
+        <a href="vehicles.html">Base véhicules</a>
+        <a href="stock.html">Stock & réservations</a>
+        <a class="active" href="ventes.html">Ventes véhicules</a>
+        <a href="compta.html">Comptabilité</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="side-actions">
+        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="chips">
+          <div class="chip">VENTES</div>
+          <div id="chipUser" class="chip muted">Chargement…</div>
+          <div id="chipRole" class="chip muted">—</div>
+          <div id="chipEnv" class="chip muted">Firestore • Live</div>
+        </div>
+        <div class="top-actions">
+          <a class="btn small" href="stock.html">Stock</a>
+          <a class="btn small" href="dashboard.html">Dashboard</a>
+          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <section class="card">
+          <h3>Créer une vente</h3>
+          <div class="sub">
+            <b>Auto</b> :
+            si <b>client</b> renseigné & réservation trouvée ⇒ <b>Vente depuis réservation</b>.
+            Sinon si <b>pas de client</b> & véhicule en stock ⇒ <b>Vente depuis stock</b>.
+            Sinon ⇒ <b>Vente directe</b> (achat + vente).
+          </div>
+
+          <div class="grid-sale">
+            <div>
+              <label>Véhicule (base véhicules)</label>
+              <select id="selVehicle"></select>
+              <div class="help" id="vehHint" style="margin-top:6px">—</div>
+            </div>
+
+            <div>
+              <label>Client (optionnel)</label>
+              <input id="inClient" placeholder="Nom RP (si réservation)" />
+              <div class="help" style="margin-top:6px">Si tu mets un client, le système cherche une réservation correspondante.</div>
+            </div>
+
+            <div>
+              <label>Prix de vente ($)</label>
+              <input id="inSell" type="number" min="0" step="1" placeholder="Ex: 250000" />
+              <div class="help" style="margin-top:6px">Le symbole $ est automatique dans les affichages.</div>
+            </div>
+
+            <div>
+              <label>Quantité</label>
+              <input id="inQty" type="number" min="1" step="1" value="1" />
+              <div class="help" style="margin-top:6px">Réservation/stock : ajuste la quantité.</div>
+            </div>
+
+            <div>
+              <label>Notes (optionnel)</label>
+              <input id="inNotes" placeholder="Ex: plaque, remise, contexte RP…" />
+              <div class="row-actions" style="margin-top:10px">
+                <button id="btnSell" class="btn gold">Valider la vente</button>
+                <button id="btnReset" class="btn">Réinitialiser</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="hint" id="saleTypeHint" style="margin-top:10px">Type détecté : —</div>
+        </section>
+
+        <section class="card">
+          <h3>Dernières ventes</h3>
+          <div class="tools">
+            <div class="left">
+              <input id="q" placeholder="Rechercher client / véhicule / vendeur…" />
+              <select id="filterType">
+                <option value="all">Tous types</option>
+                <option value="sale_direct">Vente directe</option>
+                <option value="sale_stock">Vente depuis stock</option>
+                <option value="sale_reservation">Vente depuis réservation</option>
+              </select>
+            </div>
+            <div class="right">
+              <span id="count" class="pill">0</span>
+              <button id="btnRefresh" class="btn">Rafraîchir</button>
+            </div>
+          </div>
+
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Client</th>
+                  <th>Véhicule</th>
+                  <th>Qté</th>
+                  <th>Vendeur</th>
+                  <th style="text-align:right">Montant</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+          <div class="hint">Les ventes sont enregistrées dans <span class="mono">transactions</span> et utilisées ensuite par la compta et le dashboard.</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">
+    <div id="toastTitle" class="t"></div>
+    <div id="toastMsg" class="m"></div>
+  </div>
+
+  
+  <div id="firebaseConfigModal" style="display:none">
+    <div class="cfg-card">
+      <div class="cfg-title">Configuration Firebase</div>
+      <div class="cfg-sub">Colle ici <b>uniquement</b> ton bloc <code>firebaseConfig</code> (objet). Il sera sauvegardé sur ce navigateur (localStorage) et réutilisé sur toutes les pages admin.</div>
+      <textarea id="firebaseConfigText" class="cfg-text" placeholder='Ex: { apiKey: "...", authDomain: "...", projectId: "...", appId: "..." }'></textarea>
+      <div class="cfg-actions">
+        <button id="firebaseConfigCancel" class="btn">Annuler</button>
+        <button id="firebaseConfigSave" class="btn gold">Enregistrer</button>
+      </div>
+      <div class="cfg-note">Astuce: tu peux coller le snippet complet <code>const firebaseConfig = {...};</code>, ça marche aussi.</div>
+    </div>
+  </div>
+
+
+  <script type="module">
+    import {{ initializeApp }} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {{ getAuth, onAuthStateChanged, signOut }} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {{
+      getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+      query, where, orderBy, limit, serverTimestamp, writeBatch
+    }} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ---------- Firebase config via localStorage ----------
+    function loadFirebaseConfig(){{
+      try {{
+        const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
+        if(!raw) return null;
+        let txt = String(raw).trim();
+        const objMatch = txt.match(/\{{[\s\S]*\}}/);
+        if(objMatch) txt = objMatch[0];
+        try {{ return JSON.parse(txt); }} catch {{}}
+        try {{ return (new Function("return (" + txt + ");"))(); }} catch {{}}
+        return null;
+      }} catch {{
+        return null;
+      }}
+    }}
+
+    function showFirebaseConfigModal(){{
+      return new Promise((resolve)=>{{
+        const modal = document.getElementById("firebaseConfigModal");
+        const ta = document.getElementById("firebaseConfigText");
+        const btn = document.getElementById("firebaseConfigSave");
+        const cancel = document.getElementById("firebaseConfigCancel");
+        modal.style.display = "flex";
+
+        btn.onclick = () => {{
+          const v = ta.value.trim();
+          if(!v) {{ alert("Colle ta config Firebase (bloc firebaseConfig)."); return; }}
+          localStorage.setItem("PDM_FIREBASE_CONFIG", v);
+          modal.style.display = "none";
+          resolve(true);
+          location.reload();
+        }};
+        cancel.onclick = () => {{
+          modal.style.display = "none";
+          resolve(false);
+        }};
+      }});
+    }}
+
+    async function ensureFirebaseConfig(){{
+      const cfg = loadFirebaseConfig();
+      if(cfg) return cfg;
+      await showFirebaseConfigModal();
+      throw new Error("Firebase config manquante");
+    }}
+
+    const firebaseConfig = await ensureFirebaseConfig();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ---------- UI helpers ----------
+    const $ = (id)=>document.getElementById(id);
+    let toastTimer=null;
+    function toast(title,msg){{
+      $("toastTitle").textContent = title;
+      $("toastMsg").textContent = msg || "";
+      $("toast").classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> $("toast").classList.remove("show"), 4200);
+    }}
+
+    const norm = (s)=> (s ?? "").toString().trim();
+    const normKey = (s)=> norm(s).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
+    const esc = (s)=> (s ?? "").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    const fmtMoney = (n)=> "$ " + Number(n||0).toLocaleString("en-US");
+    const fmtDate = (ts)=> {{
+      if(!ts) return "—";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString("fr-FR", {{ year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }});
+    }};
+
+    function bindLogout(btn){{
+      btn.addEventListener("click", async ()=>{{
+        try{{ await signOut(auth); }}catch(e){{}}
+        window.location.href = "pdm-staff.html";
+      }});
+    }}
+    bindLogout($("btnLogoutTop"));
+    bindLogout($("btnLogoutSide"));
+
+    // ---------- Collections ----------
+    const vehiclesCol = collection(db,"vehicles");
+    const invCol = collection(db,"inventory");
+    const txCol = collection(db,"transactions");
+    const auditCol = collection(db,"auditLogs");
+
+    // ---------- Session / profile ----------
+    let me = null; // {{uid,name,role}}
+    async function loadProfile(uid){{
+      const snap = await getDoc(doc(db,"users",uid));
+      if(!snap.exists()) return null;
+      const d = snap.data();
+      if(d.active === false) return null;
+      return {{ uid, name: d.name || "Utilisateur", role: (d.role || "staff").toLowerCase() }};
+    }}
+
+    onAuthStateChanged(auth, async (user)=>{{
+      if(!user){{
+        $("chipUser").textContent = "Non connecté";
+        $("chipRole").textContent = "—";
+        toast("Connexion requise","Connecte-toi pour accéder aux ventes.");
+        return;
+      }}
+      me = await loadProfile(user.uid);
+      if(!me){{
+        $("chipUser").textContent = "Accès refusé";
+        $("chipRole").textContent = "—";
+        toast("Accès refusé","Profil Firestore manquant/désactivé.");
+        return;
+      }}
+      $("chipUser").textContent = me.name;
+      $("chipRole").textContent = me.role === "admin" ? "ADMIN" : "STAFF";
+      await loadVehicles();
+      await refreshSales();
+      await wireFormPreview();
+    }});
+
+    // ---------- Vehicles dropdown ----------
+    let vehicles = [];
+    function vehicleLabel(v){{
+      const t = v.type ? "[" + v.type + "] " : "";
+      const brand = v.brand || "";
+      const model = v.model || "";
+      const sell = (v.sellPrice!=null) ? " — " + fmtMoney(v.sellPrice) : "";
+      return (t + brand + " " + model + sell).replace(/\s+/g," ").trim();
+    }}
+
+    async function loadVehicles(){{
+      const snap = await getDocs(query(vehiclesCol, orderBy("type","asc"), orderBy("sellPrice","asc"), limit(1000)));
+      vehicles = snap.docs.map(d=>({{ id:d.id, ...d.data() }}));
+      const sel = $("selVehicle");
+      sel.innerHTML = "";
+      for(const v of vehicles){{
+        const opt = document.createElement("option");
+        opt.value = v.id;
+        opt.textContent = vehicleLabel(v);
+        sel.appendChild(opt);
+      }}
+      if(vehicles.length===0){{
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Aucun véhicule (collection vehicles vide)";
+        sel.appendChild(opt);
+      }}
+      updateVehHint();
+    }}
+
+    function getSelectedVehicle(){{
+      const id = $("selVehicle").value;
+      return vehicles.find(v=>v.id===id) || null;
+    }}
+
+    function updateVehHint(){{
+      const v = getSelectedVehicle();
+      if(!v) {{ $("vehHint").textContent = "—"; return; }}
+      const buy = (v.buyPrice!=null) ? Number(v.buyPrice) : Math.round(Number(v.sellPrice||0)/2);
+      const sell = (v.sellPrice!=null) ? Number(v.sellPrice) : null;
+      $("vehHint").innerHTML = "Achat: <b>" + fmtMoney(buy) + "</b> • Prix base: <b>" + (sell!=null?fmtMoney(sell):"—") + "</b>";
+      if(!$("inSell").value && sell!=null) $("inSell").value = String(Math.round(sell));
+    }}
+
+    $("selVehicle").addEventListener("change", async ()=>{{ updateVehHint(); await wireFormPreview(); }});
+    $("inClient").addEventListener("input", async ()=>{{ await wireFormPreview(); }});
+
+    async function detectSaleType(v, client){{
+      const brandKey = normKey(v.brand);
+      const modelKey = normKey(v.model);
+      const cKey = normKey(client);
+
+      if(client){{
+        const qRes = query(invCol,
+          where("status","==","reservation"),
+          where("brandKey","==", brandKey),
+          where("modelKey","==", modelKey),
+          where("clientKey","==", cKey),
+          limit(1)
+        );
+        const snap = await getDocs(qRes);
+        if(!snap.empty) return {{ saleType:"sale_reservation", invDoc: snap.docs[0] }};
+        return {{ saleType:"sale_direct", invDoc: null }};
+      }} else {{
+        const qStock = query(invCol,
+          where("status","==","stock"),
+          where("brandKey","==", brandKey),
+          where("modelKey","==", modelKey),
+          limit(1)
+        );
+        const snap = await getDocs(qStock);
+        if(!snap.empty) return {{ saleType:"sale_stock", invDoc: snap.docs[0] }};
+        return {{ saleType:"sale_direct", invDoc: null }};
+      }}
+    }}
+
+    async function wireFormPreview(){{
+      const v = getSelectedVehicle();
+      if(!v) return;
+      const client = norm($("inClient").value);
+      const det = await detectSaleType(v, client);
+      const label =
+        det.saleType==="sale_reservation" ? "Vente depuis réservation" :
+        det.saleType==="sale_stock" ? "Vente depuis stock" :
+        "Vente directe (achat + vente)";
+      $("saleTypeHint").innerHTML = "Type détecté : <b>" + label + "</b>";
+    }}
+
+    // ---------- Create sale ----------
+    $("btnReset").addEventListener("click", async ()=>{{
+      $("inClient").value = "";
+      $("inSell").value = "";
+      $("inQty").value = "1";
+      $("inNotes").value = "";
+      updateVehHint();
+      await wireFormPreview();
+    }});
+
+    async function addAudit(action, entity, entityId, payload){{
+      try{{
+        await addDoc(auditCol, {{
+          action, entity, entityId,
+          actorId: me.uid,
+          actorName: me.name,
+          createdAt: serverTimestamp(),
+          payload: payload ?? null
+        }});
+      }}catch(e){{}}
+    }}
+
+    $("btnSell").addEventListener("click", async ()=>{{
+      const v = getSelectedVehicle();
+      if(!v) {{ toast("Véhicule","Sélectionne un véhicule."); return; }}
+
+      const client = norm($("inClient").value);
+      const qty = Math.max(1, Number($("inQty").value || 1));
+      const sellPrice = Number($("inSell").value);
+      const notes = norm($("inNotes").value);
+
+      if(!Number.isFinite(sellPrice) || sellPrice<=0){{
+        toast("Prix","Renseigne un prix de vente valide.");
+        return;
+      }}
+
+      const buyPrice = (v.buyPrice!=null) ? Number(v.buyPrice) : Math.round(Number(v.sellPrice||0)/2);
+
+      try{{
+        const det = await detectSaleType(v, client);
+        const saleType = det.saleType;
+
+        const batch = writeBatch(db);
+
+        const detailLabel =
+          saleType==="sale_reservation" ? "Vente depuis réservation" :
+          saleType==="sale_stock" ? "Vente depuis stock" :
+          "Vente directe";
+
+        const txRef = doc(txCol);
+
+        const txPayload = {{
+          type: saleType,
+          detail: detailLabel,
+          clientName: client || "",
+          client: client || "",
+          vehicle: (v.brand || "") + " " + (v.model || ""),
+          brand: v.brand || "",
+          model: v.model || "",
+          qty,
+          sellPrice,
+          buyPrice: saleType==="sale_direct" ? buyPrice : null,
+          price: sellPrice,
+          currency: "USD",
+          sellerId: me.uid,
+          sellerName: me.name,
+          source: "ventes.html",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          notes
+        }};
+
+        batch.set(txRef, txPayload);
+
+        if(saleType==="sale_stock" || saleType==="sale_reservation"){{
+          const invDoc = det.invDoc;
+          const curQty = Number(invDoc.data().qty || 0);
+          if(curQty < qty) throw new Error("Quantité insuffisante. Dispo: " + curQty);
+          const nextQty = curQty - qty;
+          if(nextQty > 0) batch.update(invDoc.ref, {{ qty: nextQty, updatedAt: serverTimestamp() }});
+          else batch.delete(invDoc.ref);
+        }}
+
+        await batch.commit();
+        await addAudit("create","transaction", txRef.id, txPayload);
+
+        toast("Vente enregistrée", detailLabel + " • " + fmtMoney(sellPrice));
+        $("inClient").value = "";
+        $("inSell").value = "";
+        $("inQty").value = "1";
+        $("inNotes").value = "";
+        updateVehHint();
+        await wireFormPreview();
+        await refreshSales();
+      }}catch(e){{
+        console.error(e);
+        toast("Erreur", e.message || String(e));
+      }}
+    }});
+
+    // ---------- Recent sales table ----------
+    let sales = [];
+    function saleTypeText(t){{
+      if(t==="sale_reservation") return "Vente depuis réservation";
+      if(t==="sale_stock") return "Vente depuis stock";
+      return "Vente directe";
+    }}
+
+    async function refreshSales(){{
+      const snap = await getDocs(query(txCol, orderBy("createdAt","desc"), limit(150)));
+      sales = snap.docs.map(d=>({{id:d.id, ...d.data()}}))
+        .filter(x=> String(x.type||"").startsWith("sale_"));
+      renderSales();
+    }}
+
+    function renderSales(){{
+      const q = normKey($("q").value);
+      const ft = $("filterType").value;
+
+      let rows = sales.filter(x=>{{
+        if(ft!=="all" && x.type!==ft) return false;
+        if(!q) return true;
+        const hay = normKey((x.clientName||x.client||"") + " " + (x.vehicle||"") + " " + (x.sellerName||"") + " " + (x.detail||""));
+        return hay.includes(q);
+      }});
+
+      $("count").textContent = String(rows.length);
+
+      const tbody = $("rows");
+      tbody.innerHTML = rows.map(x=>{{
+        const amt = Number(x.sellPrice ?? x.price ?? 0);
+        return `
+          <tr>
+            <td>${{fmtDate(x.createdAt)}}</td>
+            <td><span class="tag warn">${{esc(saleTypeText(x.type))}}</span></td>
+            <td>${{esc(x.clientName || x.client || "—")}}</td>
+            <td>${{esc(x.vehicle || ((x.brand||"") + " " + (x.model||"")).trim())}}</td>
+            <td><span class="tag ok">${{Number(x.qty||1)}}</span></td>
+            <td>${{esc(x.sellerName||"—")}}</td>
+            <td style="text-align:right"><span class="tag ok">${{fmtMoney(amt)}}</span></td>
+          </tr>
+        `;
+      }}).join("") || `<tr><td colspan="7" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
+    }}
+
+    $("btnRefresh").addEventListener("click", refreshSales);
+    $("q").addEventListener("input", renderSales);
+    $("filterType").addEventListener("change", renderSales);
+
+  </script>
+</body>
+</html>
