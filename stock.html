@@ -35,7 +35,6 @@
       color:var(--text);
       overflow-x:hidden;
     }
-    /* soft vignette like catalogue public */
     body:before{
       content:"";
       position:fixed; inset:-20px;
@@ -50,7 +49,6 @@
       gap:22px;
       padding:18px 18px 26px;
     }
-    /* Sidebar */
     .sidebar{
       width:250px;
       min-width:250px;
@@ -124,7 +122,6 @@
       color: rgba(255,210,210,.95);
     }
     .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
-    /* Main */
     .main{
       flex:1;
       max-width: 980px;
@@ -313,38 +310,40 @@
       .two{grid-template-columns:1fr}
       .grid{grid-template-columns:1fr 1fr; }
     }
-  
-/* Firebase config modal */
-#firebaseConfigModal{
-  position:fixed; inset:0; z-index:99999;
-  align-items:center; justify-content:center;
-  background:rgba(0,0,0,.65);
-  backdrop-filter: blur(8px);
-}
-#firebaseConfigModal .cfg-card{
-  width:min(720px, 92vw);
-  background: rgba(10,12,18,.92);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:16px;
-  padding:18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.55);
-}
-#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
-#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
-#firebaseConfigModal .cfg-text{
-  width:100%; height:220px; resize:vertical;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;
-  padding:12px;
-  color:#fff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size:12px;
-  outline:none;
-}
-#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
-</style>
+
+    /* Firebase config modal */
+    #firebaseConfigModal{
+      position:fixed; inset:0; z-index:99999;
+      display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.65);
+      backdrop-filter: blur(8px);
+      padding:18px;
+    }
+    #firebaseConfigModal .cfg-card{
+      width:min(720px, 92vw);
+      background: rgba(10,12,18,.92);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    #firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+    #firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+    #firebaseConfigModal .cfg-text{
+      width:100%; height:220px; resize:vertical;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;
+      padding:12px;
+      color:#fff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      outline:none;
+    }
+    #firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    #firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -527,67 +526,89 @@
     </div>
   </div>
 
+  <!-- Firebase Config Modal (obligatoire pour éviter null.style) -->
+  <div id="firebaseConfigModal">
+    <div class="cfg-card">
+      <div class="cfg-title">Configurer Firebase (Firestore)</div>
+      <div class="cfg-sub">
+        Colle ici ton objet <b>firebaseConfig</b> (depuis Firebase Console → paramètres du projet → SDK).
+        <br/>Il sera sauvegardé dans ton navigateur (localStorage) pour cette page.
+      </div>
+      <textarea id="firebaseConfigText" class="cfg-text" placeholder="Colle ici: { apiKey: '...', authDomain: '...', projectId: '...', ... }"></textarea>
+      <div class="cfg-actions">
+        <button id="firebaseConfigCancel" class="btn">Annuler</button>
+        <button id="firebaseConfigSave" class="btn gold">Sauvegarder</button>
+      </div>
+      <div class="cfg-note">Astuce : tu peux coller soit l’objet JSON, soit le snippet complet “const firebaseConfig = { … }”.</div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection, query, where, getDocs,
+      addDoc, updateDoc, deleteDoc, doc,
+      serverTimestamp, writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- Firebase config (stock.html) ---
-// ✅ Pas besoin d'éditer le code : colle ta config dans la fenêtre qui s'affiche, elle sera sauvegardée (localStorage).
-function loadFirebaseConfig() {
-  try {
-    const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
-    if (!raw) return null;
-    let txt = String(raw).trim();
+    // --- Firebase config (stock.html) ---
+    function loadFirebaseConfig() {
+      try {
+        const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
+        if (!raw) return null;
+        let txt = String(raw).trim();
 
-    // Si l'utilisateur colle le snippet complet "const firebaseConfig = { ... };"
-    const objMatch = txt.match(/\{[\s\S]*\}/);
-    if (objMatch) txt = objMatch[0];
+        const objMatch = txt.match(/\{[\s\S]*\}/);
+        if (objMatch) txt = objMatch[0];
 
-    // 1) JSON strict
-    try { return JSON.parse(txt); } catch (e) {}
+        try { return JSON.parse(txt); } catch (e) {}
+        try { return (new Function("return (" + txt + ");"))(); } catch (e) {}
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
 
-    // 2) Objet JS (clé sans guillemets autorisée)
-    try { return (new Function("return (" + txt + ");"))(); } catch (e) {}
+    function showFirebaseConfigModal() {
+      return new Promise((resolve) => {
+        const modal = document.getElementById("firebaseConfigModal");
+        const ta = document.getElementById("firebaseConfigText");
+        const btn = document.getElementById("firebaseConfigSave");
+        const cancel = document.getElementById("firebaseConfigCancel");
 
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
+        if (!modal || !ta || !btn || !cancel) {
+          alert("Modal Firebase manquante dans le HTML.");
+          resolve(false);
+          return;
+        }
 
-function showFirebaseConfigModal() {
-  return new Promise((resolve) => {
-    const modal = document.getElementById("firebaseConfigModal");
-    const ta = document.getElementById("firebaseConfigText");
-    const btn = document.getElementById("firebaseConfigSave");
-    const cancel = document.getElementById("firebaseConfigCancel");
+        modal.style.display = "flex";
 
-    modal.style.display = "flex";
+        btn.onclick = () => {
+          const v = ta.value.trim();
+          if (!v) { alert("Colle ta config Firebase (le bloc firebaseConfig)."); return; }
+          localStorage.setItem("PDM_FIREBASE_CONFIG", v);
+          modal.style.display = "none";
+          resolve(true);
+          location.reload();
+        };
+        cancel.onclick = () => {
+          modal.style.display = "none";
+          resolve(false);
+        };
+      });
+    }
 
-    btn.onclick = () => {
-      const v = ta.value.trim();
-      if (!v) { alert("Colle ta config Firebase (le bloc firebaseConfig)."); return; }
-      localStorage.setItem("PDM_FIREBASE_CONFIG", v);
-      modal.style.display = "none";
-      resolve(true);
-      location.reload();
-    };
-    cancel.onclick = () => {
-      modal.style.display = "none";
-      resolve(false);
-    };
-  });
-}
+    async function ensureFirebaseConfig() {
+      const cfg = loadFirebaseConfig();
+      if (cfg) return cfg;
+      await showFirebaseConfigModal();
+      throw new Error("Firebase config manquante");
+    }
 
-async function ensureFirebaseConfig() {
-  const cfg = loadFirebaseConfig();
-  if (cfg) return cfg;
-  await showFirebaseConfigModal();
-  // La page va reload après sauvegarde, ici on stoppe.
-  throw new Error("Firebase config manquante");
-}
-
-const firebaseConfig = await ensureFirebaseConfig();
+    const firebaseConfig = await ensureFirebaseConfig();
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -621,8 +642,18 @@ const firebaseConfig = await ensureFirebaseConfig();
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : def;
     }
 
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
     // ===== Auth =====
     const chipUser = $("chipUser");
+
     function bindLogout(btn){
       btn.addEventListener("click", async ()=>{
         try{ await signOut(auth); }catch(e){ console.warn(e); }
@@ -631,9 +662,11 @@ const firebaseConfig = await ensureFirebaseConfig();
     bindLogout($("btnLogoutTop"));
     bindLogout($("btnLogoutSide"));
 
+    let currentUser = null;
+
     onAuthStateChanged(auth, (user)=>{
+      currentUser = user || null;
       if(!user){
-        // si besoin: redirection vers index.html/login
         chipUser.textContent = "Non connecté";
         toast("Connexion requise", "Connecte-toi pour accéder au stock.");
         return;
@@ -642,66 +675,77 @@ const firebaseConfig = await ensureFirebaseConfig();
       refreshAll();
     });
 
-    // ===== Firestore model =====
-    // Collection unique "inventory":
-    // { status: "stock"|"reservation", brand, model, qty, clientName? , createdAt, updatedAt }
-    const invCol = collection(db, "inventory");
-    const txCol = collection(db, "transactions");
+    // ===== Firestore model (SÉPARÉ) =====
+    // stock: { brand, model, qty, brandKey, modelKey, createdAt, updatedAt }
+    // reservations: { brand, model, qty, clientName, brandKey, modelKey, clientKey, createdAt, updatedAt }
+    const stockCol = collection(db, "stock");
+    const resaCol  = collection(db, "reservations");
+    const txCol    = collection(db, "transactions");
 
-    async function upsertInventory({status, brand, model, qty, clientName}){
-      // Merge: Stock -> clé (status, brand, model)
-      // Reservation -> clé (status, brand, model, clientName)
+    async function upsertStock({brand, model, qty}){
       const b = norm(brand);
       const m = norm(model);
-      const c = norm(clientName);
       const q = Math.max(1, parseIntSafe(qty, 1));
-
       if(!b || !m) throw new Error("Marque et modèle requis.");
 
-      let qref;
-      if(status === "stock"){
-        qref = query(invCol,
-          where("status","==","stock"),
-          where("brandKey","==", normKey(b)),
-          where("modelKey","==", normKey(m))
-        );
-      }else{
-        if(!c) throw new Error("Client requis pour une réservation.");
-        qref = query(invCol,
-          where("status","==","reservation"),
-          where("brandKey","==", normKey(b)),
-          where("modelKey","==", normKey(m)),
-          where("clientKey","==", normKey(c))
-        );
-      }
+      const qref = query(stockCol,
+        where("brandKey","==", normKey(b)),
+        where("modelKey","==", normKey(m))
+      );
       const snap = await getDocs(qref);
       if(!snap.empty){
         const d0 = snap.docs[0];
         const cur = d0.data();
         const newQty = (cur.qty || 0) + q;
         await updateDoc(d0.ref, { qty: newQty, updatedAt: serverTimestamp() });
-        return { id: d0.id, merged: true, qty: newQty };
+        return { id:d0.id, merged:true, qty:newQty };
       }
-      const payload = {
-        status,
-        brand: b,
-        brandKey: normKey(b),
-        model: m,
-        modelKey: normKey(m),
-        qty: q,
-        updatedAt: serverTimestamp(),
+      const added = await addDoc(stockCol, {
+        brand:b, brandKey:normKey(b),
+        model:m, modelKey:normKey(m),
+        qty:q,
         createdAt: serverTimestamp(),
-      };
-      if(status === "reservation"){
-        payload.clientName = c;
-        payload.clientKey = normKey(c);
+        updatedAt: serverTimestamp()
+      });
+      return { id:added.id, merged:false, qty:q };
+    }
+
+    async function upsertReservation({brand, model, qty, clientName}){
+      const b = norm(brand);
+      const m = norm(model);
+      const c = norm(clientName);
+      const q = Math.max(1, parseIntSafe(qty, 1));
+
+      if(!b || !m) throw new Error("Marque et modèle requis.");
+      if(!c) throw new Error("Client requis pour une réservation.");
+
+      const qref = query(resaCol,
+        where("brandKey","==", normKey(b)),
+        where("modelKey","==", normKey(m)),
+        where("clientKey","==", normKey(c))
+      );
+      const snap = await getDocs(qref);
+      if(!snap.empty){
+        const d0 = snap.docs[0];
+        const cur = d0.data();
+        const newQty = (cur.qty || 0) + q;
+        await updateDoc(d0.ref, { qty: newQty, updatedAt: serverTimestamp() });
+        return { id:d0.id, merged:true, qty:newQty };
       }
-      const added = await addDoc(invCol, payload);
-      return { id: added.id, merged: false, qty: q };
+      const added = await addDoc(resaCol, {
+        brand:b, brandKey:normKey(b),
+        model:m, modelKey:normKey(m),
+        qty:q,
+        clientName:c,
+        clientKey:normKey(c),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return { id:added.id, merged:false, qty:q };
     }
 
     // ===== Load & render =====
-    let stockItems = [];   // {id, ...data}
+    let stockItems = [];
     let resaItems = [];
 
     function sortStock(items, mode){
@@ -743,8 +787,8 @@ const firebaseConfig = await ensureFirebaseConfig();
           <td>${escapeHtml(it.model)}</td>
           <td><span class="tag ${it.qty<=0?'bad':it.qty<2?'warn':'ok'}">${it.qty}</span></td>
           <td class="td-actions">
-            <button class="btn small" data-act="edit" data-id="${it.id}">Modifier</button>
-            <button class="btn small danger" data-act="del" data-id="${it.id}">Supprimer</button>
+            <button class="btn small" data-act="edit_stock" data-id="${it.id}">Modifier</button>
+            <button class="btn small danger" data-act="del_stock" data-id="${it.id}">Supprimer</button>
           </td>
         `;
         tbS.appendChild(tr);
@@ -773,32 +817,19 @@ const firebaseConfig = await ensureFirebaseConfig();
           <td class="td-actions">
             <button class="btn small gold" data-act="sell" data-id="${it.id}">Convertir en vente</button>
             <button class="btn small" data-act="edit_resa" data-id="${it.id}">Modifier</button>
-            <button class="btn small danger" data-act="del" data-id="${it.id}">Annuler</button>
+            <button class="btn small danger" data-act="del_resa" data-id="${it.id}">Annuler</button>
           </td>
         `;
         tbR.appendChild(tr);
       }
     }
 
-    function escapeHtml(s){
-      return (s ?? "").toString()
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
     async function refreshAll(){
       try{
-        // Stock
-        const qs = query(invCol, where("status","==","stock"));
-        const rs = await getDocs(qs);
+        const rs = await getDocs(stockCol);
         stockItems = rs.docs.map(d=>({id:d.id, ...d.data()}));
 
-        // Resa
-        const qr = query(invCol, where("status","==","reservation"));
-        const rr = await getDocs(qr);
+        const rr = await getDocs(resaCol);
         resaItems = rr.docs.map(d=>({id:d.id, ...d.data()}));
 
         render();
@@ -820,9 +851,13 @@ const firebaseConfig = await ensureFirebaseConfig();
       const model = $("inModel").value;
       const qty = $("inQty").value;
       const client = $("inClient").value;
-      const status = norm(client) ? "reservation" : "stock";
+
       try{
-        const res = await upsertInventory({status, brand, model, qty, clientName: client});
+        const c = norm(client);
+        const res = c
+          ? await upsertReservation({brand, model, qty, clientName:c})
+          : await upsertStock({brand, model, qty});
+
         toast("OK", res.merged ? "Quantité mise à jour." : "Ajouté.");
         $("inBrand").value = "";
         $("inModel").value = "";
@@ -833,6 +868,7 @@ const firebaseConfig = await ensureFirebaseConfig();
         toast("Impossible", e.message || String(e));
       }
     });
+
     $("btnResetAdd").addEventListener("click", ()=>{
       $("inBrand").value = "";
       $("inModel").value = "";
@@ -840,83 +876,10 @@ const firebaseConfig = await ensureFirebaseConfig();
       $("inClient").value = "";
     });
 
-    // ===== Row actions =====
-    document.addEventListener("click", async (ev)=>{
-      const btn = ev.target?.closest?.("button[data-act]");
-      if(!btn) return;
-      const act = btn.dataset.act;
-      const id = btn.dataset.id;
-      if(!id) return;
-
-      if(act === "del"){
-        if(!confirm("Supprimer cette ligne ?")) return;
-        try{
-          await deleteDoc(doc(db, "inventory", id));
-          toast("Supprimé", "OK.");
-          await refreshAll();
-        }catch(e){
-          toast("Erreur", e.message || String(e));
-        }
-        return;
-      }
-
-      if(act === "edit" || act === "edit_resa"){
-        const isResa = act === "edit_resa";
-        const item = (isResa ? resaItems : stockItems).find(x=>x.id===id);
-        if(!item) return;
-        openModal({
-          title: isResa ? "Modifier la réservation" : "Modifier le stock",
-          hint: isResa ? "Changer le client, la marque/modèle ou la quantité." : "Changer la marque/modèle ou la quantité.",
-          showClient: isResa,
-          data: {
-            id,
-            brand: item.brand,
-            model: item.model,
-            qty: item.qty,
-            clientName: item.clientName || ""
-          }
-        });
-        return;
-      }
-
-      if(act === "sell"){
-        const item = resaItems.find(x=>x.id===id);
-        if(!item) return;
-        if(!confirm(`Convertir en vente pour ${item.clientName} ?`)) return;
-
-        try{
-          // 1) créer une transaction "Vente depuis réservation"
-          // 2) supprimer la réservation
-          const batch = writeBatch(db);
-          const txRef = doc(txCol); // auto id
-          batch.set(txRef, {
-            type: "sale",
-            detail: "Vente depuis réservation",
-            clientName: item.clientName || "",
-            brand: item.brand,
-            model: item.model,
-            qty: item.qty,
-            source: "reservation",
-            sourceReservationId: item.id,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
-          batch.delete(doc(db, "inventory", item.id));
-          await batch.commit();
-
-          toast("Vente créée", "Réservation convertie en vente.");
-          await refreshAll();
-        }catch(e){
-          console.error(e);
-          toast("Erreur", e.message || String(e));
-        }
-        return;
-      }
-    });
-
     // ===== Modal =====
     const overlay = $("modalOverlay");
     let modalState = null;
+
     function openModal({title, hint, showClient, data}){
       modalState = { ...data, showClient };
       $("modalTitle").textContent = title;
@@ -928,10 +891,12 @@ const firebaseConfig = await ensureFirebaseConfig();
       $("mClientWrap").style.display = showClient ? "block" : "none";
       overlay.classList.add("show");
     }
+
     function closeModal(){
       overlay.classList.remove("show");
       modalState = null;
     }
+
     $("btnModalCancel").addEventListener("click", closeModal);
     overlay.addEventListener("click", (e)=>{ if(e.target === overlay) closeModal(); });
 
@@ -946,37 +911,50 @@ const firebaseConfig = await ensureFirebaseConfig();
         if(!brand || !model) throw new Error("Marque et modèle requis.");
         if(modalState.showClient && !client) throw new Error("Client requis.");
 
-        const ref = doc(db, "inventory", modalState.id);
+        if(modalState.showClient){
+          // réservation
+          const ref = doc(db, "reservations", modalState.id);
+          const prev = modalState;
 
-        // Si on change les clés (brand/model/client), la meilleure approche est:
-        // - supprimer l'ancien doc
-        // - upsert sur la nouvelle clé
-        // pour garder la fusion de quantité si besoin.
-        const prev = modalState;
-        const changedKey =
-          normKey(prev.brand) !== normKey(brand) ||
-          normKey(prev.model) !== normKey(model) ||
-          (prev.showClient && normKey(prev.clientName) !== normKey(client));
+          const keyChanged =
+            normKey(prev.brand) !== normKey(brand) ||
+            normKey(prev.model) !== normKey(model) ||
+            normKey(prev.clientName) !== normKey(client);
 
-        if(!changedKey){
-          await updateDoc(ref, {
-            brand, brandKey:normKey(brand),
-            model, modelKey:normKey(model),
-            qty,
-            clientName: prev.showClient ? client : undefined,
-            clientKey: prev.showClient ? normKey(client) : undefined,
-            updatedAt: serverTimestamp()
-          });
+          if(!keyChanged){
+            await updateDoc(ref, {
+              brand, brandKey:normKey(brand),
+              model, modelKey:normKey(model),
+              qty,
+              clientName: client,
+              clientKey: normKey(client),
+              updatedAt: serverTimestamp()
+            });
+          }else{
+            // supprime puis upsert (merge)
+            await deleteDoc(ref);
+            await upsertReservation({ brand, model, qty, clientName: client });
+          }
         }else{
-          const batch = writeBatch(db);
-          batch.delete(ref);
-          // recréation/merge
-          const status = prev.showClient ? "reservation" : "stock";
-          // upsertInventory fait ses propres writes, donc on fait version "manuelle" en batch:
-          // -> on fait un query puis add/update; mais Firestore ne supporte pas query dans batch.
-          // -> donc on fait en 2 étapes sans batch.
-          await batch.commit();
-          await upsertInventory({ status, brand, model, qty, clientName: client });
+          // stock
+          const ref = doc(db, "stock", modalState.id);
+          const prev = modalState;
+
+          const keyChanged =
+            normKey(prev.brand) !== normKey(brand) ||
+            normKey(prev.model) !== normKey(model);
+
+          if(!keyChanged){
+            await updateDoc(ref, {
+              brand, brandKey:normKey(brand),
+              model, modelKey:normKey(model),
+              qty,
+              updatedAt: serverTimestamp()
+            });
+          }else{
+            await deleteDoc(ref);
+            await upsertStock({ brand, model, qty });
+          }
         }
 
         toast("Enregistré", "Modifications appliquées.");
@@ -987,9 +965,104 @@ const firebaseConfig = await ensureFirebaseConfig();
       }
     });
 
+    // ===== Row actions =====
+    document.addEventListener("click", async (ev)=>{
+      const btn = ev.target?.closest?.("button[data-act]");
+      if(!btn) return;
+
+      const act = btn.dataset.act;
+      const id = btn.dataset.id;
+      if(!id) return;
+
+      if(act === "del_stock"){
+        if(!confirm("Supprimer cette ligne de stock ?")) return;
+        try{
+          await deleteDoc(doc(db, "stock", id));
+          toast("Supprimé", "OK.");
+          await refreshAll();
+        }catch(e){
+          toast("Erreur", e.message || String(e));
+        }
+        return;
+      }
+
+      if(act === "del_resa"){
+        if(!confirm("Annuler cette réservation ?")) return;
+        try{
+          await deleteDoc(doc(db, "reservations", id));
+          toast("Annulé", "OK.");
+          await refreshAll();
+        }catch(e){
+          toast("Erreur", e.message || String(e));
+        }
+        return;
+      }
+
+      if(act === "edit_stock"){
+        const item = stockItems.find(x=>x.id===id);
+        if(!item) return;
+        openModal({
+          title: "Modifier le stock",
+          hint: "Changer la marque/modèle ou la quantité.",
+          showClient: false,
+          data: { id, brand:item.brand, model:item.model, qty:item.qty, clientName:"" }
+        });
+        return;
+      }
+
+      if(act === "edit_resa"){
+        const item = resaItems.find(x=>x.id===id);
+        if(!item) return;
+        openModal({
+          title: "Modifier la réservation",
+          hint: "Changer le client, la marque/modèle ou la quantité.",
+          showClient: true,
+          data: { id, brand:item.brand, model:item.model, qty:item.qty, clientName:item.clientName || "" }
+        });
+        return;
+      }
+
+      if(act === "sell"){
+        const item = resaItems.find(x=>x.id===id);
+        if(!item) return;
+        if(!confirm(`Convertir en vente pour ${item.clientName} ?`)) return;
+
+        try{
+          const batch = writeBatch(db);
+
+          // transaction (pour dashboard)
+          const txRef = doc(txCol); // auto id
+          batch.set(txRef, {
+            type: "sale",
+           oree: "Vente depuis réservation",
+            detail: "Vente depuis réservation",
+            clientName: item.clientName || "",
+            brand: item.brand,
+            model: item.model,
+            qty: item.qty,
+            source: "reservation",
+            sourceReservationId: item.id,
+            createdBy: currentUser?.uid || null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+
+          // supprime la réservation
+          batch.delete(doc(db, "reservations", item.id));
+
+          await batch.commit();
+          toast("Vente créée", "Réservation convertie en vente.");
+          await refreshAll();
+        }catch(e){
+          console.error(e);
+          toast("Erreur", e.message || String(e));
+        }
+        return;
+      }
+    });
+
     // ===== CSV parsing =====
     function parseCSV(text){
-      // simple CSV parser with quotes
       const rows = [];
       let row = [];
       let cur = "";
@@ -1009,7 +1082,6 @@ const firebaseConfig = await ensureFirebaseConfig();
           continue;
         }
         if((ch === '\n' || ch === '\r') && !inQuotes){
-          // handle CRLF
           if(ch === '\r' && next === '\n') i++;
           row.push(cur);
           rows.push(row);
@@ -1025,7 +1097,6 @@ const firebaseConfig = await ensureFirebaseConfig();
     }
 
     function findHeaderRow(rows){
-      // find row containing "Marque" and "Modèle" at least once
       for(let r=0; r<Math.min(rows.length, 30); r++){
         const cells = rows[r].map(c=>normKey(c));
         if(cells.includes("marque") && (cells.includes("modele") || cells.includes("modèle"))){
@@ -1036,12 +1107,10 @@ const firebaseConfig = await ensureFirebaseConfig();
     }
 
     function extractBlocks(rows){
-      // returns arrays: stockLines {brand, model, qty, client?}
       const headerRow = findHeaderRow(rows);
       if(headerRow < 0) throw new Error("Impossible de trouver l'entête (Marque/Modèle).");
 
       const header = rows[headerRow].map(c=>normKey(c));
-      // detect multi-block style: there are multiple "marque" occurrences.
       const marqueIdx = [];
       for(let i=0;i<header.length;i++){
         if(header[i]==="marque") marqueIdx.push(i);
@@ -1050,7 +1119,6 @@ const firebaseConfig = await ensureFirebaseConfig();
       const out = [];
       const startData = headerRow + 1;
 
-      // helper to read table starting at col index
       function readTable(colBrand, colModel, colQty, colClient){
         for(let r=startData; r<rows.length; r++){
           const brand = norm(rows[r][colBrand]);
@@ -1058,35 +1126,25 @@ const firebaseConfig = await ensureFirebaseConfig();
           const qtyRaw = rows[r][colQty];
           const client = colClient != null ? norm(rows[r][colClient]) : "";
 
-          // stop if completely empty line for this table
-          if(!brand && !model && !norm(qtyRaw) && !client){
-            // but sometimes there are empty holes; if we haven't started, continue; else break when big empty run
-            continue;
-          }
-          if(!brand && !model){
-            // ignore
-            continue;
-          }
+          if(!brand && !model && !norm(qtyRaw) && !client) continue;
+          if(!brand && !model) continue;
+
           const qty = parseIntSafe(qtyRaw, 1);
           out.push({ brand, model, qty, client });
         }
       }
 
       if(marqueIdx.length >= 2){
-        // likely your sheet layout
-        // assume stock table at first marque occurrence: marque, modele, nombre
-        // assume reservations at second marque occurrence: marque, modele, nombre, demandeur
         const stockStart = marqueIdx[0];
         const resaStart = marqueIdx[1];
 
         const colStockBrand = stockStart;
         const colStockModel = stockStart + 1;
-        const colStockQty = stockStart + 2;
+        const colStockQty   = stockStart + 2;
 
-        // reservations header might be at resaStart,resaStart+1,resaStart+2,resaStart+3
-        const colResaBrand = resaStart;
-        const colResaModel = resaStart + 1;
-        const colResaQty = resaStart + 2;
+        const colResaBrand  = resaStart;
+        const colResaModel  = resaStart + 1;
+        const colResaQty    = resaStart + 2;
         const colResaClient = resaStart + 3;
 
         readTable(colStockBrand, colStockModel, colStockQty, null);
@@ -1094,7 +1152,6 @@ const firebaseConfig = await ensureFirebaseConfig();
         return out;
       }
 
-      // fallback: single-table CSV, map columns by name
       const col = {};
       for(let i=0;i<header.length;i++){
         const k = header[i];
@@ -1106,6 +1163,7 @@ const firebaseConfig = await ensureFirebaseConfig();
       }
       if(col.brand==null || col.model==null) throw new Error("Colonnes Marque/Modèle manquantes.");
       if(col.qty==null) col.qty = header.findIndex(x=>x==="nombre");
+
       for(let r=startData; r<rows.length; r++){
         const brand = norm(rows[r][col.brand]);
         const model = norm(rows[r][col.model]);
@@ -1121,17 +1179,22 @@ const firebaseConfig = await ensureFirebaseConfig();
       const statusEl = $("importStatus");
       statusEl.textContent = "Import…";
       let ok=0, skip=0;
+
       for(const l of lines){
         try{
           const client = norm(l.client);
-          const status = client ? "reservation" : "stock";
-          await upsertInventory({ status, brand: l.brand, model: l.model, qty: l.qty, clientName: client });
+          if(client){
+            await upsertReservation({ brand:l.brand, model:l.model, qty:l.qty, clientName:client });
+          }else{
+            await upsertStock({ brand:l.brand, model:l.model, qty:l.qty });
+          }
           ok++;
         }catch(e){
           console.warn("skip line", l, e);
           skip++;
         }
       }
+
       statusEl.textContent = `OK: ${ok} / skip: ${skip}`;
       toast("Import terminé", `Ajoutées: ${ok} • Ignorées: ${skip}`);
       await refreshAll();
@@ -1147,8 +1210,6 @@ const firebaseConfig = await ensureFirebaseConfig();
         const text = await f.text();
         const rows = parseCSV(text);
         const lines = extractBlocks(rows);
-
-        // rules: if client present -> reservation else stock
         await importLines(lines);
       }catch(e){
         console.error(e);
@@ -1159,17 +1220,34 @@ const firebaseConfig = await ensureFirebaseConfig();
     $("btnPurgeAll").addEventListener("click", async ()=>{
       if(!confirm("Ça supprime tout le stock ET toutes les réservations (Firestore). Continuer ?")) return;
       try{
-        const snap = await getDocs(invCol);
-        const batch = writeBatch(db);
-        snap.docs.forEach(d=>batch.delete(d.ref));
+        // purge stock
+        const s = await getDocs(stockCol);
+        let batch = writeBatch(db);
+        let count = 0;
+        for(const d of s.docs){
+          batch.delete(d.ref);
+          count++;
+          if(count % 400 === 0){ await batch.commit(); batch = writeBatch(db); }
+        }
         await batch.commit();
+
+        // purge reservations
+        const r = await getDocs(resaCol);
+        batch = writeBatch(db);
+        count = 0;
+        for(const d of r.docs){
+          batch.delete(d.ref);
+          count++;
+          if(count % 400 === 0){ await batch.commit(); batch = writeBatch(db); }
+        }
+        await batch.commit();
+
         toast("OK", "Stock + réservations vidés.");
         await refreshAll();
       }catch(e){
         toast("Erreur", e.message || String(e));
       }
     });
-
   </script>
 </body>
 </html>
