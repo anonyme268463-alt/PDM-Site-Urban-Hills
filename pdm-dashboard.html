@@ -1,1466 +1,692 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>PDM Admin — Dashboard</title>
-  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="icon" type="image/png" href="favicon.png"/>
   <style>
     :root{
-      --bg:#050608;
-      --bg2:#0b0d11;
-      --card:#0e1016cc;
-      --card2:#0b0d11cc;
-      --line:rgba(255,255,255,.08);
-      --text:#f4f4f5;
-      --muted:#a0a3ab;
-      --gold1:#f5e0a3;
-      --gold2:#d4af37;
-      --gold3:#f1d58b;
-      --blue:#0b2b5b;
-      --red:#3b1b23;
-      --shadow: 0 22px 80px rgba(0,0,0,.55);
+      --bg:#07080c;
+      --card:rgba(10,12,18,.62);
+      --card2:rgba(10,12,18,.52);
+      --stroke:rgba(255,255,255,.08);
+      --stroke2:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.55);
+      --muted2:rgba(255,255,255,.42);
+      --gold1:#f6d26b;
+      --gold2:#b88222;
+      --danger:#ff6b6b;
+      --ok:#47e6a6;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
       --radius:18px;
       --radius2:14px;
-      --ring: 0 0 0 2px rgba(212,175,55,.25);
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-      background:
-        radial-gradient(1200px 700px at 20% 30%, rgba(13,35,88,.55), transparent 55%),
-        radial-gradient(900px 600px at 75% 35%, rgba(70,10,18,.55), transparent 55%),
-        radial-gradient(1100px 900px at 50% 65%, rgba(0,0,0,.7), transparent 60%),
-        linear-gradient(180deg, var(--bg), var(--bg2));
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
+                  radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
+                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
+      color:var(--text);
       overflow-x:hidden;
     }
-    .wrap{
-      width:min(1220px, 92vw);
-      margin: 28px auto 80px;
+    /* soft vignette like catalogue public */
+    body:before{
+      content:"";
+      position:fixed; inset:-20px;
+      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
+      pointer-events:none;
+      z-index:-1;
     }
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:14px;
-      padding: 14px 18px;
-      border:1px solid var(--line);
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    a{color:inherit; text-decoration:none}
+    .app{
+      display:flex;
+      min-height:100vh;
+      gap:22px;
+      padding:18px 18px 26px;
+    }
+    /* Sidebar */
+    .sidebar{
+      width:250px;
+      min-width:250px;
+      background: rgba(10,12,18,.46);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding:14px;
       box-shadow: var(--shadow);
-      position: sticky; top: 12px; z-index: 50;
+      position:sticky;
+      top:18px;
+      height: calc(100vh - 44px);
+      display:flex;
+      flex-direction:column;
       backdrop-filter: blur(10px);
     }
     .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width: 240px;
+      font-weight:800;
+      letter-spacing:.12em;
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      margin-bottom:10px;
     }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 8px 12px;
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+    }
+    .nav a{
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.18);
+      color:rgba(255,255,255,.76);
+      font-size:13px;
+    }
+    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
+    .nav a.active{
+      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
+      border-color: rgba(246,210,107,.22);
+      color: rgba(255,255,255,.9);
+    }
+    .spacer{flex:1}
+    .side-actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+      transition:.12s transform ease, .12s background ease, .12s border-color ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
+      border-color: rgba(246,210,107,.30);
+      color:#1b1306;
+      box-shadow: 0 10px 22px rgba(184,130,34,.18);
+    }
+    .btn.danger{
+      background: rgba(255,80,80,.12);
+      border-color: rgba(255,80,80,.24);
+      color: rgba(255,210,210,.95);
+    }
+    .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
+    /* Main */
+    .main{
+      flex:1;
+      max-width: 980px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius: 16px;
+      background: rgba(10,12,18,.44);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .chips{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .chip{
+      padding:7px 10px;
       border-radius: 999px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.25);
-      color:var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.8);
       font-size:12px;
       white-space:nowrap;
     }
-    .title{
-      font-weight:700; letter-spacing:.14em;
-      text-transform: uppercase;
-      font-size:12px;
-      color:#fff;
-      opacity:.92;
+    .chip.muted{color:rgba(255,255,255,.6)}
+    .top-actions{display:flex; gap:10px; align-items:center}
+    .layout{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:14px;
     }
-    .role{
-      color: var(--gold1);
-      border-color: rgba(212,175,55,.25);
-    }
-    .right{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
-    }
-    .btn{
-      appearance:none; border:none; cursor:pointer;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight:700; letter-spacing:.08em;
-      text-transform: uppercase;
-      font-size:11px;
-      background: linear-gradient(180deg, var(--gold1), var(--gold2));
-      color:#111;
-      box-shadow: 0 14px 40px rgba(212,175,55,.18);
-      transition: transform .15s ease, filter .15s ease;
-    }
-    .btn:hover{transform: translateY(-1px); filter:brightness(1.03)}
-    .btn.secondary{
-      background: transparent;
-      color: var(--text);
-      border:1px solid var(--line);
-      box-shadow:none;
-    }
-    .btn.danger{
-      background: linear-gradient(180deg, #ffb4b4, #ff5e5e);
-      color:#1a0606;
-    }
-
-    .grid{display:grid; grid-template-columns: 1fr; gap:16px; margin-top:18px;}
-    .panel{
-      border:1px solid var(--line);
+    .card{
+      background: var(--card);
+      border:1px solid var(--stroke);
       border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
       box-shadow: var(--shadow);
-      overflow:hidden;
+      padding:14px;
+      backdrop-filter: blur(12px);
     }
-    .panelHead{
-      padding: 16px 18px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      border-bottom:1px solid var(--line);
-      background:
-        radial-gradient(900px 500px at 20% 20%, rgba(11,43,91,.25), transparent 55%),
-        radial-gradient(900px 500px at 80% 60%, rgba(59,27,35,.25), transparent 55%),
-        rgba(0,0,0,.18);
+    .card h3{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.75);
     }
-    .panelHead h2{
-      margin:0; font-size:12px; letter-spacing:.18em;
-      text-transform:uppercase; color:rgba(255,255,255,.9);
+    .sub{
+      font-size:12px;
+      color: var(--muted);
+      margin:-4px 0 10px;
     }
-    .panelBody{padding: 16px 18px;}
-    .muted{color:var(--muted)}
-    .note{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.4}
-
-    .stats{display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;}
-    .stat{border:1px solid var(--line); border-radius: var(--radius2); background: rgba(0,0,0,.22); padding:12px 14px;}
-    .stat .k{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
-    .stat .v{margin-top:6px; font-size:18px; font-weight:800}
-    .stat .s{margin-top:2px; font-size:12px; color:var(--muted)}
-    .stat .v.gold{color:var(--gold1)}
-
-    .formGrid{
+    .grid{
       display:grid;
-      grid-template-columns: 140px 1.2fr 1.4fr 140px 160px 140px;
-      gap:10px; align-items:center;
+      grid-template-columns: 1.1fr 1.1fr .7fr 1.1fr;
+      gap:10px;
+      align-items:end;
     }
-    .field, select, input, textarea{
+    label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
+    input, select{
       width:100%;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.22);
-      color:var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
       outline:none;
     }
-    textarea{border-radius:14px; min-height:42px; resize: vertical;}
-    .field:focus, select:focus, input:focus, textarea:focus{
-      box-shadow: var(--ring);
-      border-color: rgba(212,175,55,.35);
-    }
-    .rowActions{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;}
-
-    .toolbar{
+    input::placeholder{color: rgba(255,255,255,.32)}
+    .row-actions{display:flex; gap:10px; justify-content:flex-end}
+    .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
+    .two{
       display:grid;
-      grid-template-columns: 1.6fr 160px 160px 160px 160px 1fr;
-      gap:10px; align-items:center; margin-bottom:12px;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
     }
-    .toolbar .mini{font-size:11px; color:var(--muted); display:flex; gap:8px; align-items:center;}
-    .chip{
-      padding: 8px 10px; border-radius: 999px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.22);
-      font-size: 12px; color: var(--muted);
-      display:inline-flex; gap:8px; align-items:center;
-      user-select:none;
-    }
-    .chip input{accent-color: var(--gold2); width:16px; height:16px}
-
-    table{
-      width:100%; border-collapse: collapse;
-      overflow:hidden; border-radius: 14px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.18);
-    }
-    th, td{
-      padding: 10px 10px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      font-size: 12px;
-      vertical-align: top;
-    }
-    th{
-      text-align:left; color: rgba(255,255,255,.8);
-      letter-spacing:.12em; text-transform: uppercase;
-      font-size: 11px; background: rgba(255,255,255,.03);
-    }
-    tr:hover td{background: rgba(255,255,255,.02)}
-    .nowrap{white-space:nowrap}
-    .price{font-weight:800; color:var(--gold1)}
-    .badge{
-      display:inline-flex; padding:6px 10px;
-      border-radius: 999px; border:1px solid var(--line);
-      background: rgba(0,0,0,.25);
-      color: var(--muted);
-      font-size: 11px; white-space:nowrap;
-    }
-    .badge.ok{border-color: rgba(212,175,55,.25); color: var(--gold1)}
-    .badge.wait{border-color: rgba(11,43,91,.35); color:#b7c7ff}
-    .badge.no{border-color: rgba(255,130,130,.35); color:#ffb0b0}
-
-    .pagination{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; flex-wrap:wrap;}
-
-    .tabs{display:flex; gap:8px; flex-wrap:wrap;}
-    .tab{
-      padding: 8px 12px;
-      border-radius: 999px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.22);
-      color: var(--muted);
-      font-size: 12px;
-      cursor:pointer; user-select:none;
-    }
-    .tab.active{
-      background: linear-gradient(180deg, rgba(245,224,163,.18), rgba(212,175,55,.12));
-      border-color: rgba(212,175,55,.35);
-      color: var(--gold1);
-      box-shadow: var(--ring);
-    }
-
-    .twoCol{display:grid; grid-template-columns: 1.1fr .9fr; gap:14px;}
-    .list{
-      border:1px solid var(--line);
-      border-radius: 14px;
-      overflow:hidden;
-      background: rgba(0,0,0,.18);
-    }
-    .list .item{
-      display:flex; align-items:center; justify-content:space-between;
+    .tools{
+      display:flex;
       gap:10px;
-      padding: 12px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:10px;
     }
-    .list .item:last-child{border-bottom:none}
-    .item .meta{display:flex; flex-direction:column; gap:2px}
-    .item .meta b{font-size:13px}
-    .item .meta span{font-size:12px; color:var(--muted)}
-    .item .tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-
+    .tools .left, .tools .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.75);
+      font-size:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    thead th{
+      text-align:left;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.62);
+      padding:10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.02)}
+    tbody tr:last-child td{border-bottom:none}
+    .tag{
+      display:inline-flex;
+      padding:6px 9px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      font-size:12px;
+      color: rgba(255,255,255,.72);
+    }
+    .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
+    .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
+    .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
+    .td-actions{white-space:nowrap; text-align:right}
     .toast{
-      position: fixed; right: 16px; bottom: 16px;
-      background: rgba(0,0,0,.78);
-      border: 1px solid rgba(255,255,255,.10);
-      color: var(--text);
-      padding: 12px 14px;
-      border-radius: 14px;
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 460px;
+      background: rgba(10,12,18,.82);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
       box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      max-width: min(420px, 90vw);
+      backdrop-filter: blur(12px);
       display:none;
-      z-index: 999;
+      z-index:50;
     }
-    .toast b{color: var(--gold1)}
-    .toast .small{color:var(--muted); font-size:12px; margin-top:4px}
-
-    /* Mobile */
+    .toast.show{display:block}
+    .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
+    .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
+    .modal-overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:18px;
+    }
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(740px, 96vw);
+      border-radius: 18px;
+      background: rgba(10,12,18,.86);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .modal h4{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.72);
+    }
+    .modal .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px}
     @media (max-width: 980px){
-      .stats{grid-template-columns: repeat(2, minmax(0, 1fr));}
-      .formGrid{grid-template-columns: 1fr 1fr; }
-      .toolbar{grid-template-columns: 1fr 1fr; }
-      .twoCol{grid-template-columns: 1fr;}
-      .brand{min-width: unset;}
+      .app{flex-direction:column}
+      .sidebar{position:relative; width:100%; height:auto; min-width:unset}
+      .main{max-width:100%}
+      .two{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr 1fr; }
     }
-    @media (max-width: 640px){
-      .wrap{width: 94vw;}
-      .topbar{border-radius: 18px}
-      .stats{grid-template-columns: 1fr;}
-      table{display:none}
-      .cards{display:grid; gap:10px}
-      .cardRow{
-        border:1px solid var(--line);
-        border-radius: 14px;
-        background: rgba(0,0,0,.18);
-        padding: 12px;
-      }
-      .cardRow .head{display:flex; justify-content:space-between; gap:10px; align-items:flex-start}
-      .cardRow .head b{font-size:14px}
-      .cardRow .kv{display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px}
-      .kv div{font-size:12px; color:var(--muted)}
-      .kv div b{color:var(--text); font-weight:700}
-      .cardRow .tools{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap}
-    }
+  
+/* Firebase config modal */
+#firebaseConfigModal{
+  position:fixed; inset:0; z-index:99999;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+}
+#firebaseConfigModal .cfg-card{
+  width:min(720px, 92vw);
+  background: rgba(10,12,18,.92);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+#firebaseConfigModal .cfg-text{
+  width:100%; height:220px; resize:vertical;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:12px;
+  color:#fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  outline:none;
+}
+#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
 
-    #meBadge.is-admin { border-color: rgba(241,213,139,.55); color: #f1d58b; }
-    #meBadge.is-staff { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.86); }
+/* Select readability */
+select, select option{background:#fff;color:#000}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+  .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
+  .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  @media (max-width: 980px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width: 520px){
+    .kpis{grid-template-columns:1fr}
+  }
   </style>
 </head>
- <div class="toast" id="clientModal" style="display:none; right:16px; bottom:16px; max-width:560px;">
-   <div><b>Ajouter un client</b></div>
-   <div class="small" style="margin-top:10px; display:grid; gap:10px;">
-     <input id="cName" class="field" placeholder="Nom/Prénom (obligatoire)" />
-     <input id="cPhone" class="field" placeholder="Téléphone (optionnel)" />
-     <select id="cLicense" class="field">
-       <option value="oui">Permis : Oui</option>
-       <option value="non">Permis : Non</option>
-       <option value="indisponible">Permis : Indisponible</option>
-       <option value="non_demande">Permis : Non demandé</option>
-     </select>
-     <div style="display:flex; gap:12px; flex-wrap:wrap;">
-       <label class="chip"><input type="checkbox" id="cCar" /> Voiture</label>
-       <label class="chip"><input type="checkbox" id="cMoto" /> Moto</label>
-       <label class="chip"><input type="checkbox" id="cTruck" /> Camion</label>
-     </div>
-
-     <input id="cPurchase" class="field" type="number" placeholder="Achat (nombre)" />
-
-     <div style="display:flex; gap:10px; justify-content:flex-end;">
-       <button class="btn secondary" id="cCancel" type="button">Annuler</button>
-       <button class="btn" id="cSave" type="button">Enregistrer</button>
-     </div>
-   </div>
- </div>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">PDM ADMIN</div>
-        <div class="pill role" id="meBadge">Chargement…</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">PDM ADMIN</div>
+      <nav class="nav">
+        <a class="active" href="dashboard.html">Dashboard</a>
+        <a href="clients.html">Base clients</a>
+        <a href="vehicles.html">Base véhicules</a>
+        <a href="stock.html">Stock & réservations</a>
+        <a href="ventes.html">Ventes véhicules</a>
+        <a href="compta.html">Comptabilité</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="side-actions">
+        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
       </div>
-      <div class="right">
-        <div class="pill" id="envBadge">Firestore · Live</div>
-        <button class="btn secondary" id="toSite">Site</button>
-        <button class="btn danger" id="logout">Déconnexion</button>
-      </div>
-    </div>
+    </aside>
 
-    <div class="grid">
-      <!-- STATS -->
-      <div class="panel">
-        <div class="panelHead">
-          <h2>Tableau de bord</h2>
-          <div class="tabs">
-            <div class="tab active" data-tab="transactions">Transactions</div>
-            <div class="tab" data-tab="staff">Gestion staff</div>
-            <div class="tab" data-tab="audit">Journal</div>
-          </div>
+    <main class="main">
+      <div class="topbar">
+        <div class="chips">
+          <div class="chip">DASHBOARD</div>
+          <div id="chipUser" class="chip muted">Chargement…</div>
+          <div id="chipRole" class="chip muted">—</div>
+          <div id="chipEnv" class="chip muted">Firestore • Live</div>
         </div>
-        <div class="panelBody" id="tab-transactions">
-          <div class="stats">
-            <div class="stat">
-              <div class="k">Total (filtré)</div>
-              <div class="v gold" id="statTotal">$ 0</div>
-              <div class="s" id="statTotalS">—</div>
-            </div>
-            <div class="stat">
-              <div class="k">Nombre</div>
-              <div class="v" id="statCount">0</div>
-              <div class="s" id="statCountS">—</div>
-            </div>
-            <div class="stat">
-              <div class="k">Panier moyen</div>
-              <div class="v" id="statAvg">$ 0</div>
-              <div class="s" id="statAvgS">—</div>
-            </div>
-            <div class="stat">
-              <div class="k">Top vendeur</div>
-              <div class="v" id="statTop">—</div>
-              <div class="s" id="statTopS">—</div>
-            </div>
-          </div>
+        <div class="top-actions">
+          <a class="btn small" href="ventes.html">Ventes</a>
+          <a class="btn small" href="stock.html">Stock</a>
+          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
         </div>
       </div>
 
-      <!-- AJOUT -->
-      <div class="panel" id="panel-add">
-        <div class="panelHead">
-          <h2>Nouvelle entrée</h2>
-          <div class="pill" id="rightsHint">—</div>
-        </div>
-        <div class="panelBody">
-          <div class="formGrid">
-            <select id="fType">
-              <option value="vente">Vente</option>
-              <option value="reservation">Réservation</option>
-            </select>
-            <select id="fClientSelect" class="field">
-  <option value="">Sélectionner un client…</option>
-</select>
+      <div class="layout">
+        <section class="card">
+          <h3>Vue globale</h3>
+          <div class="sub">Ce dashboard est <b>lecture seule</b>. Les ventes se font dans <b>Ventes véhicules</b>.</div>
 
-<button class="btn secondary" id="addClientBtn" type="button">+ Client</button>
-            <input id="fVehicle" class="field" placeholder="Véhicule (Marque + Modèle)" />
-            <input id="fPrice" class="field" type="number" placeholder="Prix" />
-            <select id="fStatus">
-              <option value="en_attente">En attente</option>
-              <option value="paye">Payé</option>
-              <option value="annule">Annulé</option>
-            </select>
-            <button class="btn" id="addBtn">Ajouter</button>
-          </div>
-          <div style="margin-top:10px;">
-            <textarea id="fNotes" placeholder="Notes (optionnel)"></textarea>
-          </div>
-          <div class="note">
-            Règles : le staff peut créer et gérer ses propres entrées. L’admin peut tout gérer et gérer les profils staff.
-          </div>
-        </div>
-      </div>
-
-      <!-- HISTORIQUE -->
-      <div class="panel">
-        <div class="panelHead">
-          <h2>Historique</h2>
-          <div class="rowActions">
-            <button class="btn secondary" id="exportCsv">Exporter CSV</button>
-            <label class="btn secondary" id="importLabel" style="display:none;">
-              Importer CSV <input id="importCsv" type="file" accept=".csv" style="display:none;" />
-            </label>
-          </div>
-        </div>
-        <div class="panelBody">
-          <div class="toolbar">
-            <input id="q" class="field" placeholder="Rechercher (client, véhicule, vendeur, notes)…" />
-            <select id="filterType">
-              <option value="all">Tous types</option>
-              <option value="vente">Ventes</option>
-              <option value="reservation">Réservations</option>
-            </select>
-            <select id="filterStatus">
-              <option value="all">Tous statuts</option>
-              <option value="en_attente">En attente</option>
-              <option value="paye">Payé</option>
-              <option value="annule">Annulé</option>
-            </select>
-            <select id="filterSeller" style="display:none;"></select>
-            <select id="sortBy">
-              <option value="date_desc">Tri : date ↓</option>
-              <option value="date_asc">Tri : date ↑</option>
-              <option value="price_desc">Tri : prix ↓</option>
-              <option value="price_asc">Tri : prix ↑</option>
-            </select>
-            <div class="mini">
-              <span class="chip" id="mineChip"><input type="checkbox" id="mineOnly" /> Mes ventes</span>
-              <span class="chip" id="resetBtn" style="cursor:pointer;">Réinitialiser</span>
+          <div class="kpis">
+            <div class="kpi">
+              <div class="k">CA semaine (ventes)</div>
+              <div class="v" id="kWeekSales">$ 0</div>
+              <div class="s" id="kWeekSalesS">—</div>
             </div>
-
-            <input id="minPrice" class="field" type="number" placeholder="Prix min" />
-            <input id="maxPrice" class="field" type="number" placeholder="Prix max" />
-            <input id="fromDate" class="field" type="date" />
-            <input id="toDate" class="field" type="date" />
-            <select id="pageSize">
-              <option value="25">25 / page</option>
-              <option value="50">50 / page</option>
-              <option value="100">100 / page</option>
-            </select>
-            <div class="mini muted" id="countInfo">—</div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th class="nowrap">Date</th>
-                <th>Type</th>
-                <th>Client</th>
-                <th>Véhicule</th>
-                <th class="nowrap">Prix</th>
-                <th>Statut</th>
-                <th>Vendeur</th>
-                <th>Notes</th>
-                <th class="nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
-
-          <!-- Mobile cards -->
-          <div class="cards" id="cards" style="display:none;"></div>
-
-          <div class="pagination">
-            <div class="muted" id="pageInfo">—</div>
-            <div class="rowActions">
-              <button class="btn secondary" id="prevPage">Précédent</button>
-              <button class="btn secondary" id="nextPage">Suivant</button>
+            <div class="kpi">
+              <div class="k">CA total (ventes)</div>
+              <div class="v" id="kAllSales">$ 0</div>
+              <div class="s" id="kAllSalesS">—</div>
+            </div>
+            <div class="kpi">
+              <div class="k">Stock</div>
+              <div class="v" id="kStock">0</div>
+              <div class="s" id="kStockS">items</div>
+            </div>
+            <div class="kpi">
+              <div class="k">Réservations</div>
+              <div class="v" id="kResa">0</div>
+              <div class="s" id="kResaS">items</div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- STAFF -->
-      <div class="panel" id="tab-staff" style="display:none;">
-        <div class="panelHead">
-          <h2>Gestion staff</h2>
-          <div class="pill">Admin uniquement</div>
-        </div>
-        <div class="panelBody">
-          <div class="twoCol">
-            <div>
-              <div class="muted" style="margin-bottom:10px;">Liste des profils Firestore (collection <b>users</b>).</div>
-              <div class="list" id="staffList"></div>
+          <div class="hint" style="margin-top:10px">
+            Sources:
+            <span class="mono">transactions</span> (ventes) + <span class="mono">inventory</span> (stock/résa).
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Activité récente</h3>
+          <div class="tools">
+            <div class="left">
+              <input id="q" placeholder="Rechercher client / véhicule / vendeur…" />
+              <select id="filterType">
+                <option value="all">Toutes ventes</option>
+                <option value="sale_direct">Vente directe</option>
+                <option value="sale_stock">Vente depuis stock</option>
+                <option value="sale_reservation">Vente depuis réservation</option>
+              </select>
             </div>
-            <div>
-              <div class="muted" style="margin-bottom:10px;">Créer / mettre à jour un profil staff (après création du compte dans Authentication).</div>
-              <div class="panel" style="box-shadow:none;">
-                <div class="panelBody">
-                  <input id="uUid" class="field" placeholder="UID (depuis Firebase Auth)" />
-                  <div style="height:10px"></div>
-                  <input id="uName" class="field" placeholder="Nom affiché (RP)" />
-                  <div style="height:10px"></div>
-                  <select id="uRole">
-                    <option value="staff">staff</option>
-                    <option value="manager">manager</option>
-                    <option value="admin">admin</option>
-                  </select>
-                  <div style="height:10px"></div>
-                  <label class="chip"><input type="checkbox" id="uActive" checked /> Compte actif</label>
-                  <div style="height:12px"></div>
-                  <button class="btn" id="saveUser">Enregistrer profil</button>
-                  <div class="note">
-                    Création du compte (email/mot de passe) : à faire dans <b>Firebase Authentication</b>. Ici on gère le profil (rôle, actif, nom).
-                  </div>
-                </div>
-              </div>
+            <div class="right">
+              <span id="count" class="pill">0</span>
+              <button id="btnRefresh" class="btn">Rafraîchir</button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- AUDIT -->
-      <div class="panel" id="tab-audit" style="display:none;">
-        <div class="panelHead">
-          <h2>Journal des actions</h2>
-          <div class="pill">Admin uniquement</div>
-        </div>
-        <div class="panelBody">
-          <div class="muted" style="margin-bottom:10px;">Traçabilité : ajouts / modifications / suppressions.</div>
-          <div class="list" id="auditList"></div>
-        </div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Client</th>
+                  <th>Véhicule</th>
+                  <th>Qté</th>
+                  <th>Vendeur</th>
+                  <th style="text-align:right">Montant</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">
+    <div id="toastTitle" class="t"></div>
+    <div id="toastMsg" class="m"></div>
+  </div>
+
+  
+  <div id="firebaseConfigModal" style="display:none">
+    <div class="cfg-card">
+      <div class="cfg-title">Configuration Firebase</div>
+      <div class="cfg-sub">Colle ici <b>uniquement</b> ton bloc <code>firebaseConfig</code> (objet). Il sera sauvegardé sur ce navigateur (localStorage) et réutilisé sur toutes les pages admin.</div>
+      <textarea id="firebaseConfigText" class="cfg-text" placeholder='Ex: { apiKey: "...", authDomain: "...", projectId: "...", appId: "..." }'></textarea>
+      <div class="cfg-actions">
+        <button id="firebaseConfigCancel" class="btn">Annuler</button>
+        <button id="firebaseConfigSave" class="btn gold">Enregistrer</button>
+      </div>
+      <div class="cfg-note">Astuce: tu peux coller le snippet complet <code>const firebaseConfig = {...};</code>, ça marche aussi.</div>
     </div>
   </div>
 
-  <div class="toast" id="toast">
-    <div id="toastTitle"><b>Info</b></div>
-    <div class="small" id="toastMsg"></div>
-  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
-      query, orderBy, limit, onSnapshot, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+      getFirestore, collection, doc, getDoc, getDocs,
+      query, where, orderBy, limit
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
-      authDomain: "pdm-urban-hills.firebaseapp.com",
-      projectId: "pdm-urban-hills",
-      storageBucket: "pdm-urban-hills.firebasestorage.app",
-      messagingSenderId: "426355558661",
-      appId: "1:426355558661:web:8364782043dd5ad2270f6c",
-      measurementId: "G-RGM2DWVFLT"
-    };
+    function loadFirebaseConfig(){
+      try{
+        const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
+        if(!raw) return null;
+        let txt = String(raw).trim();
+        const objMatch = txt.match(/\{[\s\S]*\}/);
+        if(objMatch) txt = objMatch[0];
+        try{ return JSON.parse(txt); }catch(e){}
+        try{ return (new Function("return (" + txt + ");"))(); }catch(e){}
+        return null;
+      }catch(e){
+        return null;
+      }
+    }
 
+    function showFirebaseConfigModal(){
+      return new Promise((resolve)=>{
+        const modal = document.getElementById("firebaseConfigModal");
+        const ta = document.getElementById("firebaseConfigText");
+        const btn = document.getElementById("firebaseConfigSave");
+        const cancel = document.getElementById("firebaseConfigCancel");
+        modal.style.display = "flex";
+
+        btn.onclick = () => {
+          const v = ta.value.trim();
+          if(!v){ alert("Colle ta config Firebase (bloc firebaseConfig)."); return; }
+          localStorage.setItem("PDM_FIREBASE_CONFIG", v);
+          modal.style.display = "none";
+          resolve(true);
+          location.reload();
+        };
+        cancel.onclick = () => {
+          modal.style.display = "none";
+          resolve(false);
+        };
+      });
+    }
+
+    async function ensureFirebaseConfig(){
+      const cfg = loadFirebaseConfig();
+      if(cfg) return cfg;
+      await showFirebaseConfigModal();
+      throw new Error("Firebase config manquante");
+    }
+
+    const firebaseConfig = await ensureFirebaseConfig();
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // ===== DOM refs (UNE SEULE FOIS) =====
-    const meBadge = document.getElementById("meBadge");
-    const rightsHint = document.getElementById("rightsHint");
-    const toSiteBtn = document.getElementById("toSite");
-    const logoutBtn = document.getElementById("logout");
-
-    const tabs = [...document.querySelectorAll(".tab")];
-    const tabTransactions = document.getElementById("tab-transactions");
-    const tabStaff = document.getElementById("tab-staff");
-    const tabAudit = document.getElementById("tab-audit");
-
-    const fType = document.getElementById("fType");
-    const fClient = document.getElementById("fClient");
-    const fVehicle = document.getElementById("fVehicle");
-    const fPrice = document.getElementById("fPrice");
-    const fStatus = document.getElementById("fStatus");
-    const fNotes = document.getElementById("fNotes");
-    const addBtn = document.getElementById("addBtn");
-    
-    // ===== Clients refs =====
-    const fClientSelect = document.getElementById("fClientSelect");
-    const addClientBtn = document.getElementById("addClientBtn");
-    const clientModal = document.getElementById("clientModal");
-    const cName = document.getElementById("cName");
-    const cPhone = document.getElementById("cPhone");
-    const cLicense = document.getElementById("cLicense");
-    const cCar = document.getElementById("cCar");
-    const cMoto = document.getElementById("cMoto");
-    const cTruck = document.getElementById("cTruck");
-    const cPurchase = document.getElementById("cPurchase");
-    const cCancel = document.getElementById("cCancel");
-    const cSave = document.getElementById("cSave");
-
-
-    const qEl = document.getElementById("q");
-    const filterType = document.getElementById("filterType");
-    const filterStatus = document.getElementById("filterStatus");
-    const filterSeller = document.getElementById("filterSeller");
-    const sortBy = document.getElementById("sortBy");
-    const mineOnly = document.getElementById("mineOnly");
-    const resetBtn = document.getElementById("resetBtn");
-
-    const minPrice = document.getElementById("minPrice");
-    const maxPrice = document.getElementById("maxPrice");
-    const fromDate = document.getElementById("fromDate");
-    const toDate = document.getElementById("toDate");
-    const pageSize = document.getElementById("pageSize");
-    const countInfo = document.getElementById("countInfo");
-
-    const rowsTbody = document.getElementById("rows");
-    const cards = document.getElementById("cards");
-
-    const prevPage = document.getElementById("prevPage");
-    const nextPage = document.getElementById("nextPage");
-    const pageInfo = document.getElementById("pageInfo");
-
-    const exportCsv = document.getElementById("exportCsv");
-    const importLabel = document.getElementById("importLabel");
-    const importCsv = document.getElementById("importCsv");
-
-    const statTotal = document.getElementById("statTotal");
-    const statCount = document.getElementById("statCount");
-    const statAvg = document.getElementById("statAvg");
-    const statTop = document.getElementById("statTop");
-    const statTotalS = document.getElementById("statTotalS");
-    const statCountS = document.getElementById("statCountS");
-    const statAvgS = document.getElementById("statAvgS");
-    const statTopS = document.getElementById("statTopS");
-
-    const staffList = document.getElementById("staffList");
-    const uUid = document.getElementById("uUid");
-    const uName = document.getElementById("uName");
-    const uRole = document.getElementById("uRole");
-    const uActive = document.getElementById("uActive");
-    const saveUser = document.getElementById("saveUser");
-
-    // Toast
-    const toastEl = document.getElementById("toast");
-    const toastTitle = document.getElementById("toastTitle");
-    const toastMsg = document.getElementById("toastMsg");
-    let toastT = null;
-
-    function showToast(title, msg){
-      if(!toastEl) return;
-      toastTitle.innerHTML = "<b>" + title + "</b>";
-      toastMsg.textContent = msg || "";
-      toastEl.style.display = "block";
-      clearTimeout(toastT);
-      toastT = setTimeout(() => toastEl.style.display = "none", 2600);
+    const $ = (id)=>document.getElementById(id);
+    let toastTimer=null;
+    function toast(title,msg){
+      $("toastTitle").textContent = title;
+      $("toastMsg").textContent = msg || "";
+      $("toast").classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> $("toast").classList.remove("show"), 4200);
     }
 
-    // ===== Helpers =====
-    function money(n){
-      const x = Number(n||0);
-      return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(x);
-    }
-    function fmtDate(ts){
+    const norm = (s)=> (s ?? "").toString().trim();
+    const normKey = (s)=> norm(s).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
+    const esc = (s)=> (s ?? "").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    const fmtMoney = (n)=> "$ " + Number(n||0).toLocaleString("en-US");
+    const fmtDate = (ts)=> {
       if(!ts) return "—";
       const d = ts.toDate ? ts.toDate() : new Date(ts);
       return d.toLocaleString("fr-FR", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
-    }
-    function statusBadge(v){
-      if(v === "paye") return `<span class="badge ok">Payé</span>`;
-      if(v === "annule") return `<span class="badge no">Annulé</span>`;
-      return `<span class="badge wait">En attente</span>`;
-    }
-    function typeLabel(v){
-      return v === "reservation" ? "Réservation" : "Vente";
-    }
-    function escapeHtml(s){
-      return (s||"").toString()
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
-    function stripHtml(s){
-      return (s||"").toString().replace(/<[^>]*>/g,"").trim();
-    }
-    function norm(s){ return (s||"").toString().toLowerCase().trim(); }
-    function normalizeStatus(s){
-      const v = norm(s);
-      if(v.includes("pay")) return "paye";
-      if(v.includes("ann")) return "annule";
-      return "en_attente";
-    }
-
-    // ===== State =====
-    let me = null;           // {uid, name, role}
-    let allTx = [];
-    let filtered = [];
-    let currentPage = 1;
-    
-    // ===== Clients state =====
-    let clients = [];        // liste clients Firestore
-    let unsubClients = null; // unsubscribe listener
-
-
-    function isAdmin(){ return me?.role === "admin"; }
-    function canManageStaff(){ return isAdmin(); }
-    function canReadAudit(){ return isAdmin(); }
-
-    // ===== Topbar buttons (UNE SEULE FOIS) =====
-    toSiteBtn.addEventListener("click", () => {
-      window.location.href = "./index.html";
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      try{
-        await signOut(auth);
-      } finally {
-        window.location.href = "./pdm-staff.html";
-      }
-    });
-    // ===== Clients events =====
-addClientBtn?.addEventListener("click", openClientModal);
-cCancel?.addEventListener("click", closeClientModal);
-
-cSave?.addEventListener("click", async () => {
-  const name = cName.value.trim();
-  if(!name){
-    showToast("Client", "Nom/Prénom obligatoire.");
-    return;
-  }
-
-  try{
-    const payload = {
-      name,
-      phone: cPhone.value.trim(),
-      licenseStatus: cLicense.value,
-      needsCar: !!cCar.checked,
-      needsMoto: !!cMoto.checked,
-      needsTruck: !!cTruck.checked,
-      purchaseCount: Number(cPurchase.value || 0),
-      active: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
     };
 
-    const ref = await addDoc(collection(db, "clients"), payload);
-    closeClientModal();
-    showToast("Client", "Ajouté.");
-
-    if (fClientSelect) fClientSelect.value = ref.id;
-  }catch(err){
-    console.error(err);
-    showToast("Erreur", err?.message || "Ajout client impossible.");
-  }
-});
-    // ===== Tabs =====
-    function setTab(name){
-      tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === name));
-      tabTransactions.style.display = (name === "transactions") ? "block" : "none";
-      tabStaff.style.display = (name === "staff" && canManageStaff()) ? "block" : "none";
-      tabAudit.style.display = (name === "audit" && canReadAudit()) ? "block" : "none";
-      if(name === "staff" && !canManageStaff()) showToast("Accès refusé", "Admin uniquement.");
-      if(name === "audit" && !canReadAudit()) showToast("Accès refusé", "Admin uniquement.");
-    }
-    tabs.forEach(t => t.addEventListener("click", () => setTab(t.dataset.tab)));
-
-    // ===== Filters listeners =====
-    const filterInputs = [qEl, filterType, filterStatus, sortBy, mineOnly, minPrice, maxPrice, fromDate, toDate, pageSize, filterSeller];
-    filterInputs.forEach(el => el && el.addEventListener("input", () => { currentPage = 1; applyFilters(); render(); }));
-    filterInputs.forEach(el => el && el.addEventListener("change", () => { currentPage = 1; applyFilters(); render(); }));
-
-    resetBtn.addEventListener("click", () => {
-      qEl.value = "";
-      filterType.value = "all";
-      filterStatus.value = "all";
-      sortBy.value = "date_desc";
-      minPrice.value = "";
-      maxPrice.value = "";
-      fromDate.value = "";
-      toDate.value = "";
-      pageSize.value = "25";
-
-      if(isAdmin()){
-        mineOnly.checked = false;
-        filterSeller.value = "all";
-      } else {
-        mineOnly.checked = true;
-      }
-
-      currentPage = 1;
-      applyFilters(); render();
-      showToast("Filtres", "Réinitialisés.");
-    });
-
-    prevPage.addEventListener("click", () => { if(currentPage>1){ currentPage--; render(); } });
-    nextPage.addEventListener("click", () => {
-      const ps = Number(pageSize.value);
-      const maxPage = Math.max(1, Math.ceil(filtered.length/ps));
-      if(currentPage<maxP){ currentPage++; render(); }
-    });
-
-    // ===== Add transaction =====
-    addBtn.addEventListener("click", async () => {
-      try{
-        if(!me){
-          showToast("Session", "Profil en cours de chargement.");
-          return;
-        }
-
-        const type = fType.value;
-        const client = fClient.value.trim();
-        const vehicle = fVehicle.value.trim();
-        const price = Number(fPrice.value);
-        const status = fStatus.value;
-        const notes = fNotes.value.trim();
-
-        if(!client || !vehicle || !Number.isFinite(price)){
-          showToast("Champs manquants", "Client, véhicule et prix sont obligatoires.");
-          return;
-        }
-
-        const payload = {
-          type, client, vehicle, price,
-          status,
-          notes,
-          sellerId: me.uid,
-          sellerName: me.name || "Staff",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
-
-        const ref = await addDoc(collection(db, "transactions"), payload);
-        await addAudit("create", "transaction", ref.id, payload);
-
-        fClient.value = ""; fVehicle.value = ""; fPrice.value = ""; fNotes.value = "";
-        showToast("Ajout", "Transaction enregistrée.");
-      }catch(err){
-        console.error(err);
-        showToast("Erreur", err?.message || "Impossible d'ajouter.");
-      }
-    });
-
-    // ===== CSV Export =====
-    exportCsv.addEventListener("click", () => {
-      const rows = filtered.map(x => ({
-        date: x.createdAt ? fmtDate(x.createdAt) : "",
-        type: x.type || "",
-        client: x.client || "",
-        vehicle: x.vehicle || "",
-        price: x.price ?? "",
-        status: x.status || "",
-        sellerName: x.sellerName || "",
-        sellerId: x.sellerId || "",
-        notes: (x.notes || "").replace(/\n/g, " ")
-      }));
-      const header = ["date","type","client","vehicle","price","status","sellerName","sellerId","notes"];
-      const csv = [
-        header.join(","),
-        ...rows.map(r => header.map(k => {
-          const v = (r[k] ?? "").toString();
-          const safe = v.includes(",") || v.includes('"') ? `"${v.replace(/"/g,'""')}"` : v;
-          return safe;
-        }).join(","))
-      ].join("\n");
-
-      const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `pdm_transactions_${new Date().toISOString().slice(0,10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      showToast("Export", "CSV généré.");
-    });
-
-    // ===== CSV Import (admin only) =====
-    importCsv.addEventListener("change", async (e) => {
-      const file = e.target.files?.[0];
-      e.target.value = "";
-      if(!file) return;
-      if(!isAdmin()){
-        showToast("Accès refusé", "Import CSV réservé à l'admin.");
-        return;
-      }
-      try{
-        const text = await file.text();
-        const parsed = parseCSV(text);
-        if(parsed.rows.length === 0){
-          showToast("Import", "Aucune ligne détectée.");
-          return;
-        }
-
-        let ok = 0;
-        for(const r of parsed.rows){
-          const client = (r.client ?? r.Client ?? r.CLIENT ?? "").toString().trim();
-          const vehicle = (r.vehicle ?? r.Vehicule ?? r.vehicule ?? "").toString().trim();
-          const price = Number(r.price ?? r.Prix ?? r.prix);
-          if(!client || !vehicle || !Number.isFinite(price)) continue;
-
-          const payload = {
-            type: (r.type ?? r.Type ?? "vente").toString().trim().toLowerCase() === "reservation" ? "reservation" : "vente",
-            client,
-            vehicle,
-            price,
-            status: normalizeStatus((r.status ?? r.Statut ?? "en_attente").toString()),
-            notes: (r.notes ?? r.Notes ?? "").toString(),
-            sellerId: me.uid,
-            sellerName: String(r.sellerName ?? r.Vendeur ?? (me?.name ?? "Admin")),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          const ref = await addDoc(collection(db, "transactions"), payload);
-          await addAudit("import", "transaction", ref.id, payload);
-          ok++;
-        }
-        showToast("Import", `${ok} lignes importées.`);
-      }catch(err){
-        console.error(err);
-        showToast("Erreur import", err?.message || "Import impossible.");
-      }
-    });
-
-    function parseCSV(text){
-      const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length);
-      if(lines.length === 0) return {header:[], rows:[]};
-
-      const header = splitCSVLine(lines[0]).map(h => h.trim());
-      const rows = [];
-      for(let i=1;i<lines.length;i++){
-        const cols = splitCSVLine(lines[i]);
-        const obj = {};
-        header.forEach((h, idx) => obj[h] = (cols[idx] ?? "").trim());
-        rows.push(obj);
-      }
-      return {header, rows};
-    }
-    function splitCSVLine(line){
-      const out = [];
-      let cur = "";
-      let inQ = false;
-      for(let i=0;i<line.length;i++){
-        const c = line[i];
-        if(c === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
-        if(c === '"'){ inQ = !inQ; continue; }
-        if(c === "," && !inQ){ out.push(cur); cur=""; continue; }
-        cur += c;
-      }
-      out.push(cur);
-      return out;
-    }
-
-    // ===== Filters + render =====
-    function applyFilters(){
-      const q = norm(qEl.value);
-      const t = filterType.value;
-      const st = filterStatus.value;
-      const so = sortBy.value;
-      const mine = mineOnly.checked;
-      const minP = minPrice.value ? Number(minPrice.value) : null;
-      const maxP = maxPrice.value ? Number(maxPrice.value) : null;
-      const fd = fromDate.value ? new Date(fromDate.value + "T00:00:00") : null;
-      const td = toDate.value ? new Date(toDate.value + "T23:59:59") : null;
-      const seller = isAdmin() ? (filterSeller.value || "all") : "all";
-
-      filtered = allTx.filter(x => {
-        if(t !== "all" && x.type !== t) return false;
-        if(st !== "all" && x.status !== st) return false;
-        if(mine && x.sellerId !== me.uid) return false;
-        if(isAdmin() && seller !== "all" && x.sellerId !== seller) return false;
-
-        if(minP != null && Number(x.price) < minP) return false;
-        if(maxP != null && Number(x.price) > maxP) return false;
-
-        const d = x.createdAt?.toDate ? x.createdAt.toDate() : null;
-        if(fd && d && d < fd) return false;
-        if(td && d && d > td) return false;
-
-        if(q){
-          const blob = norm(`${x.client} ${x.vehicle} ${x.sellerName} ${x.notes} ${x.status} ${x.type}`);
-          if(!blob.includes(q)) return false;
-        }
-        return true;
-      });
-
-      const byDate = (a,b) => (a._ms||0) - (b._ms||0);
-      const byPrice = (a,b) => (Number(a.price||0) - Number(b.price||0));
-      if(so === "date_desc") filtered.sort((a,b)=> byDate(b,a));
-      if(so === "date_asc") filtered.sort((a,b)=> byDate(a,b));
-      if(so === "price_desc") filtered.sort((a,b)=> byPrice(b,a));
-      if(so === "price_asc") filtered.sort((a,b)=> byPrice(a,b));
-
-      const sum = filtered.reduce((acc,x)=> acc + Number(x.price||0), 0);
-      statTotal.textContent = money(sum);
-      statCount.textContent = String(filtered.length);
-      statAvg.textContent = money(filtered.length ? Math.round(sum/filtered.length) : 0);
-
-      const bySeller = new Map();
-      for(const x of filtered){
-        const k = x.sellerName || "—";
-        bySeller.set(k, (bySeller.get(k)||0) + Number(x.price||0));
-      }
-      let top = "—", topV = 0;
-      for(const [k,v] of bySeller.entries()){
-        if(v > topV){ topV = v; top = k; }
-      }
-      statTop.textContent = top;
-      statTopS.textContent = topV ? money(topV) : "—";
-
-      statTotalS.textContent = `Sur ${filtered.length} entrée(s)`;
-      statCountS.textContent = mineOnly.checked ? "Filtre : Mes ventes" : "—";
-      statAvgS.textContent = (filterStatus.value !== "all") ? `Statut : ${filterStatus.options[filterStatus.selectedIndex].text}` : "—";
-
-      const ps = Number(pageSize.value);
-      const maxPage = Math.max(1, Math.ceil(filtered.length/ps));
-      if(currentPage > maxP) currentPage = maxP;
-
-      countInfo.textContent = `${filtered.length} résultat(s)`;
-    }
-
-    function render(){
-      const ps = Number(pageSize.value);
-      const maxPages = Math.max(1, Math.ceil(filtered.length / ps));
-      const start = (currentPage-1)*ps;
-      const pageItems = filtered.slice(start, start+ps);
-
-      pageInfo.textContent = `Page ${currentPage} / ${maxPages}`;
-
-      rowsTbody.innerHTML = pageItems.map(x => {
-        const canEdit = isAdmin() || x.sellerId === me.uid;
-        const canDelete = isAdmin() || x.sellerId === me.uid;
-        return `
-          <tr>
-            <td class="nowrap">${fmtDate(x.createdAt)}</td>
-            <td>${typeLabel(x.type)}</td>
-            <td>${escapeHtml(x.client)}</td>
-            <td>${escapeHtml(x.vehicle)}</td>
-            <td class="nowrap price">${money(x.price)}</td>
-            <td>${statusBadge(x.status)}</td>
-            <td>${escapeHtml(x.sellerName || "—")}</td>
-            <td>${escapeHtml((x.notes||"").slice(0,80))}</td>
-            <td class="nowrap">
-              <button class="btn secondary" data-act="edit" data-id="${x.id}" ${canEdit ? "" : "disabled"}>Modifier</button>
-              <button class="btn danger" data-act="del" data-id="${x.id}" ${canDelete ? "" : "disabled"}>Supprimer</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-
-      const isMobile = window.matchMedia("(max-width: 640px)").matches;
-      if(isMobile){
-        cards.style.display = "grid";
-        document.querySelector("table").style.display = "none";
-        cards.innerHTML = pageItems.map(x => {
-          const canEdit = isAdmin() || x.sellerId === me.uid;
-          const canDelete = isAdmin() || x.sellerId === me.uid;
-          return `
-            <div class="cardRow">
-              <div class="head">
-                <div>
-                  <b>${escapeHtml(x.vehicle)}</b><div class="muted" style="font-size:12px">${escapeHtml(x.client)}</div>
-                </div>
-                <div class="price">${money(x.price)}</div>
-              </div>
-              <div class="kv">
-                <div><b>Date</b><br>${fmtDate(x.createdAt)}</div>
-                <div><b>Type</b><br>${typeLabel(x.type)}</div>
-                <div><b>Statut</b><br>${escapeHtml(stripHtml(statusBadge(x.status)))}</div>
-                <div><b>Vendeur</b><br>${escapeHtml(x.sellerName||"—")}</div>
-              </div>
-              ${x.notes ? `<div class="muted" style="margin-top:8px">${escapeHtml(x.notes)}</div>` : ""}
-              <div class="tools">
-                <button class="btn secondary" data-act="edit" data-id="${x.id}" ${canEdit ? "" : "disabled"}>Modifier</button>
-                <button class="btn danger" data-act="del" data-id="${x.id}" ${canDelete ? "" : "disabled"}>Supprimer</button>
-              </div>
-            </div>
-          `;
-        }).join("");
-      } else {
-        cards.style.display = "none";
-        document.querySelector("table").style.display = "table";
-      }
-
-      [...document.querySelectorAll("[data-act]")].forEach(b => {
-        b.addEventListener("click", async () => {
-          const id = b.dataset.id;
-          const act = b.dataset.act;
-          const item = allTx.find(x => x.id === id);
-          if(!item) return;
-
-          if(act === "del"){
-            const ok = confirm("Supprimer cette entrée ? (action irréversible)");
-            if(!ok) return;
-            try{
-              await deleteDoc(doc(db, "transactions", id));
-              await addAudit("delete", "transaction", id, item);
-              showToast("Suppression", "Entrée supprimée.");
-            }catch(err){
-              console.error(err);
-              showToast("Erreur", err?.message || "Suppression impossible.");
-            }
-          }
-
-          if(act === "edit"){
-            const client = prompt("Client", item.client || "") ?? item.client;
-            const vehicle = prompt("Véhicule", item.vehicle || "") ?? item.vehicle;
-            const price = Number(prompt("Prix", String(item.price ?? 0)) ?? item.price);
-            const status = prompt("Statut (en_attente / paye / annule)", item.status || "en_attente") ?? item.status;
-            const notes = prompt("Notes", item.notes || "") ?? item.notes;
-
-            try{
-              await updateDoc(doc(db, "transactions", id), {
-                client: client.toString().trim(),
-                vehicle: vehicle.toString().trim(),
-                price: Number.isFinite(price) ? price : Number(item.price||0),
-                status: normalizeStatus(status.toString()),
-                notes: notes.toString(),
-                updatedAt: serverTimestamp()
-              });
-              await addAudit("update", "transaction", id, { before:item, after:{client,vehicle,price,status,notes} });
-              showToast("Modification", "Entrée mise à jour.");
-            }catch(err){
-              console.error(err);
-              showToast("Erreur", err?.message || "Modification impossible.");
-            }
-          }
-        });
+    function bindLogout(btn){
+      btn.addEventListener("click", async ()=>{
+        try{ await signOut(auth); }catch(e){}
+        window.location.href = "pdm-staff.html";
       });
     }
+    bindLogout($("btnLogoutTop"));
+    bindLogout($("btnLogoutSide"));
 
-    // ===== Audit logs =====
-    async function addAudit(action, entity, entityId, payload){
-      try{
-        await addDoc(collection(db, "auditLogs"), {
-          action,
-          entity,
-          entityId,
-          actorId: me.uid,
-          actorName: me.name || "—",
-          createdAt: serverTimestamp(),
-          payload: payload ?? null
-        });
-      }catch(e){
-        console.warn("audit failed", e);
-      }
-    }
-
-    // ===== Staff management (admin) =====
-    saveUser.addEventListener("click", async () => {
-      if(!isAdmin()){
-        showToast("Accès refusé", "Admin uniquement.");
-        return;
-      }
-      const uid = uUid.value.trim();
-      const name = uName.value.trim();
-      const role = uRole.value;
-      const active = !!uActive.checked;
-      if(!uid || !name){
-        showToast("Champs manquants", "UID + Nom requis.");
-        return;
-      }
-      try{
-        await setDoc(doc(db, "users", uid), { name, role, active, updatedAt: serverTimestamp() }, { merge:true });
-        await addAudit("upsert", "user", uid, { name, role, active });
-        showToast("Profil staff", "Enregistré.");
-        uUid.value=""; uName.value=""; uRole.value="staff"; uActive.checked=true;
-      }catch(err){
-        console.error(err);
-        showToast("Erreur", err?.message || "Impossible d'enregistrer.");
-      }
-    });
-
-    function buildSellerFilter(users){
-      const current = filterSeller.value || "all";
-      filterSeller.innerHTML = `<option value="all">Tous vendeurs</option>` + users
-        .filter(u => u.active)
-        .map(u => `<option value="${u.uid}">${escapeHtml(u.name)} · ${escapeHtml(u.role||"")}</option>`)
-        .join("");
-      filterSeller.value = current === "" ? "all" : current;
-    }
-
-    function renderStaff(users){
-      staffList.innerHTML = users.map(u => `
-        <div class="item">
-          <div class="meta">
-            <b>${escapeHtml(u.name || "—")}</b>
-            <span>role: ${escapeHtml(u.role || "staff")} · active: ${u.active ? "true" : "false"} · uid: ${escapeHtml(u.uid)}</span>
-          </div>
-          <div class="tools">
-            <button class="btn secondary" data-uedit="${u.uid}">Éditer</button>
-            <button class="btn secondary" data-utoggle="${u.uid}">${u.active ? "Désactiver" : "Activer"}</button>
-          </div>
-        </div>
-      `).join("") || `<div class="item"><div class="meta"><b>Aucun profil</b><span>Crée tes profils staff dans la collection users.</span></div></div>`;
-
-      [...document.querySelectorAll("[data-uedit]")].forEach(btn => {
-        btn.addEventListener("click", () => {
-          const uid = btn.dataset.uedit;
-          const u = users.find(x => x.uid === uid);
-          if(!u) return;
-          uUid.value = u.uid;
-          uName.value = u.name || "";
-          uRole.value = u.role || "staff";
-          uActive.checked = !!u.active;
-          showToast("Edition", "Profil chargé dans le formulaire.");
-          setTab("staff");
-        });
-      });
-
-      [...document.querySelectorAll("[data-utoggle]")].forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const uid = btn.dataset.utoggle;
-          const u = users.find(x => x.uid === uid);
-          if(!u) return;
-          try{
-            await updateDoc(doc(db, "users", uid), { active: !u.active, updatedAt: serverTimestamp() });
-            await addAudit("toggle", "user", uid, { active: !u.active });
-            showToast("Profil staff", !u.active ? "Activé." : "Désactivé.");
-          }catch(err){
-            console.error(err);
-            showToast("Erreur", err?.message || "Impossible.");
-          }
-        });
-      });
-    }
-
-    function renderAudit(logs){
-      auditList.innerHTML = logs.map(l => `
-        <div class="item">
-          <div class="meta">
-            <b>${escapeHtml(l.actorName ||"—")} · ${escapeHtml(l.action ||"")}</b>
-            <span>${fmtDate(l.createdAt)} · ${escapeHtml(l.entity ||"")} · ${escapeHtml(l.entityId ||"")}</span>
-          </div>
-          <div class="tools">
-            <span class="badge">${escapeHtml(l.entity ||"")}</span>
-          </div>
-        </div>
-      `).join("") || `<div class="item"><div class="meta"><b>Aucun log</b><span>Le journal se remplira avec les actions staff/admin.</span></div></div>`;
-    }
-
-    // ===== Firestore listeners =====
-    let unsubTx = null;
-    let unsubUsers = null;
-    let unsubAudit = null;
-  // {id, name, phone, licenseStatus, needsCar, needsMoto, needsTruck, purchaseCount, active}
-function openClientModal(){
-  clientModal.style.display = "block";
-  cName.value = "";
-  cPhone.value = "";
-  cLicense.value = "oui";
-  cCar.checked = false;
-  cMoto.checked = false;
-  cTruck.checked = false;
-  cPurchase.value = "";
-  cName.focus();
-  clientModal.style.display = "none";
-}
-
-function renderClientsSelect(){
-  if(!fClientSelect) return;
-  const current = fClientSelect.value || "";
-
-  const list = clients
-    .filter(c => c.active !== false)
-    .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
-
-  fClientSelect.innerHTML =
-    `<option value="">Sélectionner un client…</option>` +
-    list.map(c => `<option value="${c.id}">${escapeHtml(c.name)}${c.phone ? " · " + escapeHtml(c.phone) : ""}</option>`).join("");
-
-  if(current && list.some(c => c.id === current)) fClientSelect.value = current;
-}
-
-function startClientsListener(){
-  const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
-  return onSnapshot(qClients, (snap) => {
-    clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderClientsSelect();
-  }, (err) => {
-    console.error(err);
-    showToast("Erreur clients", err?.message || "Impossible de charger les clients.");
-  });
-}
-    // ===== Clients helpers =====
-  if(!clientModal) return;
-  clientModal.style.display = "block";
-  cName.value = "";
-  cPhone.value = "";
-  cLicense.value = "oui";
-  cCar.checked = false;
-  cMoto.checked = false;
-  cTruck.checked = false;
-  cPurchase.value = "";
-  cName.focus();
-}
-
-function closeClientModal(){
-  if(!clientModal) return;
-  clientModal.style.display = "none";
-}
-  if(!fClientSelect) return;
-
-  const current = fClientSelect.value || "";
-  const list = clients
-    .filter(c => c.active !== false)
-    .sort((a,b) => (a.name||"").localeCompare(b.name||"", "fr"));
-
-  fClientSelect.innerHTML =
-    `<option value="">Sélectionner un client…</option>` +
-    list.map(c => `<option value="${c.id}">${escapeHtml(c.name)}${c.phone ? " · " + escapeHtml(c.phone) : ""}</option>`).join("");
-
-  if(current && list.some(c => c.id === current)) fClientSelect.value = current;
-}
-  const qClients = query(collection(db, "clients"), orderBy("name","asc"), limit(1000));
-  return onSnapshot(qClients, (snap) => {
-    clients = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    renderClientsSelect();
-  }, (err) => {
-    console.error(err);
-    showToast("Erreur clients", err?.message || "Impossible de charger les clients.");
-  });
-}
-    function startListeners(){
-      if(unsubTx) unsubTx();
-      if(unsubUsers) unsubUsers();
-      if(unsubAudit) unsubAudit();
-      unsubClients = startClientsListener();
-
-      // Transactions
-      const txQ = query(collection(db, "transactions"), orderBy("createdAt","desc"), limit(800));
-      unsubTx = onSnapshot(txQ, (snap) => {
-        allTx = snap.docs.map(d => {
-          const data = d.data();
-          const ms = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : 0;
-          return { id:d.id, ...data, _ms: ms };
-        });
-        applyFilters();
-        render();
-      }, (err) => {
-        console.error(err);
-        showToast("Erreur Firestore", err?.message || "Lecture impossible.");
-      });
-
-      // Admin extras
-      if(isAdmin()){
-        filterSeller.style.display = "block";
-        importLabel.style.display = "inline-flex";
-        rightsHint.textContent = "Admin : accès complet";
-
-        const uQ = query(collection(db, "users"), orderBy("name","asc"), limit(300));
-        unsubUsers = onSnapshot(uQ, (snap) => {
-          const users = snap.docs.map(d => ({ uid:d.id, ...d.data() }));
-          buildSellerFilter(users);
-          renderStaff(users);
-        });
-
-        const aQ = query(collection(db, "auditLogs"), orderBy("createdAt","desc"), limit(200));
-        unsubAudit = onSnapshot(aQ, (snap) => {
-          const logs = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-          renderAudit(logs);
-        });
-      } else {
-        mineOnly.checked = true;
-        filterSeller.style.display = "none";
-        importLabel.style.display = "none";
-        rightsHint.textContent = "Staff : uniquement tes entrées";
-      }
-    }
-
-    // ===== AUTH BOOT (UN SEUL) =====
+    let me=null;
     async function loadProfile(uid){
-      meBadge.textContent = "Chargement…";
-      meBadge.classList.remove("is-admin","is-staff");
-
-      const ref = doc(db, "users", uid);
-      const snap = await getDoc(ref);
-
-      if(!snap.exists()){
-        meBadge.textContent = "Profil introuvable";
-        showToast("Accès refusé", "Profil Firestore manquant.");
-        return null;
-      }
-
-      const data = snap.data();
-      const name = data.name || "Utilisateur";
-      const role = (data.role || "staff").toLowerCase();
-      const active = (data.active !== false) && (data.Active !== false);
-
-      if(!active){
-        meBadge.textContent = "Compte désactivé";
-        showToast("Accès refusé", "Compte désactivé.");
-        return null;
-      }
-
-      if(role === "admin"){
-        meBadge.textContent = `${name} — ADMIN`;
-        meBadge.classList.add("is-admin");
-      } else {
-        meBadge.textContent = `${name} — STAFF`;
-        meBadge.classList.add("is-staff");
-      }
-
-      showToast("UID reconnu", `Bienvenue ${name}`);
-      return { uid, name, role, active: true };
+      const snap = await getDoc(doc(db,"users",uid));
+      if(!snap.exists()) return null;
+      const d = snap.data();
+      if(d.active === false) return null;
+      return { uid, name: d.name || "Utilisateur", role: (d.role || "staff").toLowerCase() };
     }
 
-    onAuthStateChanged(auth, async (user) => {
-      // Always clear the 'loading' pill as soon as we know auth state
-      try{ meBadge.textContent = user ? 'Connecté' : 'Déconnecté'; }catch(e){}
+    const invCol = collection(db,"inventory");
+    const txCol = collection(db,"transactions");
 
-      if(!user){
-        window.location.href = "./pdm-staff.html";
-        return;
-      }
+    let sales=[];
+    function saleTypeText(t){
+      if(t==="sale_reservation") return "Vente depuis réservation";
+      if(t==="sale_stock") return "Vente depuis stock";
+      return "Vente directe";
+    }
 
+    function startOfWeek(d){
+      // week starts Monday
+      const x = new Date(d);
+      const day = (x.getDay()+6)%7; // 0..6
+      x.setHours(0,0,0,0);
+      x.setDate(x.getDate()-day);
+      return x;
+    }
+
+    async function refreshAll(){
       try{
-        const profile = await loadProfile(user.uid);
-        if(!profile){
-          // profil absent / désactivé
-          return;
-        }
+        // Inventory counts
+        const sSnap = await getDocs(query(invCol, where("status","==","stock")));
+        const rSnap = await getDocs(query(invCol, where("status","==","reservation")));
+        $("kStock").textContent = String(sSnap.size);
+        $("kResa").textContent = String(rSnap.size);
 
-        me = profile;
+        // Sales
+        const txSnap = await getDocs(query(txCol, orderBy("createdAt","desc"), limit(400)));
+        sales = txSnap.docs.map(d=>({id:d.id, ...d.data()})).filter(x=> String(x.type||"").startsWith("sale_"));
 
-        // Tab visible par défaut
-        setTab("transactions");
+        const total = sales.reduce((acc,x)=> acc + Number(x.sellPrice ?? x.price ?? 0), 0);
+        $("kAllSales").textContent = fmtMoney(total);
+        $("kAllSalesS").textContent = sales.length + " vente(s)";
 
-        // Démarre Firestore après profil OK
-        startListeners();
+        const weekStart = startOfWeek(new Date());
+        const weekSales = sales.filter(x=>{
+          const dt = x.createdAt?.toDate ? x.createdAt.toDate() : null;
+          return dt && dt >= weekStart;
+        });
+        const wTotal = weekSales.reduce((acc,x)=> acc + Number(x.sellPrice ?? x.price ?? 0), 0);
+        $("kWeekSales").textContent = fmtMoney(wTotal);
+        $("kWeekSalesS").textContent = weekSales.length + " vente(s)";
 
-        // Applique filtres au boot
-        applyFilters();
-        render();
+        renderSales();
       }catch(e){
         console.error(e);
-        meBadge.textContent = "Erreur profil";
-        showToast("Erreur", "Impossible de charger le profil.");
+        toast("Erreur Firestore", e.message || String(e));
       }
+    }
+
+    function renderSales(){
+      const q = normKey($("q").value);
+      const ft = $("filterType").value;
+
+      let rows = sales.filter(x=>{
+        if(ft!=="all" && x.type!==ft) return false;
+        if(!q) return true;
+        const hay = normKey((x.clientName||x.client||"") + " " + (x.vehicle||"") + " " + (x.sellerName||"") + " " + (x.detail||""));
+        return hay.includes(q);
+      });
+
+      $("count").textContent = String(rows.length);
+
+      $("rows").innerHTML = rows.slice(0,120).map(x=>{
+        const amt = Number(x.sellPrice ?? x.price ?? 0);
+        return `
+          <tr>
+            <td>${fmtDate(x.createdAt)}</td>
+            <td><span class="tag warn">${esc(saleTypeText(x.type))}</span></td>
+            <td>${esc(x.clientName || x.client || "—")}</td>
+            <td>${esc(x.vehicle || ((x.brand||"") + " " + (x.model||"")).trim())}</td>
+            <td><span class="tag ok">${Number(x.qty||1)}</span></td>
+            <td>${esc(x.sellerName||"—")}</td>
+            <td style="text-align:right"><span class="tag ok">${fmtMoney(amt)}</span></td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="7" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
+    }
+
+    $("btnRefresh").addEventListener("click", refreshAll);
+    $("q").addEventListener("input", renderSales);
+    $("filterType").addEventListener("change", renderSales);
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){
+        $("chipUser").textContent = "Non connecté";
+        $("chipRole").textContent = "—";
+        toast("Connexion requise","Connecte-toi pour accéder au dashboard.");
+        return;
+      }
+      me = await loadProfile(user.uid);
+      if(!me){
+        $("chipUser").textContent = "Accès refusé";
+        $("chipRole").textContent = "—";
+        toast("Accès refusé","Profil Firestore manquant/désactivé.");
+        return;
+      }
+      $("chipUser").textContent = me.name;
+      $("chipRole").textContent = me.role === "admin" ? "ADMIN" : "STAFF";
+      await refreshAll();
     });
-
-    window.addEventListener("resize", () => render());
-  
-    // ---- Safety: attach top buttons even if earlier code changed ----
-    try{
-      const btnSite = document.getElementById('toSite');
-      if(btnSite && !btnSite.__bound){
-        btnSite.addEventListener('click', () => { window.location.href = 'index.html'; });
-        btnSite.__bound = true;
-      }
-      const btnLogout = document.getElementById('logout');
-      if(btnLogout && !btnLogout.__bound){
-        btnLogout.addEventListener('click', async () => { try{ await signOut(auth); }catch(e){} });
-        btnLogout.__bound = true;
-      }
-    }catch(e){}
-
-    // ---- Optional: route tabs to dedicated pages ----
-    try{
-      const tStaff = document.getElementById('tabStaff');
-      if(tStaff && !tStaff.__bound){
-        tStaff.addEventListener('click', () => { window.location.href = 'pdm-staff.html'; });
-        tStaff.__bound = true;
-      }
-      const tAudit = document.getElementById('tabAudit');
-      if(tAudit && !tAudit.__bound){
-        // If you later create journal.html, change this target
-        tAudit.addEventListener('click', () => { window.location.href = 'stock.html'; });
-        tAudit.__bound = true;
-      }
-    }catch(e){}
-</script>
+  </script>
 </body>
 </html>
