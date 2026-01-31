@@ -1,1 +1,1072 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PDM Admin — Comptabilité</title>
+  <style>
+    :root{
+      --bg:#07080c;
+      --card:rgba(10,12,18,.62);
+      --card2:rgba(10,12,18,.52);
+      --stroke:rgba(255,255,255,.08);
+      --stroke2:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.55);
+      --muted2:rgba(255,255,255,.42);
+      --gold1:#f6d26b;
+      --gold2:#b88222;
+      --danger:#ff6b6b;
+      --ok:#47e6a6;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --radius2:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
+                  radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
+                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed; inset:-20px;
+      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
+      pointer-events:none;
+      z-index:-1;
+    }
+    a{color:inherit; text-decoration:none}
+    .app{display:flex; min-height:100vh; gap:22px; padding:18px 18px 26px;}
+    .sidebar{
+      width:250px; min-width:250px;
+      background: rgba(10,12,18,.46);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding:14px;
+      box-shadow: var(--shadow);
+      position:sticky;
+      top:18px;
+      height: calc(100vh - 44px);
+      display:flex; flex-direction:column;
+      backdrop-filter: blur(10px);
+    }
+    .brand{font-weight:800; letter-spacing:.12em; font-size:12px; color:rgba(255,255,255,.72); margin-bottom:10px;}
+    .nav{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
+    .nav a{
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.18);
+      color:rgba(255,255,255,.76);
+      font-size:13px;
+    }
+    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
+    .nav a.active{
+      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
+      border-color: rgba(246,210,107,.22);
+      color: rgba(255,255,255,.9);
+    }
+    .spacer{flex:1}
+    .side-actions{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+      transition:.12s transform ease, .12s background ease, .12s border-color ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
+      border-color: rgba(246,210,107,.30);
+      color:#1b1306;
+      box-shadow: 0 10px 22px rgba(184,130,34,.18);
+    }
+    .btn.danger{background: rgba(255,80,80,.12); border-color: rgba(255,80,80,.24); color: rgba(255,210,210,.95);}
+    .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
+    .main{flex:1; max-width: 1080px; margin: 0 auto; width:100%;}
+    .topbar{
+      display:flex; align-items:center; gap:12px; justify-content:space-between;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius: 16px;
+      background: rgba(10,12,18,.44);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .chips{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .chip{
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.8);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .chip.muted{color:rgba(255,255,255,.6)}
+    .top-actions{display:flex; gap:10px; align-items:center}
+    .layout{display:flex; flex-direction:column; gap:14px; margin-top:14px;}
+    .card{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.75);
+    }
+    .sub{font-size:12px; color: var(--muted); margin:-4px 0 10px;}
+    label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
+      outline:none;
+    }
+    input::placeholder, textarea::placeholder{color: rgba(255,255,255,.32)}
+    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:14px;}
+    .grid4{display:grid; grid-template-columns: 1.1fr 1fr 1fr 1.2fr; gap:10px; align-items:end;}
+    .row-actions{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap}
+    .pill{padding:8px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.18); color: rgba(255,255,255,.75); font-size:12px;}
+    table{width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius: 16px; border:1px solid rgba(255,255,255,.08);}
+    thead th{
+      text-align:left;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.62);
+      padding:10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.02)}
+    tbody tr:last-child td{border-bottom:none}
+    .td-actions{white-space:nowrap; text-align:right}
+    .tag{
+      display:inline-flex; padding:6px 9px; border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      font-size:12px; color: rgba(255,255,255,.72);
+    }
+    .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
+    .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
+    .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
+    .kpis{display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;}
+    .kpi{
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding:10px;
+      min-height:64px;
+    }
+    .kpi .l{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color: rgba(255,255,255,.62)}
+    .kpi .v{font-size:18px; font-weight:900; margin-top:6px}
+    .kpi .s{font-size:12px; color: rgba(255,255,255,.62); margin-top:2px}
+    .toast{
+      position: fixed; right: 18px; bottom: 18px; max-width: 460px;
+      background: rgba(10,12,18,.82); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px; padding: 12px 12px; box-shadow: var(--shadow);
+      backdrop-filter: blur(12px); display:none; z-index:50;
+    }
+    .toast.show{display:block}
+    .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
+    .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
+    /* Print (PDF export) */
+    @media print{
+      body{background:#fff !important; color:#000 !important;}
+      body:before, .sidebar, .topbar, .no-print{display:none !important;}
+      .app{padding:0; display:block;}
+      .main{max-width:none; margin:0;}
+      .card{box-shadow:none; border:1px solid #ddd; background:#fff; color:#000; backdrop-filter:none;}
+      table{border:1px solid #ccc;}
+      thead th{background:#f3f3f3; color:#000;}
+      tbody td{color:#000;}
+      .kpi{background:#fafafa; border:1px solid #ddd;}
+      .tag{border:1px solid #ccc; background:#f7f7f7; color:#000;}
+    }
+    @media (max-width: 1100px){
+      .kpis{grid-template-columns: repeat(2, 1fr);}
+    }
+    @media (max-width: 980px){
+      .app{flex-direction:column}
+      .sidebar{position:relative; width:100%; height:auto; min-width:unset}
+      .main{max-width:100%}
+      .grid2{grid-template-columns:1fr}
+      .grid4{grid-template-columns:1fr 1fr}
+    }
+    /* Firebase config modal */
+    #firebaseConfigModal{
+      position:fixed; inset:0; z-index:99999;
+      display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.65);
+      backdrop-filter: blur(8px);
+      padding:18px;
+    }
+    #firebaseConfigModal .cfg-card{
+      width:min(720px, 92vw);
+      background: rgba(10,12,18,.92);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+    }
+    #firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+    #firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+    #firebaseConfigModal .cfg-text{
+      width:100%; height:220px; resize:vertical;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:12px;
+      padding:12px;
+      color:#fff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      outline:none;
+    }
+    #firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;}
+    #firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">PDM ADMIN</div>
+      <nav class="nav">
+        <a href="pdm-dashboard.html">Dashboard</a>
+        <a href="clients.html">Base clients</a>
+        <a href="vehicles.html">Base véhicules</a>
+        <a href="stock.html">Stock & réservations</a>
+        <a class="active" href="compta.html">Comptabilité</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="side-actions">
+        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
+      </div>
+    </aside>
 
+    <main class="main">
+      <div class="topbar">
+        <div class="chips">
+          <div class="chip">PDM ADMIN</div>
+          <div id="chipUser" class="chip muted">Chargement…</div>
+          <div id="chipEnv" class="chip muted">Firestore • Live</div>
+        </div>
+        <div class="top-actions">
+          <button id="btnPrint" class="btn small gold no-print">Exporter PDF (impression)</button>
+          <a class="btn small no-print" href="pdm-dashboard.html">Dashboard</a>
+          <button id="btnLogoutTop" class="btn small danger no-print">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <section class="card">
+          <h3>Paramètres</h3>
+          <div class="sub">Deux vues : <b>Global</b> (depuis le début) et <b>Semaine</b> (à rendre aux modérateurs le dimanche).</div>
+          <div class="grid4">
+            <div>
+              <label>Période</label>
+              <select id="scope">
+                <option value="week">Semaine</option>
+                <option value="all">Global (depuis le début)</option>
+              </select>
+            </div>
+            <div>
+              <label>Début</label>
+              <input id="dateFrom" type="date"/>
+            </div>
+            <div>
+              <label>Fin</label>
+              <input id="dateTo" type="date"/>
+            </div>
+            <div>
+              <label>Trésorerie S-1 (optionnel)</label>
+              <input id="openingBalance" type="number" step="0.01" placeholder="Ex: 250000"/>
+            </div>
+          </div>
+          <div class="row-actions" style="margin-top:10px">
+            <button id="btnApply" class="btn gold no-print">Appliquer</button>
+            <button id="btnThisWeek" class="btn no-print">Cette semaine</button>
+            <button id="btnAll" class="btn no-print">Global</button>
+            <span id="rangeTag" class="pill">—</span>
+          </div>
+          <div class="sub" style="margin-top:10px">
+            Règle de trésorerie :<br/>
+            • Mise en <b>stock</b> ou <b>réservation</b> = on compte <b>le prix d'achat</b> (dépense).<br/>
+            • Vente <b>depuis le stock</b> = on compte <b>le prix de vente</b> (revenu), l'achat a déjà été compté avant.<br/>
+            • Vente “<b>Vente depuis réservation</b>” = revenue, et la réservation disparaît.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Résumé</h3>
+          <div class="kpis" id="kpis">
+            <div class="kpi"><div class="l">Achats (stock + résa)</div><div class="v" id="kpiPurch">—</div><div class="s" id="kpiPurchS">—</div></div>
+            <div class="kpi"><div class="l">Ventes véhicules</div><div class="v" id="kpiSales">—</div><div class="s" id="kpiSalesS">—</div></div>
+            <div class="kpi"><div class="l">Bénéfice véhicules</div><div class="v" id="kpiProfit">—</div><div class="s">Σ (vente - achat)</div></div>
+            <div class="kpi"><div class="l">Dépenses manuelles</div><div class="v" id="kpiExp">—</div><div class="s">Bouffe, events, vélos…</div></div>
+            <div class="kpi"><div class="l">Revenus manuels</div><div class="v" id="kpiInc">—</div><div class="s">Tombola, tickets…</div></div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="kpi">
+              <div class="l">Trésorerie S-1</div>
+              <div class="v" id="kpiOpen">—</div>
+              <div class="s">Entrée manuelle (optionnel)</div>
+            </div>
+            <div class="kpi">
+              <div class="l">Trésorerie actuelle (estimée)</div>
+              <div class="v" id="kpiClose">—</div>
+              <div class="s">S-1 + Revenus - Dépenses</div>
+            </div>
+          </div>
+          <div class="sub" style="margin-top:10px">
+            Note : Si certains champs manquent dans une transaction, la ligne est ignorée pour les calculs (mais visible dans le tableau).
+          </div>
+        </section>
+
+        <div class="grid2">
+          <section class="card">
+            <h3>Ventes véhicules (transactions)</h3>
+            <div class="sub">Lecture de la collection <b>transactions</b>. Colonnes attendues : date, vehicle/brand/model, buyPrice, sellPrice, sellerName (ou sellerId).</div>
+            <div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
+              <input id="qTx" placeholder="Rechercher (client, vendeur, véhicule) …"/>
+              <select id="sortTx">
+                <option value="date_desc">Tri: Récent</option>
+                <option value="date_asc">Tri: Ancien</option>
+                <option value="seller">Tri: Vendeur (A→Z)</option>
+              </select>
+              <span id="txCount" class="pill">0</span>
+            </div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Véhicule</th>
+                    <th>Achat</th>
+                    <th>Vente</th>
+                    <th>Vendeur</th>
+                    <th>Com. vendeur</th>
+                    <th>Com. CO PDG</th>
+                    <th>Com. PDG</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyTx"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Commissions (condensé)</h3>
+            <div class="sub">Calcul auto avec % (modifiable dans le code si besoin) : vendeur 10% • CO PDG 12% • PDG 5%.</div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Vendeur</th>
+                    <th>Total commission</th>
+                    <th>Nombre de ventes</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyCom"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid2">
+          <section class="card">
+            <h3>Dépenses & revenus manuels</h3>
+            <div class="sub">Ajoute ici les dépenses/revenus non liés aux véhicules (bouffe, events, tombola, vélos…). Stocké dans <b>cashbook</b>.</div>
+            <div class="grid4">
+              <div>
+                <label>Type</label>
+                <select id="cbType">
+                  <option value="expense">Dépense</option>
+                  <option value="income">Revenu</option>
+                </select>
+              </div>
+              <div>
+                <label>Date</label>
+                <input id="cbDate" type="date"/>
+              </div>
+              <div>
+                <label>Montant</label>
+                <input id="cbAmount" type="number" step="0.01" placeholder="Ex: 5000"/>
+              </div>
+              <div>
+                <label>Raison</label>
+                <input id="cbReason" placeholder="Ex: Bouffe employés / Tombola / Vélos…"/>
+              </div>
+            </div>
+            <div class="row-actions" style="margin-top:10px">
+              <button id="btnAddCB" class="btn gold no-print">Ajouter</button>
+              <button id="btnExportCSV" class="btn no-print">Exporter CSV (période)</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h3>Liste (cashbook)</h3>
+            <div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
+              <input id="qCB" placeholder="Rechercher raison…"/>
+              <select id="sortCB">
+                <option value="date_desc">Tri: Récent</option>
+                <option value="date_asc">Tri: Ancien</option>
+                <option value="type">Tri: Type</option>
+              </select>
+              <span id="cbCount" class="pill">0</span>
+            </div>
+            <div style="overflow:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Montant</th>
+                    <th>Raison</th>
+                    <th style="text-align:right" class="no-print">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyCB"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">
+    <div id="toastTitle" class="t"></div>
+    <div id="toastMsg" class="m"></div>
+  </div>
+
+  <!-- Firebase config modal -->
+  <div id="firebaseConfigModal">
+    <div class="cfg-card">
+      <div class="cfg-title">Configurer Firebase</div>
+      <div class="cfg-sub">
+        Colle ici ton objet <b>firebaseConfig</b> (ou le snippet complet).<br/>
+        Il sera sauvegardé en local (localStorage) sur ce navigateur.
+      </div>
+      <textarea id="firebaseConfigText" class="cfg-text" placeholder="const firebaseConfig = { apiKey: '…', authDomain: '…', projectId: '…', ... };"></textarea>
+      <div class="cfg-actions">
+        <button id="firebaseConfigCancel" class="btn">Annuler</button>
+        <button id="firebaseConfigSave" class="btn gold">Enregistrer</button>
+      </div>
+      <div class="cfg-note">Astuce : tu peux récupérer ce bloc dans les paramètres du projet Firebase → SDK Web.</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getFirestore, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // --- Firebase config (compta.html) ---
+    function loadFirebaseConfig() {
+      try {
+        const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
+        if (!raw) return null;
+        let txt = String(raw).trim();
+        const objMatch = txt.match(/\{[\s\S]*\}/);
+        if (objMatch) txt = objMatch[0];
+        try { return JSON.parse(txt); } catch (e) {}
+        try { return (new Function("return (" + txt + ");"))(); } catch (e) {}
+        return null;
+      } catch (e) { return null; }
+    }
+
+    function showFirebaseConfigModal() {
+      return new Promise((resolve) => {
+        const modal = document.getElementById("firebaseConfigModal");
+        const ta = document.getElementById("firebaseConfigText");
+        const btn = document.getElementById("firebaseConfigSave");
+        const cancel = document.getElementById("firebaseConfigCancel");
+
+        modal.style.display = "flex";
+        btn.onclick = () => {
+          const v = ta.value.trim();
+          if (!v) { alert("Colle ta config Firebase (le bloc firebaseConfig)."); return; }
+          localStorage.setItem("PDM_FIREBASE_CONFIG", v);
+          modal.style.display = "none";
+          resolve(true);
+          location.reload();
+        };
+        cancel.onclick = () => { modal.style.display = "none"; resolve(false); };
+      });
+    }
+
+    async function ensureFirebaseConfig() {
+      const cfg = loadFirebaseConfig();
+      if (cfg) return cfg;
+      await showFirebaseConfigModal();
+      throw new Error("Firebase config manquante");
+    }
+
+    const firebaseConfig = await ensureFirebaseConfig();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ===== UI helpers =====
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+    const toastTitle = $("toastTitle");
+    const toastMsg = $("toastMsg");
+    let toastTimer = null;
+    function toast(title, msg){
+      toastTitle.textContent = title;
+      toastMsg.textContent = msg || "";
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> toastEl.classList.remove("show"), 4200);
+    }
+    function norm(s){ return (s ?? "").toString().trim(); }
+    function normKey(s){
+      return norm(s).toLowerCase()
+        .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+        .replace(/\s+/g," ")
+        .trim();
+    }
+    function money(n){
+      const v = Number(n);
+      if(!Number.isFinite(v)) return "—";
+      return v.toLocaleString("en-US",{style:"currency", currency:"USD", maximumFractionDigits:0});
+    }
+    function parseMoney(v){
+      // accepte "$1 500,00" / "1500.00" / "1,500"
+      const s = String(v ?? "").trim();
+      if(!s) return NaN;
+      // s'il y a une virgule et pas de point -> virgule décimale
+      const hasComma = s.includes(",");
+      const hasDot = s.includes(".");
+      let t = s.replace(/[^0-9,.-]/g,"");
+      if(hasComma && !hasDot){
+        t = t.replace(/\./g,"").replace(",",".");
+      }else{
+        // format US: remove thousands commas
+        t = t.replace(/,/g,"");
+      }
+      const n = Number(t);
+      return Number.isFinite(n) ? n : NaN;
+    }
+    function ymd(d){
+      const z = (n)=> String(n).padStart(2,"0");
+      return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());
+    }
+    function startOfWeek(d){
+      // semaine = lundi -> dimanche
+      const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const day = (dd.getDay()+6)%7; // lundi=0
+      dd.setDate(dd.getDate()-day);
+      dd.setHours(0,0,0,0);
+      return dd;
+    }
+    function endOfWeek(d){
+      const s = startOfWeek(d);
+      const e = new Date(s);
+      e.setDate(e.getDate()+6);
+      e.setHours(23,59,59,999);
+      return e;
+    }
+    function toDateStart(str){
+      const d = new Date(str+"T00:00:00");
+      return d;
+    }
+    function toDateEnd(str){
+      const d = new Date(str+"T23:59:59.999");
+      return d;
+    }
+    function inRange(ts, from, to){
+      if(!ts) return false;
+      const ms = ts.toMillis ? ts.toMillis() : (ts instanceof Date ? ts.getTime() : Number(ts));
+      return Number.isFinite(ms) && ms >= from.getTime() && ms <= to.getTime();
+    }
+    function escapeHtml(s){
+      return (s ?? "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // ===== Auth =====
+    const chipUser = $("chipUser");
+    function bindLogout(btn){
+      btn.addEventListener("click", async ()=>{ try{ await signOut(auth); }catch(e){ console.warn(e);} });
+    }
+    bindLogout($("btnLogoutTop"));
+    bindLogout($("btnLogoutSide"));
+
+    // ===== Collections =====
+    const txCol = collection(db, "transactions");
+    const stockCol = collection(db, "stock"); // achats mis en stock
+    const resaCol = collection(db, "reservations"); // achats mis en résa
+    const cashCol = collection(db, "cashbook"); // dépenses/revenus manuels
+
+    // ===== Config commissions =====
+    const COMM_VENDOR = 0.10;
+    const COMM_COPDG = 0.12;
+    const COMM_PDG = 0.05;
+
+    // ===== State =====
+    let allTx = [];
+    let allStock = [];
+    let allResa = [];
+    let allCash = [];
+    let userReady = false;
+
+    function detectTxDate(d){
+      // fallback: createdAt / date
+      return d.date || d.createdAt || d.updatedAt || null;
+    }
+
+    function txVehicleLabel(d){
+      const vehicle = d.vehicle || d.vehicleName || "";
+      const brand = d.brand || "";
+      const model = d.model || "";
+      const combo = norm([vehicle, brand, model].filter(Boolean).join(" "));
+      return combo || "—";
+    }
+
+    function txSeller(d){
+      return d.sellerName || d.seller || d.vendor || d.vendeur || d.sellerId || "—";
+    }
+
+    function txPrices(d){
+      const buy = parseMoney(d.buyPrice ?? d.purchasePrice ?? d.priceBuy ?? d.prixAchat);
+      const sell = parseMoney(d.sellPrice ?? d.salePrice ?? d.priceSell ?? d.prixVente);
+      return { buy, sell };
+    }
+
+    function cashAmount(d){
+      return parseMoney(d.amount ?? d.montant);
+    }
+
+    // ===== Load =====
+    async function loadAll(){
+      const [txSnap, stSnap, reSnap, caSnap] = await Promise.all([
+        getDocs(txCol),
+        getDocs(stockCol),
+        getDocs(resaCol),
+        getDocs(cashCol)
+      ]);
+      allTx = txSnap.docs.map(x=>({id:x.id, ...x.data()}));
+      allStock = stSnap.docs.map(x=>({id:x.id, ...x.data()}));
+      allResa = reSnap.docs.map(x=>({id:x.id, ...x.data()}));
+      allCash = caSnap.docs.map(x=>({id:x.id, ...x.data()}));
+    }
+
+    // ===== Filter range =====
+    function getRange(){
+      const scope = $("scope").value;
+      if(scope === "all"){
+        // range large: 1970 -> 2100
+        return { from: new Date(1970,0,1), to: new Date(2100,0,1) };
+      }
+      const fromStr = $("dateFrom").value;
+      const toStr = $("dateTo").value;
+      const from = fromStr ? toDateStart(fromStr) : startOfWeek(new Date());
+      const to = toStr ? toDateEnd(toStr) : endOfWeek(new Date());
+      return { from, to };
+    }
+
+    function setRangeUI(from, to){
+      $("dateFrom").value = ymd(from);
+      $("dateTo").value = ymd(to);
+    }
+
+    // ===== Compute =====
+    function compute(){
+      const {from, to} = getRange();
+      $("rangeTag").textContent = `${ymd(from)} → ${ymd(to)}`;
+
+      // purchases = items created in stock + reservations (buyPrice only)
+      const stockIn = allStock.filter(d=> inRange(d.createdAt || d.date || d.updatedAt, from, to));
+      const resaIn = allResa.filter(d=> inRange(d.createdAt || d.date || d.updatedAt, from, to));
+
+      const purchLines = [];
+      let purchTotal = 0;
+
+      for(const d of [...stockIn, ...resaIn]){
+        const buy = parseMoney(d.buyPrice ?? d.purchasePrice ?? d.prixAchat ?? d.priceBuy);
+        if(!Number.isFinite(buy)) continue;
+        purchTotal += buy * (Number(d.qty ?? d.nombre ?? 1) || 1);
+        purchLines.push(d);
+      }
+
+      // vehicle sales tx
+      const txIn = allTx.filter(d=> inRange(detectTxDate(d), from, to));
+      // only sale-like: keep all but compute only when sellPrice exists
+      let salesTotal = 0, profitTotal = 0;
+      const commBySeller = new Map(); // seller -> {count, totalCommission}
+      const txRows = [];
+
+      for(const d of txIn){
+        const dateTs = detectTxDate(d);
+        const dt = dateTs?.toDate ? dateTs.toDate() : (dateTs instanceof Date ? dateTs : null);
+        const {buy, sell} = txPrices(d);
+        const seller = txSeller(d);
+        const vehicle = txVehicleLabel(d);
+        const qty = Number(d.qty ?? 1) || 1;
+
+        const hasSell = Number.isFinite(sell);
+        const hasBuy = Number.isFinite(buy);
+
+        let commVendor = NaN, commCo = NaN, commPdg = NaN;
+        if(hasSell){
+          commVendor = sell * COMM_VENDOR;
+          commCo = sell * COMM_COPDG;
+          commPdg = sell * COMM_PDG;
+          salesTotal += sell;
+          if(hasBuy) profitTotal += (sell - buy);
+          const cur = commBySeller.get(seller) || {count:0, total:0};
+          cur.count += 1;
+          cur.total += commVendor;
+          commBySeller.set(seller, cur);
+        }
+
+        txRows.push({
+          id:d.id,
+          date: dt ? ymd(dt) : "—",
+          vehicle,
+          buy,
+          sell,
+          seller,
+          commVendor,
+          commCo,
+          commPdg
+        });
+      }
+
+      // cashbook
+      const cashIn = allCash.filter(d=> inRange(d.date || d.createdAt || d.updatedAt, from, to));
+      let expTotal = 0, incTotal = 0;
+      for(const d of cashIn){
+        const amt = cashAmount(d);
+        if(!Number.isFinite(amt)) continue;
+        const t = d.type || d.kind || "";
+        if(t === "income") incTotal += amt;
+        else expTotal += amt;
+      }
+
+      // treasury
+      const open = parseMoney($("openingBalance").value);
+      const openVal = Number.isFinite(open) ? open : NaN;
+      const closeVal = Number.isFinite(openVal)
+        ? (openVal + salesTotal + incTotal - purchTotal - expTotal)
+        : NaN;
+
+      // KPIs
+      $("kpiPurch").textContent = money(purchTotal);
+      $("kpiPurchS").textContent = `${purchLines.length} ligne(s)`;
+      $("kpiSales").textContent = money(salesTotal);
+      $("kpiSalesS").textContent = `${txRows.filter(x=>Number.isFinite(x.sell)).length} vente(s)`;
+      $("kpiProfit").textContent = money(profitTotal);
+      $("kpiExp").textContent = money(expTotal);
+      $("kpiInc").textContent = money(incTotal);
+      $("kpiOpen").textContent = Number.isFinite(openVal) ? money(openVal) : "—";
+      $("kpiClose").textContent = Number.isFinite(closeVal) ? money(closeVal) : "—";
+
+      renderTx(txRows);
+      renderComms(commBySeller);
+      renderCash(cashIn);
+    }
+
+    // ===== Render tables =====
+    function renderTx(rows){
+      const q = normKey($("qTx").value);
+      const sortMode = $("sortTx").value;
+
+      let r = [...rows];
+      if(q){
+        r = r.filter(x=> normKey(`${x.vehicle} ${x.seller}`).includes(q));
+      }
+      const dateVal = (x)=> {
+        const [y,m,d] = String(x.date||"").split("-").map(Number);
+        return (y&&m&&d) ? new Date(y,m-1,d).getTime() : 0;
+      };
+      if(sortMode === "date_desc") r.sort((a,b)=> dateVal(b)-dateVal(a));
+      if(sortMode === "date_asc") r.sort((a,b)=> dateVal(a)-dateVal(b));
+      if(sortMode === "seller") r.sort((a,b)=> String(a.seller||"").localeCompare(String(b.seller||"")));
+
+      $("txCount").textContent = `${r.length} ligne(s)`;
+      const tb = $("tbodyTx");
+      tb.innerHTML = "";
+      for(const x of r){
+        const tr = document.createElement("tr");
+        const buyTxt = Number.isFinite(x.buy) ? money(x.buy) : "—";
+        const sellTxt = Number.isFinite(x.sell) ? money(x.sell) : "—";
+        tr.innerHTML = `
+          <td>${escapeHtml(x.date)}</td>
+          <td>${escapeHtml(x.vehicle)}</td>
+          <td>${buyTxt}</td>
+          <td>${sellTxt}</td>
+          <td>${escapeHtml(x.seller)}</td>
+          <td>${Number.isFinite(x.commVendor) ? money(x.commVendor) : "—"}</td>
+          <td>${Number.isFinite(x.commCo) ? money(x.commCo) : "—"}</td>
+          <td>${Number.isFinite(x.commPdg) ? money(x.commPdg) : "—"}</td>
+        `;
+        tb.appendChild(tr);
+      }
+    }
+
+    function renderComms(map){
+      const rows = Array.from(map.entries()).map(([seller,v])=>({seller, ...v}));
+      rows.sort((a,b)=> b.total - a.total);
+      const tb = $("tbodyCom");
+      tb.innerHTML = "";
+      for(const r of rows){
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(r.seller)}</td>
+          <td>${money(r.total)}</td>
+          <td><span class="tag ok">${r.count}</span></td>
+        `;
+        tb.appendChild(tr);
+      }
+      if(!rows.length){
+        tb.innerHTML = `<tr><td colspan="3" style="color:rgba(255,255,255,.6)">Aucune vente sur la période.</td></tr>`;
+      }
+    }
+
+    function renderCash(rows){
+      const q = normKey($("qCB").value);
+      const sortMode = $("sortCB").value;
+
+      let r = rows.map(d=>{
+        const ts = d.date || d.createdAt || d.updatedAt || null;
+        const dt = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+        const amt = cashAmount(d);
+        const type = d.type || d.kind || "expense";
+        return {
+          id:d.id,
+          date: dt ? ymd(dt) : "—",
+          type,
+          amount: amt,
+          reason: d.reason || d.raison || d.note || ""
+        };
+      });
+
+      if(q){
+        r = r.filter(x=> normKey(x.reason).includes(q));
+      }
+      const dateVal = (x)=> {
+        const [y,m,d] = String(x.date||"").split("-").map(Number);
+        return (y&&m&&d) ? new Date(y,m-1,d).getTime() : 0;
+      };
+      if(sortMode === "date_desc") r.sort((a,b)=> dateVal(b)-dateVal(a));
+      if(sortMode === "date_asc") r.sort((a,b)=> dateVal(a)-dateVal(b));
+      if(sortMode === "type") r.sort((a,b)=> String(a.type).localeCompare(String(b.type)));
+
+      $("cbCount").textContent = `${r.length} ligne(s)`;
+      const tb = $("tbodyCB");
+      tb.innerHTML = "";
+      for(const x of r){
+        const tr = document.createElement("tr");
+        const isInc = x.type === "income";
+        tr.innerHTML = `
+          <td>${escapeHtml(x.date)}</td>
+          <td><span class="tag ${isInc?'ok':'bad'}">${isInc?'Revenu':'Dépense'}</span></td>
+          <td>${Number.isFinite(x.amount) ? money(x.amount) : "—"}</td>
+          <td>${escapeHtml(x.reason)}</td>
+          <td class="td-actions no-print">
+            <button class="btn small danger" data-del-cb="${x.id}">Supprimer</button>
+          </td>
+        `;
+        tb.appendChild(tr);
+      }
+      if(!r.length){
+        tb.innerHTML = `<tr><td colspan="5" style="color:rgba(255,255,255,.6)">Aucune ligne sur la période.</td></tr>`;
+      }
+    }
+
+    // ===== Events =====
+    $("btnPrint").addEventListener("click", ()=> window.print());
+
+    $("btnApply").addEventListener("click", async ()=>{
+      try{ await loadAll(); compute(); toast("OK","Période appliquée."); }catch(e){ console.error(e); toast("Erreur", e.message||String(e)); }
+    });
+
+    $("btnThisWeek").addEventListener("click", ()=>{
+      $("scope").value = "week";
+      const s = startOfWeek(new Date());
+      const e = endOfWeek(new Date());
+      setRangeUI(s,e);
+      compute();
+    });
+
+    $("btnAll").addEventListener("click", ()=>{
+      $("scope").value = "all";
+      compute();
+    });
+
+    $("scope").addEventListener("change", ()=>{
+      if($("scope").value === "all"){
+        $("dateFrom").disabled = true;
+        $("dateTo").disabled = true;
+      }else{
+        $("dateFrom").disabled = false;
+        $("dateTo").disabled = false;
+      }
+      compute();
+    });
+
+    $("qTx").addEventListener("input", compute);
+    $("sortTx").addEventListener("change", compute);
+    $("qCB").addEventListener("input", compute);
+    $("sortCB").addEventListener("change", compute);
+    $("openingBalance").addEventListener("input", compute);
+    $("dateFrom").addEventListener("change", compute);
+    $("dateTo").addEventListener("change", compute);
+
+    // Add cashbook entry
+    $("btnAddCB").addEventListener("click", async ()=>{
+      try{
+        const type = $("cbType").value;
+        const dateStr = $("cbDate").value || ymd(new Date());
+        const amount = parseMoney($("cbAmount").value);
+        const reason = norm($("cbReason").value);
+        if(!Number.isFinite(amount) || amount <= 0) throw new Error("Montant invalide.");
+        if(!reason) throw new Error("Raison requise.");
+        const dt = new Date(dateStr+"T12:00:00"); // milieu de journée pour éviter TZ
+        await addDoc(cashCol, {
+          type,
+          amount,
+          reason,
+          date: dt,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        $("cbAmount").value = "";
+        $("cbReason").value = "";
+        toast("Ajouté", type==="income" ? "Revenu enregistré." : "Dépense enregistrée.");
+        await loadAll();
+        compute();
+      }catch(e){
+        console.error(e);
+        toast("Erreur", e.message || String(e));
+      }
+    });
+
+    // Delete cashbook
+    document.addEventListener("click", async (ev)=>{
+      const b = ev.target?.closest?.("button[data-del-cb]");
+      if(!b) return;
+      const id = b.dataset.delCb;
+      if(!id) return;
+      if(!confirm("Supprimer cette ligne ?")) return;
+      try{
+        await deleteDoc(doc(db,"cashbook", id));
+        toast("Supprimé","OK.");
+        await loadAll();
+        compute();
+      }catch(e){
+        toast("Erreur", e.message||String(e));
+      }
+    });
+
+    // Export CSV
+    $("btnExportCSV").addEventListener("click", ()=>{
+      const {from,to} = getRange();
+      const txIn = allTx.filter(d=> inRange(detectTxDate(d), from, to));
+      const cashIn = allCash.filter(d=> inRange(d.date || d.createdAt || d.updatedAt, from, to));
+      const lines = [];
+      lines.push(["TYPE","DATE","LABEL","ACHAT","VENTE","MONTANT","RAISON","VENDEUR"].join(","));
+      for(const d of txIn){
+        const ts = detectTxDate(d);
+        const dt = ts?.toDate ? ts.toDate() : null;
+        const {buy,sell} = txPrices(d);
+        lines.push([
+          "TRANSACTION",
+          dt? ymd(dt) : "",
+          txVehicleLabel(d).replaceAll('"','""'),
+          Number.isFinite(buy)? buy : "",
+          Number.isFinite(sell)? sell : "",
+          "",
+          "",
+          txSeller(d).replaceAll('"','""')
+        ].map(x=> (String(x).includes(",") ? `"${String(x)}"` : String(x))).join(","));
+      }
+      for(const d of cashIn){
+        const ts = d.date || d.createdAt || d.updatedAt;
+        const dt = ts?.toDate ? ts.toDate() : null;
+        const amt = cashAmount(d);
+        lines.push([
+          "CASHBOOK",
+          dt? ymd(dt):"",
+          d.type || "expense",
+          "",
+          "",
+          Number.isFinite(amt)? amt : "",
+          (d.reason||"").replaceAll('"','""'),
+          ""
+        ].map(x=> (String(x).includes(",") ? `"${String(x)}"` : String(x))).join(","));
+      }
+      const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `PDM-Compta-${ymd(from)}_to_${ymd(to)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ===== Boot =====
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){
+        chipUser.textContent = "Non connecté";
+        toast("Connexion requise", "Connecte-toi pour accéder à la comptabilité.");
+        return;
+      }
+      chipUser.textContent = `Connecté: ${user.email || user.uid}`;
+      try{
+        // init default week
+        $("scope").value = "week";
+        const s = startOfWeek(new Date());
+        const e = endOfWeek(new Date());
+        setRangeUI(s,e);
+        $("cbDate").value = ymd(new Date());
+
+        await loadAll();
+        compute();
+      }catch(e){
+        console.error(e);
+        toast("Erreur Firestore", e.message || String(e));
+      }
+    });
+  </script>
+</body>
+</html>
