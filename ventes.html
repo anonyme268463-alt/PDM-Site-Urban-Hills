@@ -562,10 +562,7 @@ select, select option{background:#fff;color:#000}
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-      query, where, orderBy, limit, serverTimestamp, writeBatch
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // ---------- Firebase config via localStorage ----------
     function loadFirebaseConfig(){
@@ -1046,6 +1043,13 @@ select, select option{background:#fff;color:#000}
         .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
         .replace(/\s+/g," ");
     }
+
+    // petit helper: convertit en entier positif (ex: "25 000" -> 25000)
+    function parseIntSafe(v, def=0){
+      const n = Number(String(v ?? "").replace(/[^0-9-]/g, ""));
+      return Number.isFinite(n) ? n : def;
+    }
+
 
     function moneyToInt(v){
       const s = (v ?? "").toString().replace(/[^0-9\-]/g,"");
