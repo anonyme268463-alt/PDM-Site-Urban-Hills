@@ -613,6 +613,8 @@ select, select option{background:#fff;color:#000}
     const norm = (s)=> (s ?? "").toString().trim();
     const normKey = (s)=> norm(s).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
     const esc = (s)=> (s ?? "").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+    const escapeHtml = esc;
     const fmtMoney = (n)=> "$ " + Number(n||0).toLocaleString("en-US");
     const fmtDate = (ts)=> {
       if(!ts) return "—";
@@ -668,7 +670,7 @@ select, select option{background:#fff;color:#000}
 
     
     // ---------- Véhicules (recherche + auto-complétion) ----------
-    const vehiclesCol = collection(db, "vehicles");
+// (vehiclesCol déjà déclaré plus haut)
     let vehiclesCache = []; // {id, ...data, __name, __key}
 
     function getVehicleName(v){
@@ -714,7 +716,7 @@ select, select option{background:#fff;color:#000}
     const inVeh = $("inVehicleSearch");
     const inVehId = $("inVehicleId");
     const sug = $("vehicleSuggest");
-    const inPrice = $("inPrice");
+    const inSell = $("inSell");
     let sugIndex = -1;
 
     function clearSuggest(){
@@ -743,7 +745,7 @@ select, select option{background:#fff;color:#000}
 
       // Auto-remplir le prix de vente depuis la base véhicules
       const baseSell = Number(getSellPrice(v));
-      if(Number.isFinite(baseSell)) inPrice.value = String(Math.round(baseSell));
+      if(Number.isFinite(baseSell)) inSell.value = String(Math.round(baseSell));
     }
 
     function currentMatches(){
@@ -838,7 +840,7 @@ select, select option{background:#fff;color:#000}
       $("inSell").value = "";
       $("inQty").value = "1";
       $("inNotes").value = "";
-      updateVehHint();
+      updateVehicleHint();
       await wireFormPreview();
     });
 
@@ -923,7 +925,7 @@ select, select option{background:#fff;color:#000}
         $("inSell").value = "";
         $("inQty").value = "1";
         $("inNotes").value = "";
-        updateVehHint();
+        updateVehicleHint();
         await wireFormPreview();
         await refreshSales();
       }catch(e){
