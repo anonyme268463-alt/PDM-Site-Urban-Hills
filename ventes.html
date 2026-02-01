@@ -378,7 +378,44 @@ select, select option{background:#fff;color:#000}
   @media (max-width: 520px){
     .kpis{grid-template-columns:1fr}
   }
-  </style>
+  
+/* Light inputs (white bg / black text) for dropdown readability */
+.input.light, select.light{
+  background: rgba(255,255,255,.96) !important;
+  color:#0b0b0b !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
+select.light option{ color:#0b0b0b; background:#fff; }
+
+/* Autocomplete (vehicle) */
+.combo{ position:relative; }
+.combo-list{
+  position:absolute;
+  left:0; right:0;
+  top: calc(100% + 6px);
+  background: rgba(255,255,255,.98);
+  color:#0b0b0b;
+  border:1px solid rgba(0,0,0,.12);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35);
+  overflow:auto;
+  max-height: 280px;
+  display:none;
+  z-index: 60;
+}
+.combo-list.show{ display:block; }
+.combo-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-bottom:1px solid rgba(0,0,0,.06);
+  font-size:13px;
+}
+.combo-item:last-child{ border-bottom:none; }
+.combo-item:hover, .combo-item.active{ background: rgba(0,0,0,.06); }
+.combo-item .sub{ display:block; font-size:12px; opacity:.75; margin-top:2px; }
+.help{ min-height: 30px; }
+
+</style>
 </head>
 <body>
   <div class="app">
@@ -426,8 +463,10 @@ select, select option{background:#fff;color:#000}
           <div class="grid-sale">
             <div>
               <label>Véhicule (base véhicules)</label>
-              <input id="inVehicleSearch" class="input light" list="vehicleList" placeholder="Tape le nom du véhicule…" autocomplete="off"/>
-              <datalist id="vehicleList"></datalist>
+              <div class="combo">
+              <input id="inVehicleSearch" class="input light" placeholder="Tape le nom du véhicule…" autocomplete="off"/>
+              <div id="vehicleSuggest" class="combo-list" role="listbox" aria-label="Suggestions véhicules"></div>
+            </div>
               <input id="inVehicleId" type="hidden"/>
               <div class="help" id="vehHint" style="margin-top:6px">—</div>
             </div>
@@ -453,6 +492,7 @@ select, select option{background:#fff;color:#000}
             <div>
               <label>Notes (optionnel)</label>
               <input id="inNotes" placeholder="Ex: plaque, remise, contexte RP…" />
+              <div class="help">&nbsp;</div>
             </div>
           </div>
 
@@ -661,111 +701,122 @@ select, select option{background:#fff;color:#000}
       const sell = (v.sellPrice!=null) ? " — " + fmtMoney(v.sellPrice) : "";
       return (t + brand + " " + model + sell).replace(/\s+/g," ").trim();
     }
+    // Autocomplete (dropdown comme Base clients)
+    const vehicleSuggest = $("vehicleSuggest");
+    let vehSuggestOpen = false;
+    let vehActiveIndex = -1;
 
-    async function loadVehicles(){
-      const snap = await getDocs(query(collection(db, "vehicles"), where("active","==", true)));
-      vehicles = snap.docs.map(d=>({id:d.id, ...d.data()}));
-
-      // Autocomplete list
-      const list = $("vehicleList");
-      list.innerHTML = "";
-      vehiclesById = new Map();
-      vehiclesByLabel = new Map();
-
+    function filterVehicles(q){
+      const nq = normKey(q);
+      if(!nq) return vehicles.slice(0, 12);
+      const out = [];
       for(const v of vehicles){
-        vehiclesById.set(v.id, v);
-        const label = vehicleLabel(v);
-        const key = normKey(label);
-        if(!vehiclesByLabel.has(key)) vehiclesByLabel.set(key, v.id);
+        if(v.key.includes(nq)) out.push(v);
+        if(out.length >= 12) break;
+      }
+      return out;
+    }
 
-        const opt = document.createElement("option");
-        opt.value = label;
-        list.appendChild(opt);
+    function closeVehSuggest(){
+      vehicleSuggest.classList.remove("show");
+      vehicleSuggest.innerHTML = "";
+      vehActiveIndex = -1;
+      vehSuggestOpen = false;
+    }
+
+    function openVehSuggest(items){
+      vehicleSuggest.innerHTML = items.map((v, idx) => `
+        <div class="combo-item" role="option" data-idx="${idx}" data-id="${v.id}">
+          ${escapeHtml(v.label)}
+          <span class="sub">Achat: ${fmtMoney(v.buyPrice)} • Revente base: ${fmtMoney(v.sellBase)}</span>
+        </div>
+      `).join("");
+      vehicleSuggest.classList.add("show");
+      vehSuggestOpen = true;
+      vehActiveIndex = -1;
+    }
+
+    function selectVehicleById(id){
+      const v = vehiclesById.get(id);
+      if(!v) return false;
+      $("inVehicleId").value = v.id;
+      $("inVehicleSearch").value = v.label;
+      updateVehicleHint(v);
+      detectTypeAndExplain();
+      closeVehSuggest();
+      return true;
+    }
+
+    function updateVehicleSuggest(){
+      const q = $("inVehicleSearch").value;
+      const items = filterVehicles(q);
+      if(!items.length){ closeVehSuggest(); return; }
+      openVehSuggest(items);
+    }
+
+    $("inVehicleSearch").addEventListener("input", ()=>{
+      $("inVehicleId").value = "";
+      updateVehicleHint(null);
+      updateVehicleSuggest();
+      detectTypeAndExplain();
+    });
+    $("inVehicleSearch").addEventListener("focus", ()=> updateVehicleSuggest());
+    $("inVehicleSearch").addEventListener("blur", ()=> setTimeout(closeVehSuggest, 160));
+
+    $("inVehicleSearch").addEventListener("keydown", (e)=>{
+      if(!vehSuggestOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")){
+        updateVehicleSuggest();
+      }
+      const items = [...vehicleSuggest.querySelectorAll(".combo-item")];
+      if(!items.length) return;
+
+      if(e.key === "ArrowDown"){
+        e.preventDefault();
+        vehActiveIndex = Math.min(items.length - 1, vehActiveIndex + 1);
+      }else if(e.key === "ArrowUp"){
+        e.preventDefault();
+        vehActiveIndex = Math.max(0, vehActiveIndex - 1);
+      }else if(e.key === "Enter"){
+        if(vehActiveIndex >= 0){
+          e.preventDefault();
+          selectVehicleById(items[vehActiveIndex].dataset.id);
+        }else{
+          // tentative exact match si l’utilisateur tape le libellé complet
+          const v = vehiclesByLabel.get(norm($("inVehicleSearch").value));
+          if(v) selectVehicleById(v.id);
+        }
+        return;
+      }else if(e.key === "Escape"){
+        closeVehSuggest();
+        return;
       }
 
-      // If current value matches, refresh hint
-      resolveVehicleFromInput();
-    }
+      items.forEach((el, i)=> el.classList.toggle("active", i === vehActiveIndex));
+      if(vehActiveIndex >= 0){
+        items[vehActiveIndex].scrollIntoView({ block: "nearest" });
+      }
+    });
+
+    vehicleSuggest.addEventListener("mousedown", (e)=>{
+      const item = e.target.closest(".combo-item");
+      if(!item) return;
+      e.preventDefault(); // évite le blur avant sélection
+      selectVehicleById(item.dataset.id);
+    });
 
     function resolveVehicleFromInput(){
-      const input = $("inVehicleSearch");
-      const hid = $("inVehicleId");
-      const typed = norm(input.value);
-      const key = normKey(typed);
+      const id = $("inVehicleId").value;
+      if(id) return vehiclesById.get(id) || null;
 
-      if(hid.value && vehiclesById?.has?.(hid.value)){
-        updateVehHint(vehiclesById.get(hid.value));
-        return vehiclesById.get(hid.value);
-      }
-
-      if(typed && vehiclesByLabel?.has?.(key)){
-        const id = vehiclesByLabel.get(key);
-        hid.value = id;
-        const v = vehiclesById.get(id);
-        updateVehHint(v);
+      const typed = norm($("inVehicleSearch").value);
+      if(!typed) return null;
+      const v = vehiclesByLabel.get(typed);
+      if(v){
+        $("inVehicleId").value = v.id;
+        updateVehicleHint(v);
         return v;
       }
-
-      hid.value = "";
-      updateVehHint(null);
       return null;
-    }
-
-    function getSelectedVehicle(){
-      return resolveVehicleFromInput();
-    }
-
-    function updateVehHint(v){
-      if(!v) { $("vehHint").textContent = "—"; return; }
-      const buy = (v.buyPrice!=null) ? Number(v.buyPrice) : Math.round(Number(v.sellPrice||0)/2);
-      const sell = (v.sellPrice!=null) ? Number(v.sellPrice) : null;
-      $("vehHint").innerHTML = "Achat: <b>" + fmtMoney(buy) + "</b> • Prix base: <b>" + (sell!=null?fmtMoney(sell):"—") + "</b>";
-      if(!$("inSell").value && sell!=null) $("inSell").value = String(Math.round(sell));
-    }
-
-    $("inVehicleSearch").addEventListener("input", async ()=>{ resolveVehicleFromInput(); await wireFormPreview(); });
-    $("inVehicleSearch").addEventListener("change", async ()=>{ resolveVehicleFromInput(); await wireFormPreview(); });
-    $("inClient").addEventListener("input", async ()=>{ await wireFormPreview(); });
-
-    async function detectSaleType(v, client){
-      const brandKey = normKey(v.brand);
-      const modelKey = normKey(v.model);
-      const cKey = normKey(client);
-
-      if(client){
-        const qRes = query(invCol,
-          where("status","==","reservation"),
-          where("brandKey","==", brandKey),
-          where("modelKey","==", modelKey),
-          where("clientKey","==", cKey),
-          limit(1)
-        );
-        const snap = await getDocs(qRes);
-        if(!snap.empty) return { saleType:"sale_reservation", invDoc: snap.docs[0] };
-        return { saleType:"sale_direct", invDoc: null };
-      } else {
-        const qStock = query(invCol,
-          where("status","==","stock"),
-          where("brandKey","==", brandKey),
-          where("modelKey","==", modelKey),
-          limit(1)
-        );
-        const snap = await getDocs(qStock);
-        if(!snap.empty) return { saleType:"sale_stock", invDoc: snap.docs[0] };
-        return { saleType:"sale_direct", invDoc: null };
-      }
-    }
-
-    async function wireFormPreview(){
-      const v = getSelectedVehicle();
-      if(!v) return;
-      const client = norm($("inClient").value);
-      const det = await detectSaleType(v, client);
-      const label =
-        det.saleType==="sale_reservation" ? "Vente depuis réservation" :
-        det.saleType==="sale_stock" ? "Vente depuis stock" :
-        "Vente directe (achat + vente)";
-      $("saleTypeHint").innerHTML = "Type détecté : <b>" + label + "</b>";
     }
 
     // ---------- Create sale ----------
