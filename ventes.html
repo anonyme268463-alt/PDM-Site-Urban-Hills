@@ -198,6 +198,15 @@
       color: rgba(255,255,255,.9);
       outline:none;
     }
+
+    /* Light selects (black text on white background) */
+    select.light, .input.light{
+      background:#fff;
+      color:#111;
+      border-color: rgba(0,0,0,.14);
+    }
+    .input.light::placeholder{ color: rgba(0,0,0,.45); }
+    select.light option{ background:#fff; color:#111; }
     select option{
       background:#ffffff;
       color:#000000;
@@ -417,7 +426,9 @@ select, select option{background:#fff;color:#000}
           <div class="grid-sale">
             <div>
               <label>Véhicule (base véhicules)</label>
-              <select id="selVehicle"></select>
+              <input id="inVehicleSearch" class="input light" list="vehicleList" placeholder="Tape le nom du véhicule…" autocomplete="off"/>
+              <datalist id="vehicleList"></datalist>
+              <input id="inVehicleId" type="hidden"/>
               <div class="help" id="vehHint" style="margin-top:6px">—</div>
             </div>
 
@@ -442,11 +453,12 @@ select, select option{background:#fff;color:#000}
             <div>
               <label>Notes (optionnel)</label>
               <input id="inNotes" placeholder="Ex: plaque, remise, contexte RP…" />
-              <div class="row-actions" style="margin-top:10px">
-                <button id="btnSell" class="btn gold">Valider la vente</button>
-                <button id="btnReset" class="btn">Réinitialiser</button>
-              </div>
             </div>
+          </div>
+
+          <div class="row-actions" style="margin-top:10px">
+            <button id="btnSell" class="btn gold">Valider la vente</button>
+            <button id="btnReset" class="btn">Réinitialiser</button>
           </div>
 
           <div class="hint" id="saleTypeHint" style="margin-top:10px">Type détecté : —</div>
@@ -640,6 +652,8 @@ select, select option{background:#fff;color:#000}
 
     // ---------- Vehicles dropdown ----------
     let vehicles = [];
+    let vehiclesById = new Map();
+    let vehiclesByLabel = new Map();
     function vehicleLabel(v){
       const t = v.type ? "[" + v.type + "] " : "";
       const brand = v.brand || "";
@@ -649,32 +663,59 @@ select, select option{background:#fff;color:#000}
     }
 
     async function loadVehicles(){
-      const snap = await getDocs(query(vehiclesCol, orderBy("type","asc"), orderBy("sellPrice","asc"), limit(1000)));
-      vehicles = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      const sel = $("selVehicle");
-      sel.innerHTML = "";
+      const snap = await getDocs(query(collection(db, "vehicles"), where("active","==", true)));
+      vehicles = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+      // Autocomplete list
+      const list = $("vehicleList");
+      list.innerHTML = "";
+      vehiclesById = new Map();
+      vehiclesByLabel = new Map();
+
       for(const v of vehicles){
+        vehiclesById.set(v.id, v);
+        const label = vehicleLabel(v);
+        const key = normKey(label);
+        if(!vehiclesByLabel.has(key)) vehiclesByLabel.set(key, v.id);
+
         const opt = document.createElement("option");
-        opt.value = v.id;
-        opt.textContent = vehicleLabel(v);
-        sel.appendChild(opt);
+        opt.value = label;
+        list.appendChild(opt);
       }
-      if(vehicles.length===0){
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "Aucun véhicule (collection vehicles vide)";
-        sel.appendChild(opt);
+
+      // If current value matches, refresh hint
+      resolveVehicleFromInput();
+    }
+
+    function resolveVehicleFromInput(){
+      const input = $("inVehicleSearch");
+      const hid = $("inVehicleId");
+      const typed = norm(input.value);
+      const key = normKey(typed);
+
+      if(hid.value && vehiclesById?.has?.(hid.value)){
+        updateVehHint(vehiclesById.get(hid.value));
+        return vehiclesById.get(hid.value);
       }
-      updateVehHint();
+
+      if(typed && vehiclesByLabel?.has?.(key)){
+        const id = vehiclesByLabel.get(key);
+        hid.value = id;
+        const v = vehiclesById.get(id);
+        updateVehHint(v);
+        return v;
+      }
+
+      hid.value = "";
+      updateVehHint(null);
+      return null;
     }
 
     function getSelectedVehicle(){
-      const id = $("selVehicle").value;
-      return vehicles.find(v=>v.id===id) || null;
+      return resolveVehicleFromInput();
     }
 
-    function updateVehHint(){
-      const v = getSelectedVehicle();
+    function updateVehHint(v){
       if(!v) { $("vehHint").textContent = "—"; return; }
       const buy = (v.buyPrice!=null) ? Number(v.buyPrice) : Math.round(Number(v.sellPrice||0)/2);
       const sell = (v.sellPrice!=null) ? Number(v.sellPrice) : null;
@@ -682,7 +723,8 @@ select, select option{background:#fff;color:#000}
       if(!$("inSell").value && sell!=null) $("inSell").value = String(Math.round(sell));
     }
 
-    $("selVehicle").addEventListener("change", async ()=>{ updateVehHint(); await wireFormPreview(); });
+    $("inVehicleSearch").addEventListener("input", async ()=>{ resolveVehicleFromInput(); await wireFormPreview(); });
+    $("inVehicleSearch").addEventListener("change", async ()=>{ resolveVehicleFromInput(); await wireFormPreview(); });
     $("inClient").addEventListener("input", async ()=>{ await wireFormPreview(); });
 
     async function detectSaleType(v, client){
@@ -728,11 +770,13 @@ select, select option{background:#fff;color:#000}
 
     // ---------- Create sale ----------
     $("btnReset").addEventListener("click", async ()=>{
+      $("inVehicleSearch").value = "";
+      $("inVehicleId").value = "";
       $("inClient").value = "";
       $("inSell").value = "";
       $("inQty").value = "1";
       $("inNotes").value = "";
-      updateVehHint();
+      updateVehHint(null);
       await wireFormPreview();
     });
 
@@ -817,7 +861,7 @@ select, select option{background:#fff;color:#000}
         $("inSell").value = "";
         $("inQty").value = "1";
         $("inNotes").value = "";
-        updateVehHint();
+        updateVehHint(null);
         await wireFormPreview();
         await refreshSales();
       }catch(e){
