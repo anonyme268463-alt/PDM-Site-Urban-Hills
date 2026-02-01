@@ -527,7 +527,8 @@ select, select option{background:#fff;color:#000}
                   <th>Véhicule</th>
                   <th>Qté</th>
                   <th>Vendeur</th>
-                  <th style="text-align:right">Montant</th>
+	                  <th style="text-align:right">Montant</th>
+	                  <th style="text-align:right">Actions</th>
                 </tr>
               </thead>
               <tbody id="rows"></tbody>
@@ -542,6 +543,48 @@ select, select option{background:#fff;color:#000}
   <div id="toast" class="toast">
     <div id="toastTitle" class="t"></div>
     <div id="toastMsg" class="m"></div>
+  </div>
+
+  <!-- Modal: modifier une vente -->
+  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h4 id="modalTitle">Modifier la vente</h4>
+      <div class="grid" style="grid-template-columns: 1fr 1fr .6fr 1fr; align-items:end">
+        <div>
+          <label>Type</label>
+          <select id="mType">
+            <option value="sale_direct">Vente directe</option>
+            <option value="sale_stock">Vente depuis stock</option>
+            <option value="sale_reservation">Vente depuis réservation</option>
+          </select>
+        </div>
+        <div>
+          <label>Client</label>
+          <input id="mClient" placeholder="Nom RP (optionnel)"/>
+        </div>
+        <div>
+          <label>Qté</label>
+          <input id="mQty" type="number" min="1" step="1"/>
+        </div>
+        <div>
+          <label>Prix de vente ($)</label>
+          <input id="mPrice" type="number" min="0" step="1"/>
+        </div>
+        <div style="grid-column: 1 / -1">
+          <label>Véhicule</label>
+          <input id="mVehicle" placeholder="Ex: Sugoi"/>
+        </div>
+        <div style="grid-column: 1 / -1">
+          <label>Notes</label>
+          <input id="mNotes" placeholder="Ex: plaque, remise, contexte RP"/>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnModalCancel" class="btn">Annuler</button>
+        <button id="btnModalSave" class="btn gold">Enregistrer</button>
+      </div>
+      <div class="hint" id="modalHint"></div>
+    </div>
   </div>
 
   
@@ -990,10 +1033,92 @@ select, select option{background:#fff;color:#000}
             <td><span class="tag ok">${Number(x.qty||1)}</span></td>
             <td>${esc(x.sellerName||"—")}</td>
             <td style="text-align:right"><span class="tag ok">${fmtMoney(amt)}</span></td>
-          <td class="td-actions"><button class="btn small" data-act="edit_sale" data-id="${x.id}">Modifier</button></td></tr>
+	            <td class="td-actions">
+	              <button class="btn small" data-act="editSale" data-id="${x.id}">Modifier</button>
+	            </td>
+          </tr>
         `;
-      }).join("") || `<tr><td colspan="8" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
+	      }).join("") || `<tr><td colspan="8" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
     }
+
+	    // ----------- Edition des ventes -----------
+	    const overlay = $("modalOverlay");
+	    let editState = null;
+	    function openEditModal(sale){
+	      editState = { id: sale.id };
+	      $("modalTitle").textContent = "Modifier la vente";
+	      $("modalHint").textContent = "Tu peux corriger les infos (client, véhicule, prix, qty, notes, type).";
+	      $("mType").value = sale.type || "sale_direct";
+	      $("mClient").value = sale.clientName || sale.client || "";
+	      $("mVehicle").value = sale.vehicle || sale.vehicleName || sale.model || "";
+	      $("mQty").value = String(Number(sale.qty ?? sale.quantity ?? 1) || 1);
+	      $("mPrice").value = String(Number(sale.sellPrice ?? sale.price ?? sale.amount ?? 0) || 0);
+	      $("mNotes").value = sale.notes || "";
+	      overlay.classList.add("show");
+	    }
+	    function closeEditModal(){
+	      overlay.classList.remove("show");
+	      editState = null;
+	    }
+	    $("btnModalCancel")?.addEventListener("click", closeEditModal);
+	    overlay?.addEventListener("click", (e)=>{ if(e.target === overlay) closeEditModal(); });
+	    $("btnModalSave")?.addEventListener("click", async ()=>{
+	      if(!editState) return;
+	      try{
+	        const type = $("mType").value;
+	        const clientName = norm($("mClient").value);
+	        const vehicle = norm($("mVehicle").value);
+	        const qty = Math.max(1, parseIntSafe($("mQty").value, 1));
+	        const sellPrice = Math.max(0, parseIntSafe($("mPrice").value, 0));
+	        const notes = norm($("mNotes").value);
+	        if(!vehicle) throw new Error("Véhicule requis.");
+	
+	        const ref = doc(db, "transactions", editState.id);
+	        await updateDoc(ref, {
+	          type,
+	          clientName: clientName || "",
+	          client: clientName || "",
+	          vehicle,
+	          qty,
+	          sellPrice,
+	          notes,
+	          updatedAt: serverTimestamp()
+	        });
+	        toast("Enregistré", "Vente mise à jour.");
+	        closeEditModal();
+	        await refreshSales();
+	      }catch(e){
+	        toast("Erreur", e.message || String(e));
+	      }
+	    });
+
+	    // Delegation actions dans le tableau
+	    document.addEventListener("click", (ev)=>{
+	      const btn = ev.target?.closest?.("button[data-act]");
+	      if(!btn) return;
+	      if(btn.dataset.act !== "editSale") return;
+	      const id = btn.dataset.id;
+	      const sale = sales.find(s=>s.id===id);
+	      if(!sale) return;
+	      openEditModal(sale);
+	    });
+
+	    // ---------- CSV preview (optionnel) ----------
+	    async function wireFormPreview(){
+	      const btnPrev = $("btnImportPreview");
+	      if(!btnPrev) return;
+	      btnPrev.addEventListener("click", async ()=>{
+	        const f = $("csvImportFile")?.files?.[0];
+	        if(!f){ toast("Prévisualisation", "Choisis un CSV d'abord."); return; }
+	        try{
+	          const text = await f.text();
+	          const rows = parseCSV(text);
+	          toast("Prévisualisation", `${Math.max(0, rows.length-1)} lignes détectées.`);
+	        }catch(e){
+	          toast("Prévisualisation", e.message || String(e));
+	        }
+	      });
+	    }
 
     $("btnRefresh").addEventListener("click", refreshSales);
     $("q").addEventListener("input", renderSales);
@@ -1232,36 +1357,3 @@ select, select option{background:#fff;color:#000}
 </script>
 </body>
 </html>
-  <div id="editSaleOverlay" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <h4 id="editSaleTitle">Modifier la vente</h4>
-      <div class="grid" style="grid-template-columns: 1.2fr 1fr .6fr 1.2fr">
-        <div>
-          <label>Véhicule</label>
-          <input id="eVehicle" placeholder="Nom du véhicule"/>
-        </div>
-        <div>
-          <label>Client</label>
-          <input id="eClient" placeholder="Nom du client"/>
-        </div>
-        <div>
-          <label>Quantité</label>
-          <input id="eQty" type="number" min="1" step="1" value="1"/>
-        </div>
-        <div>
-          <label>Prix de vente ($)</label>
-          <input id="ePrice" type="number" min="0" step="1" placeholder="Ex: 25000"/>
-        </div>
-      </div>
-      <div style="margin-top:10px">
-        <label>Notes</label>
-        <input id="eNotes" placeholder="Ex: plaque, remise, contexte RP…"/>
-      </div>
-      <div class="modal-actions">
-        <button id="btnEditCancel" class="btn">Annuler</button>
-        <button id="btnEditSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="hint" id="editSaleHint"></div>
-    </div>
-  </div>
-
