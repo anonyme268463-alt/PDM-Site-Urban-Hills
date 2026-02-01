@@ -198,6 +198,10 @@
       color: rgba(255,255,255,.9);
       outline:none;
     }
+    select option{
+      background:#ffffff;
+      color:#000000;
+    }
     input::placeholder{color: rgba(255,255,255,.32)}
     .row-actions{display:flex; gap:10px; justify-content:flex-end}
     .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
@@ -350,21 +354,21 @@
 select, select option{background:#fff;color:#000}
 
   /* Extra layout for KPIs / form */
-  .kpis{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
-  .kpi{{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}}
-  .kpi .k{{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}}
-  .kpi .v{{margin-top:6px;font-size:18px;font-weight:800}}
-  .kpi .s{{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}}
-  .grid-sale{{display:grid;grid-template-columns:1.1fr 1.1fr .8fr .8fr 1.2fr;gap:10px;align-items:end}}
-  .mono{{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}}
-  .help{{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}}
-  @media (max-width: 980px){{
-    .kpis{{grid-template-columns:repeat(2,1fr)}}
-    .grid-sale{{grid-template-columns:1fr 1fr}}
-  }}
-  @media (max-width: 520px){{
-    .kpis{{grid-template-columns:1fr}}
-  }}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+  .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
+  .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
+  .grid-sale{display:grid;grid-template-columns:1.1fr 1.1fr .8fr .8fr 1.2fr;gap:10px;align-items:end}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .help{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}
+  @media (max-width: 980px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid-sale{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width: 520px){
+    .kpis{grid-template-columns:1fr}
+  }
   </style>
 </head>
 <body>
@@ -509,58 +513,58 @@ select, select option{background:#fff;color:#000}
 
 
   <script type="module">
-    import {{ initializeApp }} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {{ getAuth, onAuthStateChanged, signOut }} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {{
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
       getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
       query, where, orderBy, limit, serverTimestamp, writeBatch
-    }} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // ---------- Firebase config via localStorage ----------
-    function loadFirebaseConfig(){{
-      try {{
+    function loadFirebaseConfig(){
+      try {
         const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
         if(!raw) return null;
         let txt = String(raw).trim();
-        const objMatch = txt.match(/\{{[\s\S]*\}}/);
+        const objMatch = txt.match(/\{[\s\S]*\}/);
         if(objMatch) txt = objMatch[0];
-        try {{ return JSON.parse(txt); }} catch {{}}
-        try {{ return (new Function("return (" + txt + ");"))(); }} catch {{}}
+        try { return JSON.parse(txt); } catch {}
+        try { return (new Function("return (" + txt + ");"))(); } catch {}
         return null;
-      }} catch {{
+      } catch {
         return null;
-      }}
-    }}
+      }
+    }
 
-    function showFirebaseConfigModal(){{
-      return new Promise((resolve)=>{{
+    function showFirebaseConfigModal(){
+      return new Promise((resolve)=>{
         const modal = document.getElementById("firebaseConfigModal");
         const ta = document.getElementById("firebaseConfigText");
         const btn = document.getElementById("firebaseConfigSave");
         const cancel = document.getElementById("firebaseConfigCancel");
         modal.style.display = "flex";
 
-        btn.onclick = () => {{
+        btn.onclick = () => {
           const v = ta.value.trim();
-          if(!v) {{ alert("Colle ta config Firebase (bloc firebaseConfig)."); return; }}
+          if(!v) { alert("Colle ta config Firebase (bloc firebaseConfig)."); return; }
           localStorage.setItem("PDM_FIREBASE_CONFIG", v);
           modal.style.display = "none";
           resolve(true);
           location.reload();
-        }};
-        cancel.onclick = () => {{
+        };
+        cancel.onclick = () => {
           modal.style.display = "none";
           resolve(false);
-        }};
-      }});
-    }}
+        };
+      });
+    }
 
-    async function ensureFirebaseConfig(){{
+    async function ensureFirebaseConfig(){
       const cfg = loadFirebaseConfig();
       if(cfg) return cfg;
       await showFirebaseConfigModal();
       throw new Error("Firebase config manquante");
-    }}
+    }
 
     const firebaseConfig = await ensureFirebaseConfig();
     const app = initializeApp(firebaseConfig);
@@ -570,30 +574,30 @@ select, select option{background:#fff;color:#000}
     // ---------- UI helpers ----------
     const $ = (id)=>document.getElementById(id);
     let toastTimer=null;
-    function toast(title,msg){{
+    function toast(title,msg){
       $("toastTitle").textContent = title;
       $("toastMsg").textContent = msg || "";
       $("toast").classList.add("show");
       clearTimeout(toastTimer);
       toastTimer = setTimeout(()=> $("toast").classList.remove("show"), 4200);
-    }}
+    }
 
     const norm = (s)=> (s ?? "").toString().trim();
     const normKey = (s)=> norm(s).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
     const esc = (s)=> (s ?? "").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
     const fmtMoney = (n)=> "$ " + Number(n||0).toLocaleString("en-US");
-    const fmtDate = (ts)=> {{
+    const fmtDate = (ts)=> {
       if(!ts) return "—";
       const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleString("fr-FR", {{ year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }});
-    }};
+      return d.toLocaleString("fr-FR", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+    };
 
-    function bindLogout(btn){{
-      btn.addEventListener("click", async ()=>{{
-        try{{ await signOut(auth); }}catch(e){{}}
+    function bindLogout(btn){
+      btn.addEventListener("click", async ()=>{
+        try{ await signOut(auth); }catch(e){}
         window.location.href = "pdm-staff.html";
-      }});
-    }}
+      });
+    }
     bindLogout($("btnLogoutTop"));
     bindLogout($("btnLogoutSide"));
 
@@ -604,89 +608,89 @@ select, select option{background:#fff;color:#000}
     const auditCol = collection(db,"auditLogs");
 
     // ---------- Session / profile ----------
-    let me = null; // {{uid,name,role}}
-    async function loadProfile(uid){{
+    let me = null; // {uid,name,role}
+    async function loadProfile(uid){
       const snap = await getDoc(doc(db,"users",uid));
       if(!snap.exists()) return null;
       const d = snap.data();
       if(d.active === false) return null;
-      return {{ uid, name: d.name || "Utilisateur", role: (d.role || "staff").toLowerCase() }};
-    }}
+      return { uid, name: d.name || "Utilisateur", role: (d.role || "staff").toLowerCase() };
+    }
 
-    onAuthStateChanged(auth, async (user)=>{{
-      if(!user){{
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){
         $("chipUser").textContent = "Non connecté";
         $("chipRole").textContent = "—";
         toast("Connexion requise","Connecte-toi pour accéder aux ventes.");
         return;
-      }}
+      }
       me = await loadProfile(user.uid);
-      if(!me){{
+      if(!me){
         $("chipUser").textContent = "Accès refusé";
         $("chipRole").textContent = "—";
         toast("Accès refusé","Profil Firestore manquant/désactivé.");
         return;
-      }}
+      }
       $("chipUser").textContent = me.name;
       $("chipRole").textContent = me.role === "admin" ? "ADMIN" : "STAFF";
       await loadVehicles();
       await refreshSales();
       await wireFormPreview();
-    }});
+    });
 
     // ---------- Vehicles dropdown ----------
     let vehicles = [];
-    function vehicleLabel(v){{
+    function vehicleLabel(v){
       const t = v.type ? "[" + v.type + "] " : "";
       const brand = v.brand || "";
       const model = v.model || "";
       const sell = (v.sellPrice!=null) ? " — " + fmtMoney(v.sellPrice) : "";
       return (t + brand + " " + model + sell).replace(/\s+/g," ").trim();
-    }}
+    }
 
-    async function loadVehicles(){{
+    async function loadVehicles(){
       const snap = await getDocs(query(vehiclesCol, orderBy("type","asc"), orderBy("sellPrice","asc"), limit(1000)));
-      vehicles = snap.docs.map(d=>({{ id:d.id, ...d.data() }}));
+      vehicles = snap.docs.map(d=>({ id:d.id, ...d.data() }));
       const sel = $("selVehicle");
       sel.innerHTML = "";
-      for(const v of vehicles){{
+      for(const v of vehicles){
         const opt = document.createElement("option");
         opt.value = v.id;
         opt.textContent = vehicleLabel(v);
         sel.appendChild(opt);
-      }}
-      if(vehicles.length===0){{
+      }
+      if(vehicles.length===0){
         const opt = document.createElement("option");
         opt.value = "";
         opt.textContent = "Aucun véhicule (collection vehicles vide)";
         sel.appendChild(opt);
-      }}
+      }
       updateVehHint();
-    }}
+    }
 
-    function getSelectedVehicle(){{
+    function getSelectedVehicle(){
       const id = $("selVehicle").value;
       return vehicles.find(v=>v.id===id) || null;
-    }}
+    }
 
-    function updateVehHint(){{
+    function updateVehHint(){
       const v = getSelectedVehicle();
-      if(!v) {{ $("vehHint").textContent = "—"; return; }}
+      if(!v) { $("vehHint").textContent = "—"; return; }
       const buy = (v.buyPrice!=null) ? Number(v.buyPrice) : Math.round(Number(v.sellPrice||0)/2);
       const sell = (v.sellPrice!=null) ? Number(v.sellPrice) : null;
       $("vehHint").innerHTML = "Achat: <b>" + fmtMoney(buy) + "</b> • Prix base: <b>" + (sell!=null?fmtMoney(sell):"—") + "</b>";
       if(!$("inSell").value && sell!=null) $("inSell").value = String(Math.round(sell));
-    }}
+    }
 
-    $("selVehicle").addEventListener("change", async ()=>{{ updateVehHint(); await wireFormPreview(); }});
-    $("inClient").addEventListener("input", async ()=>{{ await wireFormPreview(); }});
+    $("selVehicle").addEventListener("change", async ()=>{ updateVehHint(); await wireFormPreview(); });
+    $("inClient").addEventListener("input", async ()=>{ await wireFormPreview(); });
 
-    async function detectSaleType(v, client){{
+    async function detectSaleType(v, client){
       const brandKey = normKey(v.brand);
       const modelKey = normKey(v.model);
       const cKey = normKey(client);
 
-      if(client){{
+      if(client){
         const qRes = query(invCol,
           where("status","==","reservation"),
           where("brandKey","==", brandKey),
@@ -695,9 +699,9 @@ select, select option{background:#fff;color:#000}
           limit(1)
         );
         const snap = await getDocs(qRes);
-        if(!snap.empty) return {{ saleType:"sale_reservation", invDoc: snap.docs[0] }};
-        return {{ saleType:"sale_direct", invDoc: null }};
-      }} else {{
+        if(!snap.empty) return { saleType:"sale_reservation", invDoc: snap.docs[0] };
+        return { saleType:"sale_direct", invDoc: null };
+      } else {
         const qStock = query(invCol,
           where("status","==","stock"),
           where("brandKey","==", brandKey),
@@ -705,12 +709,12 @@ select, select option{background:#fff;color:#000}
           limit(1)
         );
         const snap = await getDocs(qStock);
-        if(!snap.empty) return {{ saleType:"sale_stock", invDoc: snap.docs[0] }};
-        return {{ saleType:"sale_direct", invDoc: null }};
-      }}
-    }}
+        if(!snap.empty) return { saleType:"sale_stock", invDoc: snap.docs[0] };
+        return { saleType:"sale_direct", invDoc: null };
+      }
+    }
 
-    async function wireFormPreview(){{
+    async function wireFormPreview(){
       const v = getSelectedVehicle();
       if(!v) return;
       const client = norm($("inClient").value);
@@ -720,47 +724,47 @@ select, select option{background:#fff;color:#000}
         det.saleType==="sale_stock" ? "Vente depuis stock" :
         "Vente directe (achat + vente)";
       $("saleTypeHint").innerHTML = "Type détecté : <b>" + label + "</b>";
-    }}
+    }
 
     // ---------- Create sale ----------
-    $("btnReset").addEventListener("click", async ()=>{{
+    $("btnReset").addEventListener("click", async ()=>{
       $("inClient").value = "";
       $("inSell").value = "";
       $("inQty").value = "1";
       $("inNotes").value = "";
       updateVehHint();
       await wireFormPreview();
-    }});
+    });
 
-    async function addAudit(action, entity, entityId, payload){{
-      try{{
-        await addDoc(auditCol, {{
+    async function addAudit(action, entity, entityId, payload){
+      try{
+        await addDoc(auditCol, {
           action, entity, entityId,
           actorId: me.uid,
           actorName: me.name,
           createdAt: serverTimestamp(),
           payload: payload ?? null
-        }});
-      }}catch(e){{}}
-    }}
+        });
+      }catch(e){}
+    }
 
-    $("btnSell").addEventListener("click", async ()=>{{
+    $("btnSell").addEventListener("click", async ()=>{
       const v = getSelectedVehicle();
-      if(!v) {{ toast("Véhicule","Sélectionne un véhicule."); return; }}
+      if(!v) { toast("Véhicule","Sélectionne un véhicule."); return; }
 
       const client = norm($("inClient").value);
       const qty = Math.max(1, Number($("inQty").value || 1));
       const sellPrice = Number($("inSell").value);
       const notes = norm($("inNotes").value);
 
-      if(!Number.isFinite(sellPrice) || sellPrice<=0){{
+      if(!Number.isFinite(sellPrice) || sellPrice<=0){
         toast("Prix","Renseigne un prix de vente valide.");
         return;
-      }}
+      }
 
       const buyPrice = (v.buyPrice!=null) ? Number(v.buyPrice) : Math.round(Number(v.sellPrice||0)/2);
 
-      try{{
+      try{
         const det = await detectSaleType(v, client);
         const saleType = det.saleType;
 
@@ -773,7 +777,7 @@ select, select option{background:#fff;color:#000}
 
         const txRef = doc(txCol);
 
-        const txPayload = {{
+        const txPayload = {
           type: saleType,
           detail: detailLabel,
           clientName: client || "",
@@ -792,18 +796,18 @@ select, select option{background:#fff;color:#000}
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           notes
-        }};
+        };
 
         batch.set(txRef, txPayload);
 
-        if(saleType==="sale_stock" || saleType==="sale_reservation"){{
+        if(saleType==="sale_stock" || saleType==="sale_reservation"){
           const invDoc = det.invDoc;
           const curQty = Number(invDoc.data().qty || 0);
           if(curQty < qty) throw new Error("Quantité insuffisante. Dispo: " + curQty);
           const nextQty = curQty - qty;
-          if(nextQty > 0) batch.update(invDoc.ref, {{ qty: nextQty, updatedAt: serverTimestamp() }});
+          if(nextQty > 0) batch.update(invDoc.ref, { qty: nextQty, updatedAt: serverTimestamp() });
           else batch.delete(invDoc.ref);
-        }}
+        }
 
         await batch.commit();
         await addAudit("create","transaction", txRef.id, txPayload);
@@ -816,56 +820,56 @@ select, select option{background:#fff;color:#000}
         updateVehHint();
         await wireFormPreview();
         await refreshSales();
-      }}catch(e){{
+      }catch(e){
         console.error(e);
         toast("Erreur", e.message || String(e));
-      }}
-    }});
+      }
+    });
 
     // ---------- Recent sales table ----------
     let sales = [];
-    function saleTypeText(t){{
+    function saleTypeText(t){
       if(t==="sale_reservation") return "Vente depuis réservation";
       if(t==="sale_stock") return "Vente depuis stock";
       return "Vente directe";
-    }}
+    }
 
-    async function refreshSales(){{
+    async function refreshSales(){
       const snap = await getDocs(query(txCol, orderBy("createdAt","desc"), limit(150)));
-      sales = snap.docs.map(d=>({{id:d.id, ...d.data()}}))
+      sales = snap.docs.map(d=>({id:d.id, ...d.data()}))
         .filter(x=> String(x.type||"").startsWith("sale_"));
       renderSales();
-    }}
+    }
 
-    function renderSales(){{
+    function renderSales(){
       const q = normKey($("q").value);
       const ft = $("filterType").value;
 
-      let rows = sales.filter(x=>{{
+      let rows = sales.filter(x=>{
         if(ft!=="all" && x.type!==ft) return false;
         if(!q) return true;
         const hay = normKey((x.clientName||x.client||"") + " " + (x.vehicle||"") + " " + (x.sellerName||"") + " " + (x.detail||""));
         return hay.includes(q);
-      }});
+      });
 
       $("count").textContent = String(rows.length);
 
       const tbody = $("rows");
-      tbody.innerHTML = rows.map(x=>{{
+      tbody.innerHTML = rows.map(x=>{
         const amt = Number(x.sellPrice ?? x.price ?? 0);
         return `
           <tr>
-            <td>${{fmtDate(x.createdAt)}}</td>
-            <td><span class="tag warn">${{esc(saleTypeText(x.type))}}</span></td>
-            <td>${{esc(x.clientName || x.client || "—")}}</td>
-            <td>${{esc(x.vehicle || ((x.brand||"") + " " + (x.model||"")).trim())}}</td>
-            <td><span class="tag ok">${{Number(x.qty||1)}}</span></td>
-            <td>${{esc(x.sellerName||"—")}}</td>
-            <td style="text-align:right"><span class="tag ok">${{fmtMoney(amt)}}</span></td>
+            <td>${fmtDate(x.createdAt)}</td>
+            <td><span class="tag warn">${esc(saleTypeText(x.type))}</span></td>
+            <td>${esc(x.clientName || x.client || "—")}</td>
+            <td>${esc(x.vehicle || ((x.brand||"") + " " + (x.model||"")).trim())}</td>
+            <td><span class="tag ok">${Number(x.qty||1)}</span></td>
+            <td>${esc(x.sellerName||"—")}</td>
+            <td style="text-align:right"><span class="tag ok">${fmtMoney(amt)}</span></td>
           </tr>
         `;
-      }}).join("") || `<tr><td colspan="7" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
-    }}
+      }).join("") || `<tr><td colspan="7" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
+    }
 
     $("btnRefresh").addEventListener("click", refreshSales);
     $("q").addEventListener("input", renderSales);
