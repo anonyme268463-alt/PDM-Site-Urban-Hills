@@ -480,19 +480,25 @@ select, select option{background:#fff;color:#000}
           <div class="hint" id="saleTypeHint" style="margin-top:10px">Type détecté : —</div>
         </section>
         <section class="card">
-  <h3>Importer l’historique des ventes</h3>
+          <h3>Importer l'historique des ventes</h3>
+          <div class="sub">Import CSV (ventes, revenus, dépenses). Les clients peuvent être vides (tu pourras modifier après).</div>
+          <div class="tools">
+            <div class="left">
+              <input id="csvImportFile" type="file" accept=".csv,text/csv" />
+              <button id="btnImportCsv" class="btn gold">Importer le CSV</button>
+              <span id="importCsvStatus" class="pill">Prêt</span>
+            </div>
+            <div class="right">
+              <button id="btnImportCsvDry" class="btn">Prévisualiser</button>
+            </div>
+          </div>
+          <div class="hint">
+            Colonnes attendues (flexibles) : <b>date</b>, <b>vehicle</b>, <b>purchase_price</b>, <b>sale_price</b>, <b>seller</b>, <b>qty</b>, <b>client</b>.
+            Les montants acceptent $/espaces.
+          </div>
+        </section>
 
-  <p class="hint">
-    Import CSV (ventes, revenus, dépenses).  
-    Les clients pourront être complétés plus tard manuellement.
-  </p>
 
-  <input type="file" id="importCsvInput" accept=".csv" />
-  <div style="margin-top:12px; display:flex; gap:10px;">
-    <button class="btn gold" id="btnImportCsv">Importer le CSV</button>
-    <span id="importStatus" class="hint"></span>
-  </div>
-</section>
         <section class="card">
           <h3>Dernières ventes</h3>
           <div class="tools">
@@ -678,6 +684,7 @@ select, select option{background:#fff;color:#000}
       $("chipRole").textContent = me.role === "admin" ? "ADMIN" : "STAFF";
       await loadVehicles();
       await refreshSales();
+      await wireFormPreview();
     });
 
     
@@ -994,97 +1001,230 @@ select, select option{background:#fff;color:#000}
     $("btnRefresh").addEventListener("click", refreshSales);
     $("q").addEventListener("input", renderSales);
     $("filterType").addEventListener("change", renderSales);
-   /* ================= CSV IMPORT VENTES (ROBUSTE) ================= */
 
-function detectDelimiter(text) {
-  return text.includes(";") ? ";" : ",";
-}
+  
+    // ===== Import CSV historique (ventes/revenus/dépenses) =====
+    function parseCSVText(text){
+      // Parser CSV robuste (gère guillemets)
+      const rows = [];
+      let row = [];
+      let cur = "";
+      let inQuotes = false;
 
-function normalizeKey(k){
-  return k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-}
+      for(let i=0;i<text.length;i++){
+        const ch = text[i];
+        const next = text[i+1];
 
-function parseCSV(text) {
-  const delimiter = detectDelimiter(text);
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  if (!lines.length) return [];
+        if(ch === '"'){
+          if(inQuotes && next === '"'){ cur += '"'; i++; }
+          else inQuotes = !inQuotes;
+          continue;
+        }
+        if(ch === ',' && !inQuotes){
+          row.push(cur);
+          cur = "";
+          continue;
+        }
+        if((ch === '\n' || ch === '\r') && !inQuotes){
+          if(ch === '\r' && next === '\n') i++;
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      row.push(cur);
+      rows.push(row);
+      // supprime lignes vides
+      return rows.filter(r => r.some(c => String(c||"").trim() !== ""));
+    }
 
-  const headers = lines.shift().split(delimiter).map(h => normalizeKey(h.trim()));
+    function normHdr(s){
+      return (s ?? "").toString().trim().toLowerCase()
+        .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+        .replace(/\s+/g," ");
+    }
 
-  return lines.map(line => {
-    const cols = line.split(delimiter);
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = (cols[i] || "").trim());
-    return obj;
-  });
-}
+    function moneyToInt(v){
+      const s = (v ?? "").toString().replace(/[^0-9\-]/g,"");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    }
 
-function pick(row, keys){
-  for(const k of keys){
-    if(row[k] && row[k] !== "") return row[k];
-  }
-  return "";
-}
+    function parseDateFlexible(v){
+      const s = (v ?? "").toString().trim();
+      if(!s) return null;
 
-document.getElementById("btnImportCsv").addEventListener("click", async () => {
-  const file = document.getElementById("importCsvInput").files[0];
-  if (!file) {
-    toast("Import CSV", "Sélectionne un fichier CSV.");
-    return;
-  }
+      // YYYY-MM-DD
+      let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m){
+        const [_,yy,mm,dd] = m;
+        return new Date(Number(yy), Number(mm)-1, Number(dd), 12, 0, 0);
+      }
 
-  document.getElementById("importStatus").textContent = "Lecture du fichier…";
+      // DD/MM/YYYY
+      m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if(m){
+        const [_,dd,mm,yy] = m;
+        return new Date(Number(yy), Number(mm)-1, Number(dd), 12, 0, 0);
+      }
 
-  const text = await file.text();
-  const rows = parseCSV(text);
+      const t = Date.parse(s);
+      if(Number.isFinite(t)) return new Date(t);
+      return null;
+    }
 
-  if (!rows.length) {
-    toast("CSV", "Fichier vide ou invalide.");
-    return;
-  }
+    function mapCsvHeaders(headerRow){
+      const map = {};
+      for(let i=0;i<headerRow.length;i++){
+        const h = normHdr(headerRow[i]);
+        if(!h) continue;
 
-  let imported = 0;
-  const batch = writeBatch(db);
+        // dates
+        if(["date","jour","day"].includes(h)) map.date = i;
 
-  rows.forEach(row => {
-    const amount = Number(
-      pick(row, ["montant", "total", "prix", "price"]).replace(/[^\d.-]/g,"")
-    );
+        // vehicle
+        if(["vehicle","vehicule","vehicule ","vehicule (base)","modele","modèle","voiture"].includes(h) || h.includes("vehicul")){
+          if(map.vehicle == null) map.vehicle = i;
+        }
 
-    if (!amount || isNaN(amount)) return;
+        // purchase / buy
+        if(["purchase_price","buy_price","achat","prix achat","prix_d_achat","purchase"].includes(h) || h.includes("achat")){
+          map.purchase = i;
+        }
 
-    const dateRaw = pick(row, ["date"]);
-    const date = dateRaw ? new Date(dateRaw) : new Date();
+        // sale
+        if(["sale_price","sell_price","vente","prix vente","prix_de_vente","sale"].includes(h) || h.includes("vente")){
+          // si deux colonnes "vente" existent, la 1ère peut être "type vente" -> on garde la dernière si elle ressemble à un prix
+          map.sale = i;
+        }
 
-    const txRef = doc(collection(db,"transactions"));
+        if(["seller","vendeur","staff","employe","employé"].includes(h) || h.includes("vendeur")){
+          map.seller = i;
+        }
 
-    batch.set(txRef, {
-      type: "sale_import",
-      detail: "Import historique",
-      clientName: pick(row, ["client", "nom client"]),
-      client: pick(row, ["client", "nom client"]),
-      vehicle: pick(row, ["vehicule", "véhicule", "vehicle"]),
-      qty: Number(pick(row, ["quantite", "qte"])) || 1,
-      sellPrice: amount,
-      price: amount,
-      currency: "USD",
-      sellerId: me.uid,
-      sellerName: me.name,
-      source: "import_csv",
-      notes: pick(row, ["notes", "commentaire"]),
-      createdAt: date,
-      updatedAt: serverTimestamp()
-    });
+        if(["qty","quantite","quantité","qte","nombre"].includes(h)) map.qty = i;
 
-    imported++;
-  });
+        if(["client","demandeur","acheteur","buyer"].includes(h)) map.client = i;
 
-  await batch.commit();
+        if(["type","tx_type","transaction_type"].includes(h)) map.type = i;
+      }
+      return map;
+    }
 
-  document.getElementById("importStatus").textContent = `✔ ${imported} lignes importées`;
-  toast("Import terminé", `${imported} ventes ajoutées`);
-  refreshSales();
-});
-  </script>
+    async function importCsvHistory({dryRun=false}){
+      const f = $("csvImportFile").files?.[0];
+      if(!f){ toast("CSV", "Choisis un fichier CSV."); return; }
+
+      const statusEl = $("importCsvStatus");
+      statusEl.textContent = dryRun ? "Analyse…" : "Import…";
+
+      try{
+        const text = await f.text();
+        const rows = parseCSVText(text);
+        if(rows.length < 2) throw new Error("CSV vide.");
+
+        const header = rows[0];
+        const map = mapCsvHeaders(header);
+
+        if(map.date==null || map.vehicle==null){
+          throw new Error("Colonnes minimales manquantes (date + vehicle).");
+        }
+
+        // user
+        const u = auth.currentUser;
+        if(!u) throw new Error("Non connecté.");
+
+        // build payloads
+        const payloads = [];
+        for(let r=1; r<rows.length; r++){
+          const row = rows[r];
+          const dateV = row[map.date];
+          const vehicle = (row[map.vehicle] ?? "").toString().trim();
+          if(!vehicle) continue;
+
+          const dt = parseDateFlexible(dateV);
+          if(!dt) continue;
+
+          const qty = Math.max(1, parseIntSafe(row[map.qty], 1));
+          const buy = map.purchase!=null ? moneyToInt(row[map.purchase]) : 0;
+          const sell = map.sale!=null ? moneyToInt(row[map.sale]) : 0;
+          const clientName = map.client!=null ? norm(row[map.client]) : "";
+          const sellerRaw = map.seller!=null ? norm(row[map.seller]) : "";
+          const typeRaw = map.type!=null ? normHdr(row[map.type]) : "";
+
+          // Si la ligne ressemble à une vente -> on l'importe dans transactions
+          // On force un type "sale_direct" (achat + vente) si buy>0 et sell>0
+          // Sinon "sale_stock" si buy==0 et sell>0
+          // Sinon on ignore (dépenses/revenus seront gérés dans compta.html).
+          let txType = "sale_direct";
+          if(sell > 0 && buy <= 0) txType = "sale_stock";
+          if(sell <= 0 && buy <= 0) continue;
+
+          // véhicule: on tente de splitter "Brand Model" si possible
+          let brand = "", model = vehicle;
+          const parts = vehicle.split(" ");
+          if(parts.length >= 2){
+            brand = parts[0];
+            model = vehicle.substring(brand.length).trim();
+          }
+
+          payloads.push({
+            type: txType,
+            detail: txType === "sale_stock" ? "Vente depuis stock (import)" : "Vente directe (import)",
+            clientName: clientName || "",
+            clientId: "",
+            vehicle,
+            brand,
+            model,
+            qty,
+            sellPrice: sell,
+            buyPrice: buy,
+            price: sell,
+            currency: "$",
+            sellerId: u.uid,
+            sellerName: (u.displayName || u.email || "import"),
+            importedSeller: sellerRaw || "",
+            notes: "",
+            source: "csv_import",
+            createdAt: Timestamp.fromDate(dt),
+            updatedAt: serverTimestamp()
+          });
+        }
+
+        if(dryRun){
+          statusEl.textContent = `${payloads.length} vente(s) détectée(s)`;
+          toast("Prévisualisation", `${payloads.length} vente(s) seront importées.`);
+          return;
+        }
+
+        // batch write (<=500 ops)
+        let ok = 0;
+        for(let i=0; i<payloads.length; i+=450){
+          const chunk = payloads.slice(i, i+450);
+          const batch = writeBatch(db);
+          for(const p of chunk){
+            const ref = doc(txCol);
+            batch.set(ref, p);
+          }
+          await batch.commit();
+          ok += chunk.length;
+        }
+
+        statusEl.textContent = `OK: ${ok}`;
+        toast("Import terminé", `${ok} vente(s) importée(s).`);
+        await refreshSales();
+      }catch(e){
+        console.error(e);
+        $("importCsvStatus").textContent = "Erreur";
+        toast("Import impossible", e.message || String(e));
+      }
+    }
+
+    $("btnImportCsv").addEventListener("click", ()=> importCsvHistory({dryRun:false}));
+    $("btnImportCsvDry").addEventListener("click", ()=> importCsvHistory({dryRun:true}));
+</script>
 </body>
 </html>
