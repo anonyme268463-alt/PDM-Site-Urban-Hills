@@ -479,7 +479,20 @@ select, select option{background:#fff;color:#000}
 
           <div class="hint" id="saleTypeHint" style="margin-top:10px">Type détecté : —</div>
         </section>
+        <section class="card">
+  <h3>Importer l’historique des ventes</h3>
 
+  <p class="hint">
+    Import CSV (ventes, revenus, dépenses).  
+    Les clients pourront être complétés plus tard manuellement.
+  </p>
+
+  <input type="file" id="importCsvInput" accept=".csv" />
+  <div style="margin-top:12px; display:flex; gap:10px;">
+    <button class="btn gold" id="btnImportCsv">Importer le CSV</button>
+    <span id="importStatus" class="hint"></span>
+  </div>
+</section>
         <section class="card">
           <h3>Dernières ventes</h3>
           <div class="tools">
@@ -982,7 +995,80 @@ select, select option{background:#fff;color:#000}
     $("btnRefresh").addEventListener("click", refreshSales);
     $("q").addEventListener("input", renderSales);
     $("filterType").addEventListener("change", renderSales);
+    // ================= CSV IMPORT VENTES =================
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const headers = lines.shift().split(";").map(h => h.trim());
+  return lines.map(line => {
+    const cols = line.split(";").map(c => c.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = cols[i] ?? "");
+    return obj;
+  });
+}
 
+$("btnImportCsv").addEventListener("click", async () => {
+  const file = $("importCsvInput").files[0];
+  if (!file) {
+    toast("Import CSV", "Sélectionne un fichier CSV.");
+    return;
+  }
+
+  $("importStatus").textContent = "Lecture du fichier…";
+
+  const text = await file.text();
+  const rows = parseCSV(text);
+
+  if (!rows.length) {
+    toast("CSV", "Fichier vide ou invalide.");
+    return;
+  }
+
+  let imported = 0;
+  const batch = writeBatch(db);
+
+  rows.forEach(row => {
+    const amount = Number(row.montant || row.price || 0);
+    if (!amount) return;
+
+    const type =
+      row.type === "DEPENSE" ? "expense" :
+      row.type === "REVENU" ? "income" :
+      "sale_import";
+
+    const txRef = doc(txCol);
+
+    batch.set(txRef, {
+      type,
+      detail: row.detail || "Import historique",
+      clientName: row.client || "",
+      client: row.client || "",
+      vehicle: row.vehicule || "",
+      brand: row.brand || "",
+      model: row.model || "",
+      qty: Number(row.quantite || 1),
+      price: amount,
+      sellPrice: type.startsWith("sale") ? amount : null,
+      buyPrice: null,
+      currency: "USD",
+      sellerId: me.uid,
+      sellerName: me.name,
+      source: "import_csv",
+      notes: row.notes || "",
+      createdAt: row.date
+        ? new Date(row.date)
+        : serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    imported++;
+  });
+
+  await batch.commit();
+
+  $("importStatus").textContent = `✔ ${imported} lignes importées`;
+  toast("Import terminé", `${imported} transactions ajoutées`);
+});
   </script>
 </body>
 </html>
