@@ -450,17 +450,10 @@ select, select option{background:#fff;color:#000}
 </div>
 
             <div>
-  <label>Client (optionnel)</label>
-  <div class="combo">
-    <input id="inClientSearch" placeholder="Tape le nom du client…" autocomplete="off"/>
-    <input id="inClientId" type="hidden"/>
-    <div id="clientSuggest" class="combo-list" role="listbox"></div>
-  </div>
-  <div class="help" style="margin-top:6px">
-    Sélection facultative – permet de détecter une réservation automatiquement
-  </div>
-</div>
-
+              <label>Client (optionnel)</label>
+              <input id="inClient" placeholder="Nom RP (si réservation)" />
+              <div class="help" style="margin-top:6px">Si tu mets un client, le système cherche une réservation correspondante.</div>
+            </div>
 
             <div>
               <label>Prix de vente ($)</label>
@@ -899,52 +892,6 @@ select, select option{background:#fff;color:#000}
     // Charger au démarrage
     loadVehicles();
 
-	  /* ===== AUTOCOMPLETE CLIENTS ===== */
-let clientsCache = [];
-
-async function loadClients(){
-  if(clientsCache.length) return clientsCache;
-  const snap = await getDocs(collection(db, "clients"));
-  clientsCache = snap.docs.map(d => ({
-    id: d.id,
-    name: d.data().name || ""
-  }));
-  return clientsCache;
-}
-
-function renderClientSuggest(list){
-  const box = $("clientSuggest");
-  box.innerHTML = "";
-  if(!list.length){ box.style.display="none"; return; }
-
-  list.slice(0,8).forEach(c=>{
-    const div = document.createElement("div");
-    div.textContent = c.name;
-    div.onclick = ()=>{
-      $("inClientSearch").value = c.name;
-      $("inClientId").value = c.id;
-      box.style.display="none";
-    };
-    box.appendChild(div);
-  });
-  box.style.display="block";
-}
-
-$("inClientSearch").addEventListener("input", async ()=>{
-  const q = norm($("inClientSearch").value);
-  $("inClientId").value = "";
-  if(q.length < 2){ $("clientSuggest").style.display="none"; return; }
-
-  const all = await loadClients();
-  renderClientSuggest(all.filter(c=>c.name.toLowerCase().includes(q)));
-});
-
-document.addEventListener("click", e=>{
-  if(!e.target.closest("#clientSuggest") && e.target.id!=="inClientSearch"){
-    $("clientSuggest").style.display="none";
-  }
-});
-
 
 // ---------- Create sale ----------
     $("btnReset").addEventListener("click", async ()=>{
@@ -972,7 +919,7 @@ document.addEventListener("click", e=>{
       const v = await resolveVehicleFromInput();
       if(!v) { toast("Véhicule","Sélectionne un véhicule."); return; }
 
-      const client = norm($("inClientSearch")?.value || "");
+      const client = norm($("inClient").value);
       const qty = Math.max(1, Number($("inQty").value || 1));
       const sellPrice = Number($("inSell").value);
       const notes = norm($("inNotes").value);
