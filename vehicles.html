@@ -1,348 +1,614 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDM Admin — Base véhicules</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>PDM Admin — Partenariats</title>
+<link href="favicon.png" rel="icon" type="image/png"/>
+<style>
     :root{
-      --bg1:#081021; --bg2:#240b0b; --card:rgba(10,14,18,.72);
-      --line:rgba(255,255,255,.12); --text:#e9eef7; --muted:rgba(233,238,247,.65);
-      --gold1:#f6d36a; --gold2:#b88b1f;
-      --bad1:#ffb4b4; --bad2:#ff5e5e;
+      --bg:#07080c;
+      --card:rgba(10,12,18,.62);
+      --card2:rgba(10,12,18,.52);
+      --stroke:rgba(255,255,255,.08);
+      --stroke2:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.55);
+      --muted2:rgba(255,255,255,.42);
+      --gold1:#f6d26b;
+      --gold2:#b88222;
+      --danger:#ff6b6b;
+      --ok:#47e6a6;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --radius2:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text);
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
+                  radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
+                  radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
+                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    /* soft vignette like catalogue public */
+    body:before{
+      content:"";
+      position:fixed; inset:-20px;
+      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
+      pointer-events:none;
+      z-index:-1;
+    }
+    a{color:inherit; text-decoration:none}
+    .app{
+      display:flex;
       min-height:100vh;
-      background:
-        radial-gradient(1200px 700px at 20% 30%, rgba(40,110,255,.22), transparent 55%),
-        radial-gradient(900px 600px at 80% 35%, rgba(255,55,55,.22), transparent 55%),
-        linear-gradient(135deg,var(--bg1),var(--bg2));
+      gap:22px;
+      padding:18px 18px 26px;
     }
-    .wrap{max-width:1180px; margin:0 auto; padding:26px 18px 60px;}
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-      background:rgba(0,0,0,.30); border:1px solid var(--line); border-radius:999px;
-      padding:10px 12px; backdrop-filter: blur(10px);
+    /* Sidebar */
+    .sidebar{
+      width:250px;
+      min-width:250px;
+      background: rgba(10,12,18,.46);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding:14px;
+      box-shadow: var(--shadow);
+      position:sticky;
+      top:18px;
+      height: calc(100vh - 44px);
+      display:flex;
+      flex-direction:column;
+      backdrop-filter: blur(10px);
     }
-    .brand{display:flex; align-items:center; gap:10px;}
-    .title{
-      font-weight:800; letter-spacing:.12em; text-transform:uppercase; font-size:12px;
-      padding:9px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(0,0,0,.25);
-    }
-    .pill{display:inline-flex; align-items:center; gap:8px; padding:9px 12px;
-      border:1px solid var(--line); border-radius:999px; background:rgba(0,0,0,.25); color:var(--muted);
+    .brand{
+      font-weight:800;
+      letter-spacing:.12em;
       font-size:12px;
+      color:rgba(255,255,255,.72);
+      margin-bottom:10px;
     }
-    .right{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+    }
+    .nav a{
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.18);
+      color:rgba(255,255,255,.76);
+      font-size:13px;
+    }
+    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
+    .nav a.active{
+      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
+      border-color: rgba(246,210,107,.22);
+      color: rgba(255,255,255,.9);
+    }
+    .spacer{flex:1}
+    .side-actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
     .btn{
-      appearance:none; border:none; cursor:pointer;
-      padding:10px 14px; border-radius:999px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-      font-size:11px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.86);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+      transition:.12s transform ease, .12s background ease, .12s border-color ease;
     }
-    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--line);}
-    .btn.primary{
-      background:linear-gradient(180deg,var(--gold1),var(--gold2)); color:#1a1606;
-      box-shadow:0 10px 25px rgba(246,211,106,.20);
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
+      border-color: rgba(246,210,107,.30);
+      color:#1b1306;
+      box-shadow: 0 10px 22px rgba(184,130,34,.18);
     }
     .btn.danger{
-      background:linear-gradient(180deg,var(--bad1),var(--bad2)); color:#1a0606;
+      background: rgba(255,80,80,.12);
+      border-color: rgba(255,80,80,.24);
+      color: rgba(255,210,210,.95);
     }
-    .grid{display:grid; gap:14px; margin-top:16px;}
+    .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
+    /* Main */
+    .main{
+      flex:1;
+      max-width: 980px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+      padding:10px 12px;
+      border:1px solid var(--stroke);
+      border-radius: 16px;
+      background: rgba(10,12,18,.44);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .chips{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .chip{
+      padding:7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.8);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .chip.muted{color:rgba(255,255,255,.6)}
+    .top-actions{display:flex; gap:10px; align-items:center}
+    .layout{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:14px;
+    }
     .card{
-      background:var(--card); border:1px solid var(--line); border-radius:18px;
-      padding:16px 16px 14px; backdrop-filter: blur(14px);
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
     }
-    h2{
-      margin:0 0 10px; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted);
+    .card h3{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.75);
     }
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .field{
-      display:flex; flex-direction:column; gap:6px; min-width:180px; flex:1;
+    .sub{
+      font-size:12px;
+      color: var(--muted);
+      margin:-4px 0 10px;
     }
-    label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1.1fr .7fr 1.1fr;
+      gap:10px;
+      align-items:end;
+    }
+    label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
     input, select{
       width:100%;
-      padding:10px 12px; border-radius:999px;
-      border:1px solid var(--line); background:rgba(0,0,0,.25); color:var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
       outline:none;
     }
-    input::placeholder{color:rgba(233,238,247,.35)}
-    .hint{font-size:12px; color:var(--muted); margin-top:8px}
-    table{width:100%; border-collapse:collapse; margin-top:10px;}
-    th,td{padding:10px 8px; border-bottom:1px solid rgba(255,255,255,.08); font-size:13px;}
-    th{font-size:11px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; text-align:left;}
-    td.actions{white-space:nowrap; width:1%}
-    .chip{
-      display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px;
-      border:1px solid var(--line); background:rgba(0,0,0,.22); color:var(--text); font-size:12px;
+    select option{
+      background:#ffffff;
+      color:#000000;
     }
+    input::placeholder{color: rgba(255,255,255,.32)}
+    .row-actions{display:flex; gap:10px; justify-content:flex-end}
+    .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .tools{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .tools .left, .tools .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.75);
+      font-size:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    thead th{
+      text-align:left;
+      font-size:11px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.62);
+      padding:10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.02)}
+    tbody tr:last-child td{border-bottom:none}
+    .tag{
+      display:inline-flex;
+      padding:6px 9px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      font-size:12px;
+      color: rgba(255,255,255,.72);
+    }
+    .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
+    .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
+    .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
+    .td-actions{white-space:nowrap; text-align:right}
     .toast{
-      position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
-      background:rgba(0,0,0,.72); color:var(--text); border:1px solid var(--line);
-      padding:10px 12px; border-radius:14px; width:min(620px, calc(100vw - 32px));
-      backdrop-filter: blur(12px); display:none;
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 460px;
+      background: rgba(10,12,18,.82);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:none;
+      z-index:50;
     }
-    .toast strong{display:block; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
-    .toast p{margin:6px 0 0; font-size:13px;}
-    .modalOverlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:18px;}
-    .modal{width:min(720px, 100%); background:rgba(12,16,24,.92); border:1px solid var(--line); border-radius:18px; padding:16px; backdrop-filter: blur(14px);}
-    .modalHead{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;}
-    .modalHead h3{margin:0; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
-    .muted{color:var(--muted)}
+    .toast.show{display:block}
+    .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
+    .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
+    .modal-overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:18px;
+    }
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(740px, 96vw);
+      border-radius: 18px;
+      background: rgba(10,12,18,.86);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
+    }
+    .modal h4{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.72);
+    }
+    .modal .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px}
+    @media (max-width: 980px){
+      .app{flex-direction:column}
+      .sidebar{position:relative; width:100%; height:auto; min-width:unset}
+      .main{max-width:100%}
+      .two{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr 1fr; }
+    }
   
-/* ===== Sidebar (global nav) ===== */
-.sidebar{
-  position:fixed;
-  left:18px;
-  top:18px;
-  bottom:18px;
-  width:240px;
-  border-radius:18px;
-  padding:16px 14px;
-  background: rgba(10,10,14,0.52);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 18px 55px rgba(0,0,0,0.35);
-  backdrop-filter: blur(10px);
-  z-index: 5;
+/* Firebase config modal */
+#firebaseConfigModal{
+  position:fixed; inset:0; z-index:99999;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
 }
-.sb-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.sb-title{
-  font-weight:700;
-  letter-spacing:.12em;
-  font-size:12px;
-  opacity:.9;
+#firebaseConfigModal .cfg-card{
+  width:min(720px, 92vw);
+  background: rgba(10,12,18,.92);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
 }
-.sb-nav{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
-.sb-nav a{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
+#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+#firebaseConfigModal .cfg-text{
+  width:100%; height:220px; resize:vertical;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.12);
   border-radius:12px;
-  color:#e8e8ee;
-  text-decoration:none;
-  font-size:13px;
-  opacity:.88;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.03);
+  padding:12px;
+  color:#fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  outline:none;
 }
-.sb-nav a:hover{ opacity:1; background: rgba(255,255,255,0.06); }
-.sb-nav a.active{
-  opacity:1;
-  background: rgba(225,179,67,0.14);
-  border-color: rgba(225,179,67,0.22);
-}
-/* Push main content to the right (desktop) */
-.wrap{ margin-left: 290px !important; }
+#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
 
-/* Mobile/tablet: sidebar becomes top bar */
-@media (max-width: 980px){
-  .sidebar{
-    position:sticky;
-    width:auto;
-    left:0; right:0; top:0; bottom:auto;
-    margin: 12px;
+/* Select readability */
+select, select option{background:#fff;color:#000}
+
+  /* Extra layout for KPIs / form */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+  .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
+  .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
+  .grid-sale{display:grid; grid-template-columns: 1.25fr 1fr .8fr .6fr 1.25fr; gap:10px; align-items:end}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .help{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}
+  @media (max-width: 980px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid-sale{grid-template-columns:1fr 1fr}
   }
-  .sb-nav{ flex-direction:row; flex-wrap:wrap; }
-  .sb-nav a{ flex: 1 1 auto; justify-content:center; }
-  .wrap{ margin-left: 0 !important; }
+  @media (max-width: 520px){
+    .kpis{grid-template-columns:1fr}
+  }
+  
+/* combo autocomplete (like base clients) */
+.combo{ position:relative; }
+.combo-list{
+  position:absolute; left:0; right:0; top:calc(100% + 6px);
+  background: rgba(10,12,18,.96);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  display:none;
+  z-index:80;
 }
+.combo-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-top:1px solid rgba(255,255,255,.06);
+  color: rgba(255,255,255,.88);
+  font-size:12px;
+}
+.combo-item:first-child{ border-top:none; }
+.combo-item:hover, .combo-item.active{ background: rgba(255,255,255,.06); }
+.combo-item .meta{ display:block; margin-top:2px; font-size:11px; opacity:.7; }
 
 </style>
 </head>
 <body>
-  
-  <aside class="sidebar">
-    <div class="sb-top">
-      <div class="sb-title">PDM ADMIN</div>
-    </div>
-    <nav class="sb-nav">
-      <a href="pdm-dashboard.html">Dashboard</a>
-      <a href="clients.html">Base clients</a>
-      <a class="active" href="vehicles.html">Base véhicules</a>
-      <a href="stock.html">Stock &amp; réservations</a>
-      <a href="compta.html">Comptabilité</a>
-    </nav>
-  </aside>
+<div class="app">
+<aside class="sidebar">
+<div class="brand">PDM ADMIN</div>
+<nav class="nav">
+<a href="dashboard.html">Dashboard</a>
+<a href="clients.html">Base clients</a>
+<a class="active" href="vehicles.html">Base véhicules</a>
+<a href="stock.html">Stock &amp; réservations</a>
+<a href="ventes.html">Ventes véhicules</a>
+<a href="partenariats.html">Partenariats</a>
+<a href="compta.html">Comptabilité</a>
+</nav>
+<div class="spacer"></div>
+<div class="side-actions">
+<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
+</div>
+</aside>
+<main class="main">
+<div class="topbar">
+<div class="chips">
+<div class="chip">Base véhicules</div>
+<div class="chip muted" id="chipUser">Chargement…</div>
+<div class="chip muted" id="chipRole">—</div>
+<div class="chip muted" id="chipEnv">Firestore • Live</div>
+</div>
+<div class="top-actions">
+<a class="btn small" href="ventes.html">Ventes</a>
+<a class="btn small" href="stock.html">Stock</a>
+<a class="btn small" href="dashboard.html">Dashboard</a>
+<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
+</div>
+</div>
+
+</main>
+</div>
+<div class="toast" id="toast">
+<div class="t" id="toastTitle"></div>
+<div class="m" id="toastMsg"></div>
+</div>
+<!-- Modal -->
+<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
+<div class="modal">
+<h4 id="modalTitle">Modifier</h4>
+<div id="modalBody"></div>
+<div class="modal-actions">
+<button class="btn" id="btnModalCancel">Annuler</button>
+<button class="btn gold" id="btnModalSave">Enregistrer</button>
+</div>
+<div class="hint" id="modalHint"></div>
+</div>
+</div>
+<!-- Firebase config modal (auto) -->
+<div id="firebaseConfigModal" style="display:none">
+<div class="cfg-card">
+<div class="cfg-title">Configurer Firebase</div>
+<div class="cfg-sub">
+        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
+      </div>
+<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
+<div class="cfg-actions">
+<button class="btn" id="firebaseConfigCancel">Annuler</button>
+<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
+</div>
+<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
+</div>
+</div>
+
 <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="title">PDM Admin</div>
-        <div class="pill" id="mePill">Chargement…</div>
-      </div>
-      <div class="right">
-        <div class="pill" id="envBadge">Firestore • Live</div>
-        <button class="btn secondary" id="toDashboard">Dashboard</button>
-        <button class="btn danger" id="logout">Déconnexion</button>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h2>Ajouter un véhicule</h2>
-      <div class="row" style="margin: 10px 0 14px; gap:10px; align-items:center;">
-        <input id="importCsv" type="file" accept=".csv,text/csv" class="input" style="max-width:320px" />
-        <button id="importBtn" class="btn secondary" type="button">Importer CSV</button>
-        <div class="muted" style="font-size:12px; line-height:1.2">
-          Colonnes attendues: <b>Type</b>, <b>Marque</b>, <b>Modèle</b>, <b>Prix de vente</b> (et optionnel <b>Prix d'achat</b>).
-          Si le prix d'achat est vide, il est calculé automatiquement (prix de vente / 2).
-        </div>
-      </div>
-    
-
-        <div class="row">
-          <div class="field">
-            <label>Type de véhicule</label>
-            <input id="vType" placeholder="Ex: Compact, Sedans, SUV…" />
-          </div>
-          <div class="field">
-            <label>Marque</label>
-            <input id="vBrand" placeholder="Ex: Benefactor, Dinka…" />
-          </div>
-          <div class="field">
-            <label>Modèle</label>
-            <input id="vModel" placeholder="Ex: Panto, Blista…" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label>Prix de vente ($)</label>
-            <input id="vSell" type="number" min="0" step="1" placeholder="Ex: 32000" />
-          </div>
-          <div class="field">
-            <label>Prix d'achat ($)</label>
-            <input id="vBuy" type="number" min="0" step="1" placeholder="Auto: vente / 2" />
-          </div>
-          <div class="field" style="max-width:240px">
-            <label>&nbsp;</label>
-            <button class="btn primary" id="add">Ajouter</button>
-          </div>
-        </div>
-
-        <div class="hint">Règle: <span class="chip">Prix d'achat = Prix de vente / 2</span> (auto si vide).</div>
-      </div>
-    </div>
-
+<div class="topbar">
+<div class="brand">
+<div class="title">PDM Admin</div>
+<div class="pill" id="mePill">Chargement…</div>
+</div>
+<div class="right">
+<div class="pill" id="envBadge">Firestore • Live</div>
+<button class="btn secondary" id="toDashboard">Dashboard</button>
+<button class="btn danger" id="logout">Déconnexion</button>
+</div>
+</div>
+<div class="grid">
 <div class="card">
-        <h2>Base véhicules</h2>
-
-        <div class="row">
-          <div class="field">
-            <label>Recherche</label>
-            <input id="q" placeholder="Marque, modèle, type…" />
-          </div>
-          <div class="field" style="max-width:220px">
-            <label>Type</label>
-            <select id="filterType">
-              <option value="all">Tous</option>
-            </select>
-          </div>
-          <div class="field" style="max-width:240px">
-            <label>Tri</label>
-            <select id="sortBy">
-              <option value="type_asc">Type (A→Z)</option>
-              <option value="type_desc">Type (Z→A)</option>
-              <option value="price_asc">Prix de vente (↑)</option>
-              <option value="price_desc">Prix de vente (↓)</option>
-              <option value="brand_asc">Marque (A→Z)</option>
-              <option value="brand_desc">Marque (Z→A)</option>
-            </select>
-          </div>
-          <div class="field" style="max-width:200px">
-            <label>&nbsp;</label>
-            <button class="btn secondary" id="reset">Réinitialiser</button>
-          </div>
-        </div>
-
-        <div class="hint" id="countInfo">—</div>
-
-        <div style="overflow:auto">
-          <table>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Marque</th>
-                <th>Modèle</th>
-                <th>Prix d'achat</th>
-                <th>Prix de vente</th>
-                <th class="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-
-  <div class="modalOverlay" id="editOverlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modalHead">
-        <h3>Modifier véhicule</h3>
-        <button class="btn secondary" id="closeEdit">Fermer</button>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label>Type</label>
-          <input id="eType" />
-        </div>
-        <div class="field">
-          <label>Marque</label>
-          <input id="eBrand" />
-        </div>
-        <div class="field">
-          <label>Modèle</label>
-          <input id="eModel" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label>Prix de vente ($)</label>
-          <input id="eSell" type="number" min="0" step="1" />
-        </div>
-        <div class="field">
-          <label>Prix d'achat ($)</label>
-          <input id="eBuy" type="number" min="0" step="1" />
-        </div>
-        <div class="field" style="max-width:260px">
-          <label>&nbsp;</label>
-          <button class="btn primary" id="saveEdit">Enregistrer</button>
-        </div>
-      </div>
-
-      <div class="hint muted">Astuce: si tu laisses le prix d'achat vide, on recalculera automatiquement vente / 2.</div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast">
-    <strong id="toastTitle">Info</strong>
-    <p id="toastMsg">—</p>
-  </div>
-
-  <script type="module">
+<h2>Base véhicules</h2>
+<div class="row">
+<div class="field">
+<label>Recherche</label>
+<input id="q" placeholder="Marque, modèle, type…"/>
+</div>
+<div class="field" style="max-width:220px">
+<label>Type</label>
+<select id="filterType">
+<option value="all">Tous</option>
+</select>
+</div>
+<div class="field" style="max-width:240px">
+<label>Tri</label>
+<select id="sortBy">
+<option value="type_asc">Type (A→Z)</option>
+<option value="type_desc">Type (Z→A)</option>
+<option value="price_asc">Prix de vente (↑)</option>
+<option value="price_desc">Prix de vente (↓)</option>
+<option value="brand_asc">Marque (A→Z)</option>
+<option value="brand_desc">Marque (Z→A)</option>
+</select>
+</div>
+<div class="field" style="max-width:200px">
+<label> </label>
+<button class="btn secondary" id="reset">Réinitialiser</button>
+</div>
+</div>
+<div class="hint" id="countInfo">—</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Marque</th>
+<th>Modèle</th>
+<th>Prix d'achat</th>
+<th>Prix de vente</th>
+<th class="actions">Actions</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</div>
+<div class="card">
+<h2>Ajouter un véhicule</h2>
+<div class="row">
+<div class="field">
+<label>Type de véhicule</label>
+<input id="vType" placeholder="Ex: Compact, Sedans, SUV…"/>
+</div>
+<div class="field">
+<label>Marque</label>
+<input id="vBrand" placeholder="Ex: Benefactor, Dinka…"/>
+</div>
+<div class="field">
+<label>Modèle</label>
+<input id="vModel" placeholder="Ex: Panto, Blista…"/>
+</div>
+</div>
+<div class="row">
+<div class="field">
+<label>Prix de vente ($)</label>
+<input id="vSell" min="0" placeholder="Ex: 32000" step="1" type="number"/>
+</div>
+<div class="field">
+<label>Prix d'achat ($)</label>
+<input id="vBuy" min="0" placeholder="Auto: vente / 2" step="1" type="number"/>
+</div>
+<div class="field" style="max-width:240px">
+<label> </label>
+<button class="btn primary" id="add">Ajouter</button>
+</div>
+</div>
+<div class="hint">Règle: <span class="chip">Prix d'achat = Prix de vente / 2</span> (auto si vide).</div>
+</div>
+</div>
+</div><div aria-modal="true" class="modalOverlay" id="editOverlay" role="dialog">
+<div class="modal">
+<div class="modalHead">
+<h3>Modifier véhicule</h3>
+<button class="btn secondary" id="closeEdit">Fermer</button>
+</div>
+<div class="row">
+<div class="field">
+<label>Type</label>
+<input id="eType"/>
+</div>
+<div class="field">
+<label>Marque</label>
+<input id="eBrand"/>
+</div>
+<div class="field">
+<label>Modèle</label>
+<input id="eModel"/>
+</div>
+</div>
+<div class="row">
+<div class="field">
+<label>Prix de vente ($)</label>
+<input id="eSell" min="0" step="1" type="number"/>
+</div>
+<div class="field">
+<label>Prix d'achat ($)</label>
+<input id="eBuy" min="0" step="1" type="number"/>
+</div>
+<div class="field" style="max-width:260px">
+<label> </label>
+<button class="btn primary" id="saveEdit">Enregistrer</button>
+</div>
+</div>
+<div class="hint muted">Astuce: si tu laisses le prix d'achat vide, on recalculera automatiquement vente / 2.</div>
+</div>
+</div><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, writeBatch,
+      getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
       onSnapshot, query
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // ✅ Colle ici EXACTEMENT la même config que dans pdm-dashboard.html
     const firebaseConfig = {
-  apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
-  authDomain: "pdm-urban-hills.firebaseapp.com",
-  projectId: "pdm-urban-hills",
-  storageBucket: "pdm-urban-hills.firebasestorage.app",
-  messagingSenderId: "426355558661",
-  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
-  measurementId: "G-RGM2DWVFLT"
-};
+      apiKey: "REPLACE_ME",
+      authDomain: "REPLACE_ME",
+      projectId: "REPLACE_ME",
+      storageBucket: "REPLACE_ME",
+      messagingSenderId: "REPLACE_ME",
+      appId: "REPLACE_ME"
+    };
 
     const $ = (id) => document.getElementById(id);
     const toastEl = $("toast");
@@ -402,7 +668,7 @@
     let editingId = null;
 
     function autoCalcBuyIfEmpty(sellInput, buyInput){
-      const sell = parseMoney(sellInput.value);
+      const sell = Number(sellInput.value);
       if(!buyInput.value && Number.isFinite(sell) && sell > 0){
         buyInput.value = String(Math.round(sell / 2));
       }
@@ -418,84 +684,7 @@
       if([ "all", ...types ].includes(current)) filterType.value = current;
     }
 
-    
-    // ----- CSV import helpers -----
-    function splitCSVLine(line){
-      const out = [];
-      let cur = "";
-      let inQ = false;
-      for(let i=0;i<line.length;i++){
-        const c = line[i];
-        if(c === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
-        if(c === '"'){ inQ = !inQ; continue; }
-        if(c === "," && !inQ){ out.push(cur); cur=""; continue; }
-        cur += c;
-      }
-      out.push(cur);
-      return out;
-    }
-    function parseCSV(text){
-      const lines = text.replace(/\r/g,"").split("\n")
-        // Ignore empty lines AND "phantom" lines like ",,,," from some Sheets exports
-        .filter(l => l.trim().length && l.replace(/[\s,;]+/g,"").length);
-      if(lines.length === 0) return {header:[], rows:[]};
-      const header = splitCSVLine(lines[0]).map(h => h.trim());
-      const rows = [];
-      for(let i=1;i<lines.length;i++){
-        const cols = splitCSVLine(lines[i]);
-        const obj = {};
-        header.forEach((h, idx) => obj[h] = (cols[idx] ?? "").toString().trim());
-        rows.push(obj);
-      }
-      return {header, rows};
-    }
-    function pick(row, keys){
-      for(const k of keys){
-        if(row[k] != null && row[k] !== "") return row[k];
-        // case-insensitive match
-        const hit = Object.keys(row).find(x => x.toLowerCase() === k.toLowerCase());
-        if(hit && row[hit] != null && row[hit] !== "") return row[hit];
-      }
-      return "";
-    }
-    function parseMoney(v){
-      let s = (v ?? "").toString().trim();
-      if(!s) return NaN;
-
-      // remove spaces + currency symbols, keep digits and separators
-      s = s.replace(/\s/g,"").replace(/[$€]/g,"").replace(/[^0-9.,\-]/g,"");
-
-      const hasDot = s.includes(".");
-      const hasComma = s.includes(",");
-
-      if(hasDot && hasComma){
-        // The last separator is the decimal separator
-        if(s.lastIndexOf(".") > s.lastIndexOf(",")){
-          // dot is decimal -> remove thousands commas
-          s = s.replace(/,/g,"");
-        } else {
-          // comma is decimal -> remove thousands dots, then convert comma to dot
-          s = s.replace(/\./g,"").replace(/,/g,".");
-        }
-      } else if(hasComma && !hasDot){
-        // likely European decimal comma
-        const parts = s.split(",");
-        if(parts.length === 2 && parts[1].length <= 2){
-          s = parts[0].replace(/,/g,"") + "." + parts[1];
-        } else {
-          // treat commas as thousands separators
-          s = s.replace(/,/g,"");
-        }
-      } else {
-        // only dot or no separator
-        s = s.replace(/,/g,"");
-      }
-
-      const n = Number(s);
-      return Number.isFinite(n) ? n : NaN;
-    }
-
-function applyFilters(){
+    function applyFilters(){
       const q = norm(qEl.value);
       const t = filterType.value;
       const so = sortBy.value;
@@ -509,17 +698,8 @@ function applyFilters(){
         return true;
       });
 
-      const byType = (a,b) => {
-      const t = (a.type||"").localeCompare(b.type||"");
-      if(t !== 0) return t;
-      const pa = Number(a.sellPrice ?? a.price ?? 0);
-      const pb = Number(b.sellPrice ?? b.price ?? 0);
-      if(pa !== pb) return pa - pb; // prix croissant dans le même type
-      const br = (a.brand||"").localeCompare(b.brand||"");
-      if(br !== 0) return br;
-      return (a.model||"").localeCompare(b.model||"");
-    };
-const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
+      const byType = (a,b) => (a.type||"").localeCompare(b.type||"");
+      const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
       const byPrice = (a,b) => (Number(a.sellPrice||0) - Number(b.sellPrice||0));
 
       switch(so){
@@ -582,7 +762,7 @@ const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
     $("reset").addEventListener("click", () => {
       qEl.value = "";
       filterType.value = "all";
-      sortBy.value = "type_price";
+      sortBy.value = "type_asc";
       applyFilters();
     });
     qEl.addEventListener("input", applyFilters);
@@ -590,98 +770,40 @@ const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
     sortBy.addEventListener("change", applyFilters);
 
     addBtn.addEventListener("click", async () => {
+      const type = vType.value.trim();
+      const brand = vBrand.value.trim();
+      const model = vModel.value.trim();
+      const sell = Number(vSell.value);
+      let buy = vBuy.value ? Number(vBuy.value) : NaN;
+
+      if(!type || !brand || !model){
+        showToast("Validation", "Type, Marque et Modèle sont obligatoires.");
+        return;
+      }
+      if(!Number.isFinite(sell) || sell <= 0){
+        showToast("Validation", "Prix de vente invalide.");
+        return;
+      }
+      if(!Number.isFinite(buy) || buy <= 0){
+        buy = Math.round(sell / 2);
+      }
+
       try{
-        if(!me){ showToast("Session", "Profil en cours de chargement."); return; }
-
-        const type = (vType.value || "").trim();
-        const brand = (vBrand.value || "").trim();
-        const model = (vModel.value || "").trim();
-
-        const sellPrice = parseMoney(vSell.value);
-        let buyPrice = parseMoney(vBuy.value);
-          // if empty/invalid, auto buy = sell / 2
-          if(!Number.isFinite(buyPrice) && Number.isFinite(sellPrice)) buyPrice = Math.round(sellPrice/2);
-
-        if(!type || !brand || !model || !Number.isFinite(sellPrice)){
-          showToast("Ajout", "Type / Marque / Modèle / Prix de vente requis.");
-          return;
-        }
-        if(!Number.isFinite(buyPrice)) buyPrice = Math.round(sellPrice / 2);
-
-        const payload = {
+        await addDoc(collection(db, "vehicles"), {
           type, brand, model,
-          sellPrice: Math.round(sellPrice),
-          buyPrice: Math.round(buyPrice),
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          createdBy: me.uid
-        };
-
-        await addDoc(collection(db,"vehicles"), payload);
-        showToast("Véhicules", "Véhicule ajouté.");
-
-        // reset
-        vBrand.value = "";
-        vModel.value = "";
-        vSell.value = "";
-        vBuy.value = "";
+          sellPrice: Math.round(sell),
+          buyPrice: Math.round(buy),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdBy: me?.uid || null
+        });
+        vType.value=""; vBrand.value=""; vModel.value=""; vSell.value=""; vBuy.value="";
+        showToast("Véhicule", "Ajouté.");
       }catch(err){
         console.error(err);
         showToast("Erreur", err?.message || "Ajout impossible.");
       }
     });
-
-
-    // CSV import (Sheets -> CSV)
-    importBtn?.addEventListener("click", async () => {
-      try{
-        if(!me){ showToast("Session", "Profil en cours de chargement."); return; }
-        const f = importCsv?.files?.[0];
-        if(!f){ showToast("Import", "Sélectionne un fichier CSV."); return; }
-
-        const text = await f.text();
-        const parsed = parseCSV(text);
-        if(!parsed.rows.length){ showToast("Import", "Aucune ligne détectée."); return; }
-
-        const batch = writeBatch(db);
-        let count = 0;
-
-        for(const r of parsed.rows){
-          const type = pick(r, ["Type", "Type de véhicule", "Categorie", "Catégorie"]).trim();
-          const brand = pick(r, ["Marque", "Brand"]).trim();
-          const model = pick(r, ["Modèle", "Modele", "Model"]).trim();
-          const sell = parseMoney(pick(r, ["Prix de vente", "Prix vente", "Vente", "Sale price", "SellPrice"]));
-          const buyRaw = parseMoney(pick(r, ["Prix d'achat", "Prix achat", "Achat", "Buy price", "BuyPrice", "Prix d'achat du véhicule"]));
-          if(!type || !brand || !model || !Number.isFinite(sell)) continue;
-
-          const buy = Number.isFinite(buyRaw) ? buyRaw : Math.round(sell / 2);
-
-          const ref = doc(collection(db, "vehicles"));
-          batch.set(ref, {
-            type, brand, model,
-            sellPrice: Math.round(sell),
-            buyPrice: Math.round(buy),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: me.uid
-          });
-          count++;
-          // batch limit 500 writes
-          if(count % 450 === 0){
-            // commit partial to avoid exceeding limits (keeping simple: commit and start new batch is complex here)
-          }
-        }
-
-        if(count === 0){ showToast("Import", "Aucune ligne valide (Type/Marque/Modèle/Prix)."); return; }
-        await batch.commit();
-        showToast("Import", `${count} véhicule(s) importé(s).`);
-        importCsv.value = "";
-      }catch(err){
-        console.error(err);
-        showToast("Erreur import", err?.message || "Import impossible.");
-      }
-    });
-
 
     saveEdit.addEventListener("click", async () => {
       if(!editingId) return;
@@ -738,10 +860,9 @@ const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
       });
     });
 
-    if(firebaseConfig.apiKey === "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM"){
+    if(firebaseConfig.apiKey === "REPLACE_ME"){
       showToast("Config", "⚠️ Colle ta firebaseConfig dans vehicles.html (REPLACE_ME).");
       console.warn("firebaseConfig not set. Paste your real config in vehicles.html.");
     }
-  </script>
-</body>
+  </script></body>
 </html>
