@@ -1,11 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>PDM Admin — Ventes véhicules</title>
-  <link rel="icon" type="image/png" href="favicon.png"/>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>PDM Admin — Partenariats</title>
+<link href="favicon.png" rel="icon" type="image/png"/>
+<style>
     :root{
       --bg:#07080c;
       --card:rgba(10,12,18,.62);
@@ -396,213 +397,173 @@ select, select option{background:#fff;color:#000}
 </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">PDM ADMIN</div>
-      <nav class="nav">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="clients.html">Base clients</a>
-        <a href="vehicles.html">Base véhicules</a>
-        <a href="stock.html">Stock & réservations</a>
-        <a class="active" href="ventes.html">Ventes véhicules</a>
-        <a href="compta.html">Comptabilité</a>
-      </nav>
-      <div class="spacer"></div>
-      <div class="side-actions">
-        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
-      </div>
-    </aside>
-
-    <main class="main">
-      <div class="topbar">
-        <div class="chips">
-          <div class="chip">VENTES</div>
-          <div id="chipUser" class="chip muted">Chargement…</div>
-          <div id="chipRole" class="chip muted">—</div>
-          <div id="chipEnv" class="chip muted">Firestore • Live</div>
-        </div>
-        <div class="top-actions">
-          <a class="btn small" href="stock.html">Stock</a>
-          <a class="btn small" href="dashboard.html">Dashboard</a>
-          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
-        </div>
-      </div>
-
-      <div class="layout">
-        <section class="card">
-          <h3>Créer une vente</h3>
-          <div class="sub">
-            <b>Auto</b> :
-            si <b>client</b> renseigné & réservation trouvée ⇒ <b>Vente depuis réservation</b>.
-            Sinon si <b>pas de client</b> & véhicule en stock ⇒ <b>Vente depuis stock</b>.
-            Sinon ⇒ <b>Vente directe</b> (achat + vente).
-          </div>
-
-          <div class="grid-sale">
-            <div>
-              <label>Véhicule (base véhicules)</label>
-              <div class="combo">
-                <input id="inVehicleSearch" placeholder="Tape le nom du véhicule…"/>
-                <input id="inVehicleId" type="hidden"/>
-                <div id="vehicleSuggest" class="combo-list" role="listbox" aria-label="Suggestions véhicules"></div>
-              </div>
-              <div class="hint" id="vehHint" style="grid-column:1 / -1; margin-top:6px">—</div>
+<div class="app">
+<aside class="sidebar">
+<div class="brand">PDM ADMIN</div>
+<nav class="nav">
+<a href="dashboard.html">Dashboard</a>
+<a href="clients.html">Base clients</a>
+<a href="vehicles.html">Base véhicules</a>
+<a href="stock.html">Stock &amp; réservations</a>
+<a class="active" href="ventes.html">Ventes véhicules</a>
+<a href="partenariats.html">Partenariats</a>
+<a href="compta.html">Comptabilité</a>
+</nav>
+<div class="spacer"></div>
+<div class="side-actions">
+<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
+</div>
+</aside>
+<main class="main">
+<div class="topbar">
+<div class="chips">
+<div class="chip">Ventes véhicules</div>
+<div class="chip muted" id="chipUser">Chargement…</div>
+<div class="chip muted" id="chipRole">—</div>
+<div class="chip muted" id="chipEnv">Firestore • Live</div>
+</div>
+<div class="top-actions">
+<a class="btn small" href="ventes.html">Ventes</a>
+<a class="btn small" href="stock.html">Stock</a>
+<a class="btn small" href="dashboard.html">Dashboard</a>
+<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
+</div>
 </div>
 
-            <div>
-              <label>Client (optionnel)</label>
-              <input id="inClient" placeholder="Nom RP (si réservation)" />
-              <div class="help" style="margin-top:6px">Si tu mets un client, le système cherche une réservation correspondante.</div>
-            </div>
-
-            <div>
-              <label>Prix de vente ($)</label>
-              <input id="inSell" type="number" min="0" step="1" placeholder="Ex: 250000" />
-              <div class="help" style="margin-top:6px">Le symbole $ est automatique dans les affichages.</div>
-            </div>
-
-            <div>
-              <label>Quantité</label>
-              <input id="inQty" type="number" min="1" step="1" value="1" />
-              <div class="help" style="margin-top:6px">Réservation/stock : ajuste la quantité.</div>
-            </div>
-
-            <div>
-              <label>Notes (optionnel)</label>
-              <input id="inNotes" placeholder="Ex: plaque, remise, contexte RP…" />
-              <div class="row-actions" style="margin-top:10px">
-                <button id="btnSell" class="btn gold">Valider la vente</button>
-                <button id="btnReset" class="btn">Réinitialiser</button>
-              </div>
-            </div>
+<div class="layout">
+<section class="card">
+<h3>Créer une vente</h3>
+<div class="sub">
+<b>Auto</b> :
+            si <b>client</b> renseigné &amp; réservation trouvée ⇒ <b>Vente depuis réservation</b>.
+            Sinon si <b>pas de client</b> &amp; véhicule en stock ⇒ <b>Vente depuis stock</b>.
+            Sinon ⇒ <b>Vente directe</b> (achat + vente).
           </div>
-
-          <div class="hint" id="saleTypeHint" style="margin-top:10px">Type détecté : —</div>
-        </section>
-        <section class="card">
-          <h3>Importer l'historique des ventes</h3>
-          <div class="sub">Import CSV (ventes, revenus, dépenses). Les clients peuvent être vides (tu pourras modifier après).</div>
-          <div class="tools">
-            <div class="left">
-              <input id="csvImportFile" type="file" accept=".csv,text/csv" />
-              <button id="btnImportCsv" class="btn gold">Importer le CSV</button>
-              <span id="importCsvStatus" class="pill">Prêt</span>
-            </div>
-            <div class="right">
-              <button id="btnImportCsvDry" class="btn">Prévisualiser</button>
-            </div>
-          </div>
-          <div class="hint">
+<div class="grid-sale">
+<div>
+<label>Véhicule (base véhicules)</label>
+<div class="combo">
+<input id="inVehicleSearch" placeholder="Tape le nom du véhicule…"/>
+<input id="inVehicleId" type="hidden"/>
+<div aria-label="Suggestions véhicules" class="combo-list" id="vehicleSuggest" role="listbox"></div>
+</div>
+<div class="hint" id="vehHint" style="grid-column:1 / -1; margin-top:6px">—</div>
+</div>
+<div>
+<label>Client (optionnel)</label>
+<input id="inClient" placeholder="Nom RP (si réservation)"/>
+<div class="help" style="margin-top:6px">Si tu mets un client, le système cherche une réservation correspondante.</div>
+</div>
+<div>
+<label>Prix de vente ($)</label>
+<input id="inSell" min="0" placeholder="Ex: 250000" step="1" type="number"/>
+<div class="help" style="margin-top:6px">Le symbole $ est automatique dans les affichages.</div>
+</div>
+<div>
+<label>Quantité</label>
+<input id="inQty" min="1" step="1" type="number" value="1"/>
+<div class="help" style="margin-top:6px">Réservation/stock : ajuste la quantité.</div>
+</div>
+<div>
+<label>Notes (optionnel)</label>
+<input id="inNotes" placeholder="Ex: plaque, remise, contexte RP…"/>
+<div class="row-actions" style="margin-top:10px">
+<button class="btn gold" id="btnSell">Valider la vente</button>
+<button class="btn" id="btnReset">Réinitialiser</button>
+</div>
+</div>
+</div>
+<div class="hint" id="saleTypeHint" style="margin-top:10px">Type détecté : —</div>
+</section>
+<section class="card">
+<h3>Importer l'historique des ventes</h3>
+<div class="sub">Import CSV (ventes, revenus, dépenses). Les clients peuvent être vides (tu pourras modifier après).</div>
+<div class="tools">
+<div class="left">
+<input accept=".csv,text/csv" id="csvImportFile" type="file"/>
+<button class="btn gold" id="btnImportCsv">Importer le CSV</button>
+<span class="pill" id="importCsvStatus">Prêt</span>
+</div>
+<div class="right">
+<button class="btn" id="btnImportCsvDry">Prévisualiser</button>
+</div>
+</div>
+<div class="hint">
             Colonnes attendues (flexibles) : <b>date</b>, <b>vehicle</b>, <b>purchase_price</b>, <b>sale_price</b>, <b>seller</b>, <b>qty</b>, <b>client</b>.
             Les montants acceptent $/espaces.
           </div>
-        </section>
-
-
-        <section class="card">
-          <h3>Dernières ventes</h3>
-          <div class="tools">
-            <div class="left">
-              <input id="q" placeholder="Rechercher client / véhicule / vendeur…" />
-              <select id="filterType">
-                <option value="all">Tous types</option>
-                <option value="sale_direct">Vente directe</option>
-                <option value="sale_stock">Vente depuis stock</option>
-                <option value="sale_reservation">Vente depuis réservation</option>
-              </select>
-            </div>
-            <div class="right">
-              <span id="count" class="pill">0</span>
-              <button id="btnRefresh" class="btn">Rafraîchir</button>
-            </div>
-          </div>
-
-          <div style="overflow:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Client</th>
-                  <th>Véhicule</th>
-                  <th>Qté</th>
-                  <th>Vendeur</th>
-	                  <th style="text-align:right">Montant</th>
-	                  <th style="text-align:right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="rows"></tbody>
-            </table>
-          </div>
-          <div class="hint">Les ventes sont enregistrées dans <span class="mono">transactions</span> et utilisées ensuite par la compta et le dashboard.</div>
-        </section>
+</section>
+<section class="card">
+<h3>Dernières ventes</h3>
+<div class="tools">
+<div class="left">
+<input id="q" placeholder="Rechercher client / véhicule / vendeur…"/>
+<select id="filterType">
+<option value="all">Tous types</option>
+<option value="sale_direct">Vente directe</option>
+<option value="sale_stock">Vente depuis stock</option>
+<option value="sale_reservation">Vente depuis réservation</option>
+</select>
+</div>
+<div class="right">
+<span class="pill" id="count">0</span>
+<button class="btn" id="btnRefresh">Rafraîchir</button>
+</div>
+</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Client</th>
+<th>Véhicule</th>
+<th>Qté</th>
+<th>Vendeur</th>
+<th style="text-align:right">Montant</th>
+<th style="text-align:right">Actions</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+<div class="hint">Les ventes sont enregistrées dans <span class="mono">transactions</span> et utilisées ensuite par la compta et le dashboard.</div>
+</section>
+</div></main>
+</div>
+<div class="toast" id="toast">
+<div class="t" id="toastTitle"></div>
+<div class="m" id="toastMsg"></div>
+</div>
+<!-- Modal -->
+<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
+<div class="modal">
+<h4 id="modalTitle">Modifier</h4>
+<div id="modalBody"></div>
+<div class="modal-actions">
+<button class="btn" id="btnModalCancel">Annuler</button>
+<button class="btn gold" id="btnModalSave">Enregistrer</button>
+</div>
+<div class="hint" id="modalHint"></div>
+</div>
+</div>
+<!-- Firebase config modal (auto) -->
+<div id="firebaseConfigModal" style="display:none">
+<div class="cfg-card">
+<div class="cfg-title">Configurer Firebase</div>
+<div class="cfg-sub">
+        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
       </div>
-    </main>
-  </div>
+<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
+<div class="cfg-actions">
+<button class="btn" id="firebaseConfigCancel">Annuler</button>
+<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
+</div>
+<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
+</div>
+</div>
 
-  <div id="toast" class="toast">
-    <div id="toastTitle" class="t"></div>
-    <div id="toastMsg" class="m"></div>
-  </div>
-
-  <!-- Modal: modifier une vente -->
-  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <h4 id="modalTitle">Modifier la vente</h4>
-      <div class="grid" style="grid-template-columns: 1fr 1fr .6fr 1fr; align-items:end">
-        <div>
-          <label>Type</label>
-          <select id="mType">
-            <option value="sale_direct">Vente directe</option>
-            <option value="sale_stock">Vente depuis stock</option>
-            <option value="sale_reservation">Vente depuis réservation</option>
-          </select>
-        </div>
-        <div>
-          <label>Client</label>
-          <input id="mClient" placeholder="Nom RP (optionnel)"/>
-        </div>
-        <div>
-          <label>Qté</label>
-          <input id="mQty" type="number" min="1" step="1"/>
-        </div>
-        <div>
-          <label>Prix de vente ($)</label>
-          <input id="mPrice" type="number" min="0" step="1"/>
-        </div>
-        <div style="grid-column: 1 / -1">
-          <label>Véhicule</label>
-          <input id="mVehicle" placeholder="Ex: Sugoi"/>
-        </div>
-        <div style="grid-column: 1 / -1">
-          <label>Notes</label>
-          <input id="mNotes" placeholder="Ex: plaque, remise, contexte RP"/>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button id="btnModalCancel" class="btn">Annuler</button>
-        <button id="btnModalSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="hint" id="modalHint"></div>
-    </div>
-  </div>
-
-  
-  <div id="firebaseConfigModal" style="display:none">
-    <div class="cfg-card">
-      <div class="cfg-title">Configuration Firebase</div>
-      <div class="cfg-sub">Colle ici <b>uniquement</b> ton bloc <code>firebaseConfig</code> (objet). Il sera sauvegardé sur ce navigateur (localStorage) et réutilisé sur toutes les pages admin.</div>
-      <textarea id="firebaseConfigText" class="cfg-text" placeholder='Ex: { apiKey: "...", authDomain: "...", projectId: "...", appId: "..." }'></textarea>
-      <div class="cfg-actions">
-        <button id="firebaseConfigCancel" class="btn">Annuler</button>
-        <button id="firebaseConfigSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="cfg-note">Astuce: tu peux coller le snippet complet <code>const firebaseConfig = {...};</code>, ça marche aussi.</div>
-    </div>
-  </div>
-
-
-  <script type="module">
+<!-- Modal: modifier une vente --><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -1354,6 +1315,5 @@ select, select option{background:#fff;color:#000}
 
     $("btnImportCsv").addEventListener("click", ()=> importCsvHistory({dryRun:false}));
     $("btnImportCsvDry").addEventListener("click", ()=> importCsvHistory({dryRun:true}));
-</script>
-</body>
+</script></body>
 </html>
