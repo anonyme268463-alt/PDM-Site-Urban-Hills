@@ -1,11 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>PDM Admin — Dashboard</title>
-  <link rel="icon" type="image/png" href="favicon.png"/>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>PDM Admin — Partenariats</title>
+<link href="favicon.png" rel="icon" type="image/png"/>
+<style>
     :root{
       --bg:#07080c;
       --card:rgba(10,12,18,.62);
@@ -198,6 +199,10 @@
       color: rgba(255,255,255,.9);
       outline:none;
     }
+    select option{
+      background:#ffffff;
+      color:#000000;
+    }
     input::placeholder{color: rgba(255,255,255,.32)}
     .row-actions{display:flex; gap:10px; justify-content:flex-end}
     .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
@@ -349,147 +354,182 @@
 /* Select readability */
 select, select option{background:#fff;color:#000}
 
+  /* Extra layout for KPIs / form */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
   .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
   .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
   .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
+  .grid-sale{display:grid; grid-template-columns: 1.25fr 1fr .8fr .6fr 1.25fr; gap:10px; align-items:end}
   .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .help{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}
   @media (max-width: 980px){
     .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid-sale{grid-template-columns:1fr 1fr}
   }
   @media (max-width: 520px){
     .kpis{grid-template-columns:1fr}
   }
-  </style>
+  
+/* combo autocomplete (like base clients) */
+.combo{ position:relative; }
+.combo-list{
+  position:absolute; left:0; right:0; top:calc(100% + 6px);
+  background: rgba(10,12,18,.96);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  display:none;
+  z-index:80;
+}
+.combo-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-top:1px solid rgba(255,255,255,.06);
+  color: rgba(255,255,255,.88);
+  font-size:12px;
+}
+.combo-item:first-child{ border-top:none; }
+.combo-item:hover, .combo-item.active{ background: rgba(255,255,255,.06); }
+.combo-item .meta{ display:block; margin-top:2px; font-size:11px; opacity:.7; }
+
+</style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">PDM ADMIN</div>
-      <nav class="nav">
-        <a class="active" href="dashboard.html">Dashboard</a>
-        <a href="clients.html">Base clients</a>
-        <a href="vehicles.html">Base véhicules</a>
-        <a href="stock.html">Stock & réservations</a>
-        <a href="ventes.html">Ventes véhicules</a>
-        <a href="compta.html">Comptabilité</a>
-      </nav>
-      <div class="spacer"></div>
-      <div class="side-actions">
-        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
-      </div>
-    </aside>
+<div class="app">
+<aside class="sidebar">
+<div class="brand">PDM ADMIN</div>
+<nav class="nav">
+<a href="dashboard.html">Dashboard</a>
+<a href="clients.html">Base clients</a>
+<a href="vehicles.html">Base véhicules</a>
+<a href="stock.html">Stock &amp; réservations</a>
+<a href="ventes.html">Ventes véhicules</a>
+<a href="partenariats.html">Partenariats</a>
+<a href="compta.html">Comptabilité</a>
+</nav>
+<div class="spacer"></div>
+<div class="side-actions">
+<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
+</div>
+</aside>
+<main class="main">
+<div class="topbar">
+<div class="chips">
+<div class="chip">Dashboard</div>
+<div class="chip muted" id="chipUser">Chargement…</div>
+<div class="chip muted" id="chipRole">—</div>
+<div class="chip muted" id="chipEnv">Firestore • Live</div>
+</div>
+<div class="top-actions">
+<a class="btn small" href="ventes.html">Ventes</a>
+<a class="btn small" href="stock.html">Stock</a>
+<a class="btn small" href="dashboard.html">Dashboard</a>
+<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
+</div>
+</div>
 
-    <main class="main">
-      <div class="topbar">
-        <div class="chips">
-          <div class="chip">DASHBOARD</div>
-          <div id="chipUser" class="chip muted">Chargement…</div>
-          <div id="chipRole" class="chip muted">—</div>
-          <div id="chipEnv" class="chip muted">Firestore • Live</div>
-        </div>
-        <div class="top-actions">
-          <a class="btn small" href="ventes.html">Ventes</a>
-          <a class="btn small" href="stock.html">Stock</a>
-          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
-        </div>
-      </div>
-
-      <div class="layout">
-        <section class="card">
-          <h3>Vue globale</h3>
-          <div class="sub">Ce dashboard est <b>lecture seule</b>. Les ventes se font dans <b>Ventes véhicules</b>.</div>
-
-          <div class="kpis">
-            <div class="kpi">
-              <div class="k">CA semaine (ventes)</div>
-              <div class="v" id="kWeekSales">$ 0</div>
-              <div class="s" id="kWeekSalesS">—</div>
-            </div>
-            <div class="kpi">
-              <div class="k">CA total (ventes)</div>
-              <div class="v" id="kAllSales">$ 0</div>
-              <div class="s" id="kAllSalesS">—</div>
-            </div>
-            <div class="kpi">
-              <div class="k">Stock</div>
-              <div class="v" id="kStock">0</div>
-              <div class="s" id="kStockS">items</div>
-            </div>
-            <div class="kpi">
-              <div class="k">Réservations</div>
-              <div class="v" id="kResa">0</div>
-              <div class="s" id="kResaS">items</div>
-            </div>
-          </div>
-
-          <div class="hint" style="margin-top:10px">
+<div class="layout">
+<section class="card">
+<h3>Vue globale</h3>
+<div class="sub">Ce dashboard est <b>lecture seule</b>. Les ventes se font dans <b>Ventes véhicules</b>.</div>
+<div class="kpis">
+<div class="kpi">
+<div class="k">CA semaine (ventes)</div>
+<div class="v" id="kWeekSales">$ 0</div>
+<div class="s" id="kWeekSalesS">—</div>
+</div>
+<div class="kpi">
+<div class="k">CA total (ventes)</div>
+<div class="v" id="kAllSales">$ 0</div>
+<div class="s" id="kAllSalesS">—</div>
+</div>
+<div class="kpi">
+<div class="k">Stock</div>
+<div class="v" id="kStock">0</div>
+<div class="s" id="kStockS">items</div>
+</div>
+<div class="kpi">
+<div class="k">Réservations</div>
+<div class="v" id="kResa">0</div>
+<div class="s" id="kResaS">items</div>
+</div>
+</div>
+<div class="hint" style="margin-top:10px">
             Sources:
             <span class="mono">transactions</span> (ventes) + <span class="mono">inventory</span> (stock/résa).
           </div>
-        </section>
-
-        <section class="card">
-          <h3>Activité récente</h3>
-          <div class="tools">
-            <div class="left">
-              <input id="q" placeholder="Rechercher client / véhicule / vendeur…" />
-              <select id="filterType">
-                <option value="all">Toutes ventes</option>
-                <option value="sale_direct">Vente directe</option>
-                <option value="sale_stock">Vente depuis stock</option>
-                <option value="sale_reservation">Vente depuis réservation</option>
-              </select>
-            </div>
-            <div class="right">
-              <span id="count" class="pill">0</span>
-              <button id="btnRefresh" class="btn">Rafraîchir</button>
-            </div>
-          </div>
-
-          <div style="overflow:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Client</th>
-                  <th>Véhicule</th>
-                  <th>Qté</th>
-                  <th>Vendeur</th>
-                  <th style="text-align:right">Montant</th>
-                </tr>
-              </thead>
-              <tbody id="rows"></tbody>
-            </table>
-          </div>
-        </section>
+</section>
+<section class="card">
+<h3>Activité récente</h3>
+<div class="tools">
+<div class="left">
+<input id="q" placeholder="Rechercher client / véhicule / vendeur…"/>
+<select id="filterType">
+<option value="all">Toutes ventes</option>
+<option value="sale_direct">Vente directe</option>
+<option value="sale_stock">Vente depuis stock</option>
+<option value="sale_reservation">Vente depuis réservation</option>
+</select>
+</div>
+<div class="right">
+<span class="pill" id="count">0</span>
+<button class="btn" id="btnRefresh">Rafraîchir</button>
+</div>
+</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Client</th>
+<th>Véhicule</th>
+<th>Qté</th>
+<th>Vendeur</th>
+<th style="text-align:right">Montant</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</section>
+</div></main>
+</div>
+<div class="toast" id="toast">
+<div class="t" id="toastTitle"></div>
+<div class="m" id="toastMsg"></div>
+</div>
+<!-- Modal -->
+<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
+<div class="modal">
+<h4 id="modalTitle">Modifier</h4>
+<div id="modalBody"></div>
+<div class="modal-actions">
+<button class="btn" id="btnModalCancel">Annuler</button>
+<button class="btn gold" id="btnModalSave">Enregistrer</button>
+</div>
+<div class="hint" id="modalHint"></div>
+</div>
+</div>
+<!-- Firebase config modal (auto) -->
+<div id="firebaseConfigModal" style="display:none">
+<div class="cfg-card">
+<div class="cfg-title">Configurer Firebase</div>
+<div class="cfg-sub">
+        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
       </div>
-    </main>
-  </div>
+<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
+<div class="cfg-actions">
+<button class="btn" id="firebaseConfigCancel">Annuler</button>
+<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
+</div>
+<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
+</div>
+</div>
 
-  <div id="toast" class="toast">
-    <div id="toastTitle" class="t"></div>
-    <div id="toastMsg" class="m"></div>
-  </div>
-
-  
-  <div id="firebaseConfigModal" style="display:none">
-    <div class="cfg-card">
-      <div class="cfg-title">Configuration Firebase</div>
-      <div class="cfg-sub">Colle ici <b>uniquement</b> ton bloc <code>firebaseConfig</code> (objet). Il sera sauvegardé sur ce navigateur (localStorage) et réutilisé sur toutes les pages admin.</div>
-      <textarea id="firebaseConfigText" class="cfg-text" placeholder='Ex: { apiKey: "...", authDomain: "...", projectId: "...", appId: "..." }'></textarea>
-      <div class="cfg-actions">
-        <button id="firebaseConfigCancel" class="btn">Annuler</button>
-        <button id="firebaseConfigSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="cfg-note">Astuce: tu peux coller le snippet complet <code>const firebaseConfig = {...};</code>, ça marche aussi.</div>
-    </div>
-  </div>
-
-
-  <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
@@ -687,6 +727,5 @@ select, select option{background:#fff;color:#000}
       $("chipRole").textContent = me.role === "admin" ? "ADMIN" : "STAFF";
       await refreshAll();
     });
-  </script>
-</body>
+  </script></body>
 </html>
