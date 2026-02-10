@@ -1,10 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>PDM Admin — Stock & Réservations</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>PDM Admin — Partenariats</title>
+<link href="favicon.png" rel="icon" type="image/png"/>
+<style>
     :root{
       --bg:#07080c;
       --card:rgba(10,12,18,.62);
@@ -35,6 +37,7 @@
       color:var(--text);
       overflow-x:hidden;
     }
+    /* soft vignette like catalogue public */
     body:before{
       content:"";
       position:fixed; inset:-20px;
@@ -49,6 +52,7 @@
       gap:22px;
       padding:18px 18px 26px;
     }
+    /* Sidebar */
     .sidebar{
       width:250px;
       min-width:250px;
@@ -122,6 +126,7 @@
       color: rgba(255,210,210,.95);
     }
     .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
+    /* Main */
     .main{
       flex:1;
       max-width: 980px;
@@ -193,6 +198,10 @@
       border:1px solid rgba(255,255,255,.10);
       color: rgba(255,255,255,.9);
       outline:none;
+    }
+    select option{
+      background:#ffffff;
+      color:#000000;
     }
     input::placeholder{color: rgba(255,255,255,.32)}
     .row-actions{display:flex; gap:10px; justify-content:flex-end}
@@ -310,240 +319,262 @@
       .two{grid-template-columns:1fr}
       .grid{grid-template-columns:1fr 1fr; }
     }
+  
+/* Firebase config modal */
+#firebaseConfigModal{
+  position:fixed; inset:0; z-index:99999;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+}
+#firebaseConfigModal .cfg-card{
+  width:min(720px, 92vw);
+  background: rgba(10,12,18,.92);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+#firebaseConfigModal .cfg-text{
+  width:100%; height:220px; resize:vertical;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:12px;
+  color:#fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  outline:none;
+}
+#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
 
-    /* Firebase config modal */
-    #firebaseConfigModal{
-      position:fixed; inset:0; z-index:99999;
-      display:none;
-      align-items:center; justify-content:center;
-      background:rgba(0,0,0,.65);
-      backdrop-filter: blur(8px);
-      padding:18px;
-    }
-    #firebaseConfigModal .cfg-card{
-      width:min(720px, 92vw);
-      background: rgba(10,12,18,.92);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
-      padding:18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.55);
-    }
-    #firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
-    #firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
-    #firebaseConfigModal .cfg-text{
-      width:100%; height:220px; resize:vertical;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:12px;
-      padding:12px;
-      color:#fff;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
-      outline:none;
-    }
-    #firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-    #firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
-  </style>
+/* Select readability */
+select, select option{background:#fff;color:#000}
+
+  /* Extra layout for KPIs / form */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+  .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
+  .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
+  .grid-sale{display:grid; grid-template-columns: 1.25fr 1fr .8fr .6fr 1.25fr; gap:10px; align-items:end}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .help{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}
+  @media (max-width: 980px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid-sale{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width: 520px){
+    .kpis{grid-template-columns:1fr}
+  }
+  
+/* combo autocomplete (like base clients) */
+.combo{ position:relative; }
+.combo-list{
+  position:absolute; left:0; right:0; top:calc(100% + 6px);
+  background: rgba(10,12,18,.96);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  display:none;
+  z-index:80;
+}
+.combo-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-top:1px solid rgba(255,255,255,.06);
+  color: rgba(255,255,255,.88);
+  font-size:12px;
+}
+.combo-item:first-child{ border-top:none; }
+.combo-item:hover, .combo-item.active{ background: rgba(255,255,255,.06); }
+.combo-item .meta{ display:block; margin-top:2px; font-size:11px; opacity:.7; }
+
+</style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">PDM ADMIN</div>
-      <nav class="nav">
-        <a href="pdm-dashboard.html">Dashboard</a>
-        <a href="clients.html">Base clients</a>
-        <a href="vehicles.html">Base véhicules</a>
-        <a class="active" href="stock.html">Stock & réservations</a>
-        <a href="compta.html">Comptabilité</a>
-      </nav>
-      <div class="spacer"></div>
-      <div class="side-actions">
-        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
-      </div>
-    </aside>
+<div class="app">
+<aside class="sidebar">
+<div class="brand">PDM ADMIN</div>
+<nav class="nav">
+<a href="dashboard.html">Dashboard</a>
+<a href="clients.html">Base clients</a>
+<a href="vehicles.html">Base véhicules</a>
+<a class="active" href="stock.html">Stock &amp; réservations</a>
+<a href="ventes.html">Ventes véhicules</a>
+<a href="partenariats.html">Partenariats</a>
+<a href="compta.html">Comptabilité</a>
+</nav>
+<div class="spacer"></div>
+<div class="side-actions">
+<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
+</div>
+</aside>
+<main class="main">
+<div class="topbar">
+<div class="chips">
+<div class="chip">Stock &amp; réservations</div>
+<div class="chip muted" id="chipUser">Chargement…</div>
+<div class="chip muted" id="chipRole">—</div>
+<div class="chip muted" id="chipEnv">Firestore • Live</div>
+</div>
+<div class="top-actions">
+<a class="btn small" href="ventes.html">Ventes</a>
+<a class="btn small" href="stock.html">Stock</a>
+<a class="btn small" href="dashboard.html">Dashboard</a>
+<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
+</div>
+</div>
 
-    <main class="main">
-      <div class="topbar">
-        <div class="chips">
-          <div class="chip">PDM ADMIN</div>
-          <div id="chipUser" class="chip muted">Chargement…</div>
-          <div id="chipEnv" class="chip muted">Firestore • Live</div>
-        </div>
-        <div class="top-actions">
-          <a class="btn small" href="pdm-dashboard.html">Dashboard</a>
-          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
-        </div>
-      </div>
-
-      <div class="layout">
-        <section class="card">
-          <h3>Ajouter / réserver</h3>
-          <div class="sub">Si un <b>client</b> est renseigné, l’entrée devient une <b>réservation</b>. Sinon, elle va au <b>stock</b>.</div>
-          <div class="grid">
-            <div>
-              <label>Marque</label>
-              <input id="inBrand" placeholder="Ex: Pfister, Benefactor…" />
-            </div>
-            <div>
-              <label>Modèle</label>
-              <input id="inModel" placeholder="Ex: Comet S2 Cabriolet…" />
-            </div>
-            <div>
-              <label>Nombre</label>
-              <input id="inQty" type="number" min="1" step="1" value="1"/>
-            </div>
-            <div>
-              <label>Client (optionnel)</label>
-              <input id="inClient" placeholder="Nom du client (pour réservation)"/>
-            </div>
-          </div>
-          <div class="row-actions" style="margin-top:10px">
-            <button id="btnAdd" class="btn gold">Ajouter</button>
-            <button id="btnResetAdd" class="btn">Réinitialiser</button>
-          </div>
-          <div class="hint">Astuce : tu peux aussi importer ton CSV Sheets ci-dessous (stock + réservations). Tout est sauvegardé dans Firestore (mémoire).</div>
-        </section>
-
-        <section class="card">
-          <h3>Importer CSV (Google Sheets)</h3>
-          <div class="tools">
-            <div class="left">
-              <input id="csvFile" type="file" accept=".csv,text/csv" />
-              <button id="btnImport" class="btn gold">Importer</button>
-              <span id="importStatus" class="pill">Prêt</span>
-            </div>
-            <div class="right">
-              <button id="btnPurgeAll" class="btn danger">Vider stock + réservations</button>
-            </div>
-          </div>
-          <div class="hint">
+<div class="layout">
+<section class="card">
+<h3>Ajouter / réserver</h3>
+<div class="sub">Si un <b>client</b> est renseigné, l’entrée devient une <b>réservation</b>. Sinon, elle va au <b>stock</b>.</div>
+<div class="grid">
+<div>
+<label>Marque</label>
+<input id="inBrand" placeholder="Ex: Pfister, Benefactor…"/>
+</div>
+<div>
+<label>Modèle</label>
+<input id="inModel" placeholder="Ex: Comet S2 Cabriolet…"/>
+</div>
+<div>
+<label>Nombre</label>
+<input id="inQty" min="1" step="1" type="number" value="1"/>
+</div>
+<div>
+<label>Client (optionnel)</label>
+<input id="inClient" placeholder="Nom du client (pour réservation)"/>
+</div>
+</div>
+<div class="row-actions" style="margin-top:10px">
+<button class="btn gold" id="btnAdd">Ajouter</button>
+<button class="btn" id="btnResetAdd">Réinitialiser</button>
+</div>
+<div class="hint">Astuce : tu peux aussi importer ton CSV Sheets ci-dessous (stock + réservations). Tout est sauvegardé dans Firestore (mémoire).</div>
+</section>
+<section class="card">
+<h3>Importer CSV (Google Sheets)</h3>
+<div class="tools">
+<div class="left">
+<input accept=".csv,text/csv" id="csvFile" type="file"/>
+<button class="btn gold" id="btnImport">Importer</button>
+<span class="pill" id="importStatus">Prêt</span>
+</div>
+<div class="right">
+<button class="btn danger" id="btnPurgeAll">Vider stock + réservations</button>
+</div>
+</div>
+<div class="hint">
             Formats acceptés :
             <b>1)</b> ton onglet “Stock / Reservations” (multi-blocs) ; <b>2)</b> un CSV simple avec colonnes Marque/Modèle/Nombre et optionnellement Demandeur/Client.
           </div>
-        </section>
-
-        <div class="two">
-          <section class="card">
-            <h3>Stock</h3>
-            <div class="tools">
-              <div class="left">
-                <input id="qStock" placeholder="Rechercher marque/modèle…" />
-                <select id="sortStock">
-                  <option value="brand">Tri: Marque (A→Z)</option>
-                  <option value="model">Tri: Modèle (A→Z)</option>
-                  <option value="qty_desc">Tri: Nombre (↓)</option>
-                  <option value="qty_asc">Tri: Nombre (↑)</option>
-                </select>
-              </div>
-              <div class="right">
-                <span id="stockCount" class="pill">0</span>
-                <button id="btnRefresh" class="btn">Rafraîchir</button>
-              </div>
-            </div>
-            <div style="overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Marque</th>
-                    <th>Modèle</th>
-                    <th>Nombre</th>
-                    <th style="text-align:right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyStock"></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="card">
-            <h3>Réservations</h3>
-            <div class="tools">
-              <div class="left">
-                <input id="qResa" placeholder="Rechercher marque/modèle/client…" />
-                <select id="sortResa">
-                  <option value="created_desc">Tri: Récent</option>
-                  <option value="created_asc">Tri: Ancien</option>
-                  <option value="client">Tri: Client (A→Z)</option>
-                  <option value="brand">Tri: Marque (A→Z)</option>
-                </select>
-              </div>
-              <div class="right">
-                <span id="resaCount" class="pill">0</span>
-              </div>
-            </div>
-            <div style="overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Client</th>
-                    <th>Marque</th>
-                    <th>Modèle</th>
-                    <th>Nombre</th>
-                    <th style="text-align:right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyResa"></tbody>
-              </table>
-            </div>
-            <div class="hint">Quand le client vient récupérer : clique “Convertir en vente”. La réservation disparaît et une transaction “Vente depuis réservation” est créée (dashboard).</div>
-          </section>
-        </div>
+</section>
+<div class="two">
+<section class="card">
+<h3>Stock</h3>
+<div class="tools">
+<div class="left">
+<input id="qStock" placeholder="Rechercher marque/modèle…"/>
+<select id="sortStock">
+<option value="brand">Tri: Marque (A→Z)</option>
+<option value="model">Tri: Modèle (A→Z)</option>
+<option value="qty_desc">Tri: Nombre (↓)</option>
+<option value="qty_asc">Tri: Nombre (↑)</option>
+</select>
+</div>
+<div class="right">
+<span class="pill" id="stockCount">0</span>
+<button class="btn" id="btnRefresh">Rafraîchir</button>
+</div>
+</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Marque</th>
+<th>Modèle</th>
+<th>Nombre</th>
+<th style="text-align:right">Actions</th>
+</tr>
+</thead>
+<tbody id="tbodyStock"></tbody>
+</table>
+</div>
+</section>
+<section class="card">
+<h3>Réservations</h3>
+<div class="tools">
+<div class="left">
+<input id="qResa" placeholder="Rechercher marque/modèle/client…"/>
+<select id="sortResa">
+<option value="created_desc">Tri: Récent</option>
+<option value="created_asc">Tri: Ancien</option>
+<option value="client">Tri: Client (A→Z)</option>
+<option value="brand">Tri: Marque (A→Z)</option>
+</select>
+</div>
+<div class="right">
+<span class="pill" id="resaCount">0</span>
+</div>
+</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Client</th>
+<th>Marque</th>
+<th>Modèle</th>
+<th>Nombre</th>
+<th style="text-align:right">Actions</th>
+</tr>
+</thead>
+<tbody id="tbodyResa"></tbody>
+</table>
+</div>
+<div class="hint">Quand le client vient récupérer : clique “Convertir en vente”. La réservation disparaît et une transaction “Vente depuis réservation” est créée (dashboard).</div>
+</section>
+</div>
+</div></main>
+</div>
+<div class="toast" id="toast">
+<div class="t" id="toastTitle"></div>
+<div class="m" id="toastMsg"></div>
+</div>
+<!-- Modal -->
+<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
+<div class="modal">
+<h4 id="modalTitle">Modifier</h4>
+<div id="modalBody"></div>
+<div class="modal-actions">
+<button class="btn" id="btnModalCancel">Annuler</button>
+<button class="btn gold" id="btnModalSave">Enregistrer</button>
+</div>
+<div class="hint" id="modalHint"></div>
+</div>
+</div>
+<!-- Firebase config modal (auto) -->
+<div id="firebaseConfigModal" style="display:none">
+<div class="cfg-card">
+<div class="cfg-title">Configurer Firebase</div>
+<div class="cfg-sub">
+        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
       </div>
-    </main>
-  </div>
+<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
+<div class="cfg-actions">
+<button class="btn" id="firebaseConfigCancel">Annuler</button>
+<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
+</div>
+<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
+</div>
+</div>
 
-  <div id="toast" class="toast">
-    <div id="toastTitle" class="t"></div>
-    <div id="toastMsg" class="m"></div>
-  </div>
-
-  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <h4 id="modalTitle">Modifier</h4>
-      <div class="grid" style="grid-template-columns: 1fr 1fr .6fr 1fr">
-        <div>
-          <label>Marque</label>
-          <input id="mBrand"/>
-        </div>
-        <div>
-          <label>Modèle</label>
-          <input id="mModel"/>
-        </div>
-        <div>
-          <label>Nombre</label>
-          <input id="mQty" type="number" min="1" step="1"/>
-        </div>
-        <div id="mClientWrap">
-          <label>Client</label>
-          <input id="mClient"/>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button id="btnModalCancel" class="btn">Annuler</button>
-        <button id="btnModalSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="hint" id="modalHint"></div>
-    </div>
-  </div>
-
-  <!-- Firebase Config Modal (obligatoire pour éviter null.style) -->
-  <div id="firebaseConfigModal">
-    <div class="cfg-card">
-      <div class="cfg-title">Configurer Firebase (Firestore)</div>
-      <div class="cfg-sub">
-        Colle ici ton objet <b>firebaseConfig</b> (depuis Firebase Console → paramètres du projet → SDK).
-        <br/>Il sera sauvegardé dans ton navigateur (localStorage) pour cette page.
-      </div>
-      <textarea id="firebaseConfigText" class="cfg-text" placeholder="Colle ici: { apiKey: '...', authDomain: '...', projectId: '...', ... }"></textarea>
-      <div class="cfg-actions">
-        <button id="firebaseConfigCancel" class="btn">Annuler</button>
-        <button id="firebaseConfigSave" class="btn gold">Sauvegarder</button>
-      </div>
-      <div class="cfg-note">Astuce : tu peux coller soit l’objet JSON, soit le snippet complet “const firebaseConfig = { … }”.</div>
-    </div>
-  </div>
-
-  <script type="module">
+<!-- Firebase Config Modal (obligatoire pour éviter null.style) --><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
@@ -1248,6 +1279,5 @@
         toast("Erreur", e.message || String(e));
       }
     });
-  </script>
-</body>
+  </script></body>
 </html>
