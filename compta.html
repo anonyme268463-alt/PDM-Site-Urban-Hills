@@ -1,10 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>PDM Admin — Comptabilité</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>PDM Admin — Partenariats</title>
+<link href="favicon.png" rel="icon" type="image/png"/>
+<style>
     :root{
       --bg:#07080c;
       --card:rgba(10,12,18,.62);
@@ -35,6 +37,7 @@
       color:var(--text);
       overflow-x:hidden;
     }
+    /* soft vignette like catalogue public */
     body:before{
       content:"";
       position:fixed; inset:-20px;
@@ -43,9 +46,16 @@
       z-index:-1;
     }
     a{color:inherit; text-decoration:none}
-    .app{display:flex; min-height:100vh; gap:22px; padding:18px 18px 26px;}
+    .app{
+      display:flex;
+      min-height:100vh;
+      gap:22px;
+      padding:18px 18px 26px;
+    }
+    /* Sidebar */
     .sidebar{
-      width:250px; min-width:250px;
+      width:250px;
+      min-width:250px;
       background: rgba(10,12,18,.46);
       border:1px solid var(--stroke);
       border-radius: 18px;
@@ -54,11 +64,23 @@
       position:sticky;
       top:18px;
       height: calc(100vh - 44px);
-      display:flex; flex-direction:column;
+      display:flex;
+      flex-direction:column;
       backdrop-filter: blur(10px);
     }
-    .brand{font-weight:800; letter-spacing:.12em; font-size:12px; color:rgba(255,255,255,.72); margin-bottom:10px;}
-    .nav{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
+    .brand{
+      font-weight:800;
+      letter-spacing:.12em;
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      margin-bottom:10px;
+    }
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+    }
     .nav a{
       padding:11px 12px;
       border-radius: 12px;
@@ -74,7 +96,12 @@
       color: rgba(255,255,255,.9);
     }
     .spacer{flex:1}
-    .side-actions{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+    .side-actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:12px;
+    }
     .btn{
       border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.22);
@@ -93,11 +120,24 @@
       color:#1b1306;
       box-shadow: 0 10px 22px rgba(184,130,34,.18);
     }
-    .btn.danger{background: rgba(255,80,80,.12); border-color: rgba(255,80,80,.24); color: rgba(255,210,210,.95);}
+    .btn.danger{
+      background: rgba(255,80,80,.12);
+      border-color: rgba(255,80,80,.24);
+      color: rgba(255,210,210,.95);
+    }
     .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
-    .main{flex:1; max-width: 1080px; margin: 0 auto; width:100%;}
+    /* Main */
+    .main{
+      flex:1;
+      max-width: 980px;
+      margin: 0 auto;
+      width:100%;
+    }
     .topbar{
-      display:flex; align-items:center; gap:12px; justify-content:space-between;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
       padding:10px 12px;
       border:1px solid var(--stroke);
       border-radius: 16px;
@@ -117,7 +157,12 @@
     }
     .chip.muted{color:rgba(255,255,255,.6)}
     .top-actions{display:flex; gap:10px; align-items:center}
-    .layout{display:flex; flex-direction:column; gap:14px; margin-top:14px;}
+    .layout{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:14px;
+    }
     .card{
       background: var(--card);
       border:1px solid var(--stroke);
@@ -133,9 +178,19 @@
       text-transform:uppercase;
       color: rgba(255,255,255,.75);
     }
-    .sub{font-size:12px; color: var(--muted); margin:-4px 0 10px;}
+    .sub{
+      font-size:12px;
+      color: var(--muted);
+      margin:-4px 0 10px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1.1fr .7fr 1.1fr;
+      gap:10px;
+      align-items:end;
+    }
     label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
-    input, select, textarea{
+    input, select{
       width:100%;
       padding:10px 12px;
       border-radius: 14px;
@@ -144,12 +199,43 @@
       color: rgba(255,255,255,.9);
       outline:none;
     }
-    input::placeholder, textarea::placeholder{color: rgba(255,255,255,.32)}
-    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:14px;}
-    .grid4{display:grid; grid-template-columns: 1.1fr 1fr 1fr 1.2fr; gap:10px; align-items:end;}
-    .row-actions{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap}
-    .pill{padding:8px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.18); color: rgba(255,255,255,.75); font-size:12px;}
-    table{width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius: 16px; border:1px solid rgba(255,255,255,.08);}
+    select option{
+      background:#ffffff;
+      color:#000000;
+    }
+    input::placeholder{color: rgba(255,255,255,.32)}
+    .row-actions{display:flex; gap:10px; justify-content:flex-end}
+    .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .tools{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .tools .left, .tools .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.75);
+      font-size:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.08);
+    }
     thead th{
       text-align:left;
       font-size:11px;
@@ -159,7 +245,6 @@
       padding:10px 10px;
       background: rgba(0,0,0,.22);
       border-bottom:1px solid rgba(255,255,255,.08);
-      white-space:nowrap;
     }
     tbody td{
       padding:10px 10px;
@@ -170,324 +255,384 @@
     }
     tbody tr:hover td{background: rgba(255,255,255,.02)}
     tbody tr:last-child td{border-bottom:none}
-    .td-actions{white-space:nowrap; text-align:right}
     .tag{
-      display:inline-flex; padding:6px 9px; border-radius: 999px;
+      display:inline-flex;
+      padding:6px 9px;
+      border-radius: 999px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.22);
-      font-size:12px; color: rgba(255,255,255,.72);
+      font-size:12px;
+      color: rgba(255,255,255,.72);
     }
     .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
     .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
     .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
-    .kpis{display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;}
-    .kpi{
-      background: rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      padding:10px;
-      min-height:64px;
-    }
-    .kpi .l{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color: rgba(255,255,255,.62)}
-    .kpi .v{font-size:18px; font-weight:900; margin-top:6px}
-    .kpi .s{font-size:12px; color: rgba(255,255,255,.62); margin-top:2px}
+    .td-actions{white-space:nowrap; text-align:right}
     .toast{
-      position: fixed; right: 18px; bottom: 18px; max-width: 460px;
-      background: rgba(10,12,18,.82); border: 1px solid rgba(255,255,255,.12);
-      border-radius: 16px; padding: 12px 12px; box-shadow: var(--shadow);
-      backdrop-filter: blur(12px); display:none; z-index:50;
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: 460px;
+      background: rgba(10,12,18,.82);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:none;
+      z-index:50;
     }
     .toast.show{display:block}
     .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
     .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
-    /* Print (PDF export) */
-    @media print{
-      body{background:#fff !important; color:#000 !important;}
-      body:before, .sidebar, .topbar, .no-print{display:none !important;}
-      .app{padding:0; display:block;}
-      .main{max-width:none; margin:0;}
-      .card{box-shadow:none; border:1px solid #ddd; background:#fff; color:#000; backdrop-filter:none;}
-      table{border:1px solid #ccc;}
-      thead th{background:#f3f3f3; color:#000;}
-      tbody td{color:#000;}
-      .kpi{background:#fafafa; border:1px solid #ddd;}
-      .tag{border:1px solid #ccc; background:#f7f7f7; color:#000;}
+    .modal-overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:18px;
     }
-    @media (max-width: 1100px){
-      .kpis{grid-template-columns: repeat(2, 1fr);}
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(740px, 96vw);
+      border-radius: 18px;
+      background: rgba(10,12,18,.86);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding:14px;
+      backdrop-filter: blur(12px);
     }
+    .modal h4{
+      margin:0 0 10px;
+      font-size:12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.72);
+    }
+    .modal .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px}
     @media (max-width: 980px){
       .app{flex-direction:column}
       .sidebar{position:relative; width:100%; height:auto; min-width:unset}
       .main{max-width:100%}
-      .grid2{grid-template-columns:1fr}
-      .grid4{grid-template-columns:1fr 1fr}
+      .two{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr 1fr; }
     }
-    /* Firebase config modal */
-    #firebaseConfigModal{
-      position:fixed; inset:0; z-index:99999;
-      display:none; align-items:center; justify-content:center;
-      background:rgba(0,0,0,.65);
-      backdrop-filter: blur(8px);
-      padding:18px;
-    }
-    #firebaseConfigModal .cfg-card{
-      width:min(720px, 92vw);
-      background: rgba(10,12,18,.92);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
-      padding:18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.55);
-    }
-    #firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
-    #firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
-    #firebaseConfigModal .cfg-text{
-      width:100%; height:220px; resize:vertical;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:12px;
-      padding:12px;
-      color:#fff;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size:12px;
-      outline:none;
-    }
-    #firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap;}
-    #firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
-  </style>
+  
+/* Firebase config modal */
+#firebaseConfigModal{
+  position:fixed; inset:0; z-index:99999;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+}
+#firebaseConfigModal .cfg-card{
+  width:min(720px, 92vw);
+  background: rgba(10,12,18,.92);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+  padding:18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
+#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
+#firebaseConfigModal .cfg-text{
+  width:100%; height:220px; resize:vertical;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:12px;
+  color:#fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  outline:none;
+}
+#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
+
+/* Select readability */
+select, select option{background:#fff;color:#000}
+
+  /* Extra layout for KPIs / form */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
+  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+  .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
+  .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
+  .grid-sale{display:grid; grid-template-columns: 1.25fr 1fr .8fr .6fr 1.25fr; gap:10px; align-items:end}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .help{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}
+  @media (max-width: 980px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid-sale{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width: 520px){
+    .kpis{grid-template-columns:1fr}
+  }
+  
+/* combo autocomplete (like base clients) */
+.combo{ position:relative; }
+.combo-list{
+  position:absolute; left:0; right:0; top:calc(100% + 6px);
+  background: rgba(10,12,18,.96);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  display:none;
+  z-index:80;
+}
+.combo-item{
+  padding:10px 12px;
+  cursor:pointer;
+  border-top:1px solid rgba(255,255,255,.06);
+  color: rgba(255,255,255,.88);
+  font-size:12px;
+}
+.combo-item:first-child{ border-top:none; }
+.combo-item:hover, .combo-item.active{ background: rgba(255,255,255,.06); }
+.combo-item .meta{ display:block; margin-top:2px; font-size:11px; opacity:.7; }
+
+</style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">PDM ADMIN</div>
-      <nav class="nav">
-        <a href="pdm-dashboard.html">Dashboard</a>
-        <a href="clients.html">Base clients</a>
-        <a href="vehicles.html">Base véhicules</a>
-        <a href="stock.html">Stock & réservations</a>
-        <a class="active" href="compta.html">Comptabilité</a>
-      </nav>
-      <div class="spacer"></div>
-      <div class="side-actions">
-        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
-      </div>
-    </aside>
+<div class="app">
+<aside class="sidebar">
+<div class="brand">PDM ADMIN</div>
+<nav class="nav">
+<a href="dashboard.html">Dashboard</a>
+<a href="clients.html">Base clients</a>
+<a href="vehicles.html">Base véhicules</a>
+<a href="stock.html">Stock &amp; réservations</a>
+<a href="ventes.html">Ventes véhicules</a>
+<a href="partenariats.html">Partenariats</a>
+<a class="active" href="compta.html">Comptabilité</a>
+</nav>
+<div class="spacer"></div>
+<div class="side-actions">
+<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
+</div>
+</aside>
+<main class="main">
+<div class="topbar">
+<div class="chips">
+<div class="chip">Comptabilité</div>
+<div class="chip muted" id="chipUser">Chargement…</div>
+<div class="chip muted" id="chipRole">—</div>
+<div class="chip muted" id="chipEnv">Firestore • Live</div>
+</div>
+<div class="top-actions">
+<a class="btn small" href="ventes.html">Ventes</a>
+<a class="btn small" href="stock.html">Stock</a>
+<a class="btn small" href="dashboard.html">Dashboard</a>
+<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
+</div>
+</div>
 
-    <main class="main">
-      <div class="topbar">
-        <div class="chips">
-          <div class="chip">PDM ADMIN</div>
-          <div id="chipUser" class="chip muted">Chargement…</div>
-          <div id="chipEnv" class="chip muted">Firestore • Live</div>
-        </div>
-        <div class="top-actions">
-          <button id="btnPrint" class="btn small gold no-print">Exporter PDF (impression)</button>
-          <a class="btn small no-print" href="pdm-dashboard.html">Dashboard</a>
-          <button id="btnLogoutTop" class="btn small danger no-print">Déconnexion</button>
-        </div>
-      </div>
-
-      <div class="layout">
-        <section class="card">
-          <h3>Paramètres</h3>
-          <div class="sub">Deux vues : <b>Global</b> (depuis le début) et <b>Semaine</b> (à rendre aux modérateurs le dimanche).</div>
-          <div class="grid4">
-            <div>
-              <label>Période</label>
-              <select id="scope">
-                <option value="week">Semaine</option>
-                <option value="all">Global (depuis le début)</option>
-              </select>
-            </div>
-            <div>
-              <label>Début</label>
-              <input id="dateFrom" type="date"/>
-            </div>
-            <div>
-              <label>Fin</label>
-              <input id="dateTo" type="date"/>
-            </div>
-            <div>
-              <label>Trésorerie S-1 (optionnel)</label>
-              <input id="openingBalance" type="number" step="0.01" placeholder="Ex: 250000"/>
-            </div>
-          </div>
-          <div class="row-actions" style="margin-top:10px">
-            <button id="btnApply" class="btn gold no-print">Appliquer</button>
-            <button id="btnThisWeek" class="btn no-print">Cette semaine</button>
-            <button id="btnAll" class="btn no-print">Global</button>
-            <span id="rangeTag" class="pill">—</span>
-          </div>
-          <div class="sub" style="margin-top:10px">
+<div class="layout">
+<section class="card">
+<h3>Paramètres</h3>
+<div class="sub">Deux vues : <b>Global</b> (depuis le début) et <b>Semaine</b> (à rendre aux modérateurs le dimanche).</div>
+<div class="grid4">
+<div>
+<label>Période</label>
+<select id="scope">
+<option value="week">Semaine</option>
+<option value="all">Global (depuis le début)</option>
+</select>
+</div>
+<div>
+<label>Début</label>
+<input id="dateFrom" type="date"/>
+</div>
+<div>
+<label>Fin</label>
+<input id="dateTo" type="date"/>
+</div>
+<div>
+<label>Trésorerie S-1 (optionnel)</label>
+<input id="openingBalance" placeholder="Ex: 250000" step="0.01" type="number"/>
+</div>
+</div>
+<div class="row-actions" style="margin-top:10px">
+<button class="btn gold no-print" id="btnApply">Appliquer</button>
+<button class="btn no-print" id="btnThisWeek">Cette semaine</button>
+<button class="btn no-print" id="btnAll">Global</button>
+<span class="pill" id="rangeTag">—</span>
+</div>
+<div class="sub" style="margin-top:10px">
             Règle de trésorerie :<br/>
             • Mise en <b>stock</b> ou <b>réservation</b> = on compte <b>le prix d'achat</b> (dépense).<br/>
             • Vente <b>depuis le stock</b> = on compte <b>le prix de vente</b> (revenu), l'achat a déjà été compté avant.<br/>
             • Vente “<b>Vente depuis réservation</b>” = revenue, et la réservation disparaît.
           </div>
-        </section>
-
-        <section class="card">
-          <h3>Résumé</h3>
-          <div class="kpis" id="kpis">
-            <div class="kpi"><div class="l">Achats (stock + résa)</div><div class="v" id="kpiPurch">—</div><div class="s" id="kpiPurchS">—</div></div>
-            <div class="kpi"><div class="l">Ventes véhicules</div><div class="v" id="kpiSales">—</div><div class="s" id="kpiSalesS">—</div></div>
-            <div class="kpi"><div class="l">Bénéfice véhicules</div><div class="v" id="kpiProfit">—</div><div class="s">Σ (vente - achat)</div></div>
-            <div class="kpi"><div class="l">Dépenses manuelles</div><div class="v" id="kpiExp">—</div><div class="s">Bouffe, events, vélos…</div></div>
-            <div class="kpi"><div class="l">Revenus manuels</div><div class="v" id="kpiInc">—</div><div class="s">Tombola, tickets…</div></div>
-          </div>
-          <div class="grid2" style="margin-top:12px">
-            <div class="kpi">
-              <div class="l">Trésorerie S-1</div>
-              <div class="v" id="kpiOpen">—</div>
-              <div class="s">Entrée manuelle (optionnel)</div>
-            </div>
-            <div class="kpi">
-              <div class="l">Trésorerie actuelle (estimée)</div>
-              <div class="v" id="kpiClose">—</div>
-              <div class="s">S-1 + Revenus - Dépenses</div>
-            </div>
-          </div>
-          <div class="sub" style="margin-top:10px">
+</section>
+<section class="card">
+<h3>Résumé</h3>
+<div class="kpis" id="kpis">
+<div class="kpi"><div class="l">Achats (stock + résa)</div><div class="v" id="kpiPurch">—</div><div class="s" id="kpiPurchS">—</div></div>
+<div class="kpi"><div class="l">Ventes véhicules</div><div class="v" id="kpiSales">—</div><div class="s" id="kpiSalesS">—</div></div>
+<div class="kpi"><div class="l">Bénéfice véhicules</div><div class="v" id="kpiProfit">—</div><div class="s">Σ (vente - achat)</div></div>
+<div class="kpi"><div class="l">Dépenses manuelles</div><div class="v" id="kpiExp">—</div><div class="s">Bouffe, events, vélos…</div></div>
+<div class="kpi"><div class="l">Revenus manuels</div><div class="v" id="kpiInc">—</div><div class="s">Tombola, tickets…</div></div>
+</div>
+<div class="grid2" style="margin-top:12px">
+<div class="kpi">
+<div class="l">Trésorerie S-1</div>
+<div class="v" id="kpiOpen">—</div>
+<div class="s">Entrée manuelle (optionnel)</div>
+</div>
+<div class="kpi">
+<div class="l">Trésorerie actuelle (estimée)</div>
+<div class="v" id="kpiClose">—</div>
+<div class="s">S-1 + Revenus - Dépenses</div>
+</div>
+</div>
+<div class="sub" style="margin-top:10px">
             Note : Si certains champs manquent dans une transaction, la ligne est ignorée pour les calculs (mais visible dans le tableau).
           </div>
-        </section>
-
-        <div class="grid2">
-          <section class="card">
-            <h3>Ventes véhicules (transactions)</h3>
-            <div class="sub">Lecture de la collection <b>transactions</b>. Colonnes attendues : date, vehicle/brand/model, buyPrice, sellPrice, sellerName (ou sellerId).</div>
-            <div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
-              <input id="qTx" placeholder="Rechercher (client, vendeur, véhicule) …"/>
-              <select id="sortTx">
-                <option value="date_desc">Tri: Récent</option>
-                <option value="date_asc">Tri: Ancien</option>
-                <option value="seller">Tri: Vendeur (A→Z)</option>
-              </select>
-              <span id="txCount" class="pill">0</span>
-            </div>
-            <div style="overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Véhicule</th>
-                    <th>Achat</th>
-                    <th>Vente</th>
-                    <th>Vendeur</th>
-                    <th>Com. vendeur</th>
-                    <th>Com. CO PDG</th>
-                    <th>Com. PDG</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyTx"></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="card">
-            <h3>Commissions (condensé)</h3>
-            <div class="sub">Calcul auto avec % (modifiable dans le code si besoin) : vendeur 10% • CO PDG 12% • PDG 5%.</div>
-            <div style="overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Vendeur</th>
-                    <th>Total commission</th>
-                    <th>Nombre de ventes</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyCom"></tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-
-        <div class="grid2">
-          <section class="card">
-            <h3>Dépenses & revenus manuels</h3>
-            <div class="sub">Ajoute ici les dépenses/revenus non liés aux véhicules (bouffe, events, tombola, vélos…). Stocké dans <b>cashbook</b>.</div>
-            <div class="grid4">
-              <div>
-                <label>Type</label>
-                <select id="cbType">
-                  <option value="expense">Dépense</option>
-                  <option value="income">Revenu</option>
-                </select>
-              </div>
-              <div>
-                <label>Date</label>
-                <input id="cbDate" type="date"/>
-              </div>
-              <div>
-                <label>Montant</label>
-                <input id="cbAmount" type="number" step="0.01" placeholder="Ex: 5000"/>
-              </div>
-              <div>
-                <label>Raison</label>
-                <input id="cbReason" placeholder="Ex: Bouffe employés / Tombola / Vélos…"/>
-              </div>
-            </div>
-            <div class="row-actions" style="margin-top:10px">
-              <button id="btnAddCB" class="btn gold no-print">Ajouter</button>
-              <button id="btnExportCSV" class="btn no-print">Exporter CSV (période)</button>
-            </div>
-          </section>
-
-          <section class="card">
-            <h3>Liste (cashbook)</h3>
-            <div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
-              <input id="qCB" placeholder="Rechercher raison…"/>
-              <select id="sortCB">
-                <option value="date_desc">Tri: Récent</option>
-                <option value="date_asc">Tri: Ancien</option>
-                <option value="type">Tri: Type</option>
-              </select>
-              <span id="cbCount" class="pill">0</span>
-            </div>
-            <div style="overflow:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Montant</th>
-                    <th>Raison</th>
-                    <th style="text-align:right" class="no-print">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyCB"></tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-
+</section>
+<div class="grid2">
+<section class="card">
+<h3>Ventes véhicules (transactions)</h3>
+<div class="sub">Lecture de la collection <b>transactions</b>. Colonnes attendues : date, vehicle/brand/model, buyPrice, sellPrice, sellerName (ou sellerId).</div>
+<div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
+<input id="qTx" placeholder="Rechercher (client, vendeur, véhicule) …"/>
+<select id="sortTx">
+<option value="date_desc">Tri: Récent</option>
+<option value="date_asc">Tri: Ancien</option>
+<option value="seller">Tri: Vendeur (A→Z)</option>
+</select>
+<span class="pill" id="txCount">0</span>
+</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Véhicule</th>
+<th>Achat</th>
+<th>Vente</th>
+<th>Vendeur</th>
+<th>Com. vendeur</th>
+<th>Com. CO PDG</th>
+<th>Com. PDG</th>
+</tr>
+</thead>
+<tbody id="tbodyTx"></tbody>
+</table>
+</div>
+</section>
+<section class="card">
+<h3>Commissions (condensé)</h3>
+<div class="sub">Calcul auto avec % (modifiable dans le code si besoin) : vendeur 10% • CO PDG 12% • PDG 5%.</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Vendeur</th>
+<th>Total commission</th>
+<th>Nombre de ventes</th>
+</tr>
+</thead>
+<tbody id="tbodyCom"></tbody>
+</table>
+</div>
+</section>
+</div>
+<div class="grid2">
+<section class="card">
+<h3>Dépenses &amp; revenus manuels</h3>
+<div class="sub">Ajoute ici les dépenses/revenus non liés aux véhicules (bouffe, events, tombola, vélos…). Stocké dans <b>cashbook</b>.</div>
+<div class="grid4">
+<div>
+<label>Type</label>
+<select id="cbType">
+<option value="expense">Dépense</option>
+<option value="income">Revenu</option>
+</select>
+</div>
+<div>
+<label>Date</label>
+<input id="cbDate" type="date"/>
+</div>
+<div>
+<label>Montant</label>
+<input id="cbAmount" placeholder="Ex: 5000" step="0.01" type="number"/>
+</div>
+<div>
+<label>Raison</label>
+<input id="cbReason" placeholder="Ex: Bouffe employés / Tombola / Vélos…"/>
+</div>
+</div>
+<div class="row-actions" style="margin-top:10px">
+<button class="btn gold no-print" id="btnAddCB">Ajouter</button>
+<button class="btn no-print" id="btnExportCSV">Exporter CSV (période)</button>
+</div>
+</section>
+<section class="card">
+<h3>Liste (cashbook)</h3>
+<div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
+<input id="qCB" placeholder="Rechercher raison…"/>
+<select id="sortCB">
+<option value="date_desc">Tri: Récent</option>
+<option value="date_asc">Tri: Ancien</option>
+<option value="type">Tri: Type</option>
+</select>
+<span class="pill" id="cbCount">0</span>
+</div>
+<div style="overflow:auto">
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Montant</th>
+<th>Raison</th>
+<th class="no-print" style="text-align:right">Actions</th>
+</tr>
+</thead>
+<tbody id="tbodyCB"></tbody>
+</table>
+</div>
+</section>
+</div>
+</div></main>
+</div>
+<div class="toast" id="toast">
+<div class="t" id="toastTitle"></div>
+<div class="m" id="toastMsg"></div>
+</div>
+<!-- Modal -->
+<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
+<div class="modal">
+<h4 id="modalTitle">Modifier</h4>
+<div id="modalBody"></div>
+<div class="modal-actions">
+<button class="btn" id="btnModalCancel">Annuler</button>
+<button class="btn gold" id="btnModalSave">Enregistrer</button>
+</div>
+<div class="hint" id="modalHint"></div>
+</div>
+</div>
+<!-- Firebase config modal (auto) -->
+<div id="firebaseConfigModal" style="display:none">
+<div class="cfg-card">
+<div class="cfg-title">Configurer Firebase</div>
+<div class="cfg-sub">
+        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
       </div>
-    </main>
-  </div>
+<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
+<div class="cfg-actions">
+<button class="btn" id="firebaseConfigCancel">Annuler</button>
+<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
+</div>
+<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
+</div>
+</div>
 
-  <div id="toast" class="toast">
-    <div id="toastTitle" class="t"></div>
-    <div id="toastMsg" class="m"></div>
-  </div>
-
-  <!-- Firebase config modal -->
-  <div id="firebaseConfigModal">
-    <div class="cfg-card">
-      <div class="cfg-title">Configurer Firebase</div>
-      <div class="cfg-sub">
-        Colle ici ton objet <b>firebaseConfig</b> (ou le snippet complet).<br/>
-        Il sera sauvegardé en local (localStorage) sur ce navigateur.
-      </div>
-      <textarea id="firebaseConfigText" class="cfg-text" placeholder="const firebaseConfig = { apiKey: '…', authDomain: '…', projectId: '…', ... };"></textarea>
-      <div class="cfg-actions">
-        <button id="firebaseConfigCancel" class="btn">Annuler</button>
-        <button id="firebaseConfigSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="cfg-note">Astuce : tu peux récupérer ce bloc dans les paramètres du projet Firebase → SDK Web.</div>
-    </div>
-  </div>
-
-  <script type="module">
+<!-- Firebase config modal --><script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { 
@@ -1067,6 +1212,5 @@
         toast("Erreur Firestore", e.message || String(e));
       }
     });
-  </script>
-</body>
+  </script></body>
 </html>
