@@ -107,7 +107,7 @@
   showToast(`UID reconnu. Bienvenue <strong>${displayName}</strong>`);
 
   setTimeout(() => {
-    window.location.href = "./pdm-dashboard.html";
+    window.location.href = "./dashboard.html";
   }, 900);
 });
 
@@ -117,7 +117,7 @@
       msg.classList.remove("err");
       try {
         await signInWithEmailAndPassword(auth, email.value.trim(), password.value);
-        window.location.href = "./pdm-dashboard.html";
+        window.location.href = "./dashboard.html";
       } catch (e) {
         msg.textContent = "Connexion refusée. Vérifie l’identifiant et le mot de passe.";
         msg.classList.add("err");
