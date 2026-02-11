@@ -979,7 +979,9 @@ select, select option{background:#fff;color:#000}
     onAuthStateChanged(auth, (user) => {
       if(!user){ location.href = "index.html"; return; }
       me = user;
-      $("mePill").textContent = user.email || user.uid;
+      // Compat: certaines versions du layout utilisent chipUser/chipRole au lieu de mePill/rolePill.
+      const _mePill = document.getElementById("mePill") || document.getElementById("chipUser");
+      if (_mePill) _mePill.textContent = user.email || user.uid;
       if(firebaseConfig.apiKey === "REPLACE_ME"){
         showToast("Config", "⚠️ Colle ta firebaseConfig dans clients.html (REPLACE_ME). ");
         console.warn("firebaseConfig not set. Paste your real config in clients.html.");
