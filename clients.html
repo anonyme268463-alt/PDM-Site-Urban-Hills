@@ -645,9 +645,14 @@ select, select option{background:#fff;color:#000}
         .replaceAll("'","&#39;");
     }
 
-    const logoutBtn = $("logoutBtn");
-    const sbLogout = $("sbLogout");
-    logoutBtn.onclick = sbLogout.onclick = async () => { await signOut(auth); location.href = "index.html"; };
+    const logoutBtn = $("logoutBtn") || $("btnLogoutTop");
+    const sbLogout = $("sbLogout") || $("btnLogoutSide");
+    const doLogout = async () => { 
+      try { await signOut(auth); } catch(e) { console.warn(e); }
+      location.href = "index.html"; 
+    };
+    if (logoutBtn) logoutBtn.onclick = doLogout;
+    if (sbLogout) sbLogout.onclick = doLogout;
 
     // ===== Data model =====
     // Firestore: collection "clients"
