@@ -584,16 +584,24 @@ select, select option{background:#fff;color:#000}
     return x.toLocaleString("en-US");
   };
 
-  // ========= Firebase init (auto via localStorage) =========
-  const cfgStr = localStorage.getItem("PDM_FIREBASE_CONFIG");
-  if (!cfgStr) {
-    // fallback: show modal (like other pages)
-    const m = $("firebaseConfigModal");
-    if (m) m.style.display = "block";
-    throw new Error("Missing PDM_FIREBASE_CONFIG in localStorage");
+  // ========= Firebase init (robuste) =========
+  let firebaseConfig = null;
+  const _rawCfg = localStorage.getItem("PDM_FIREBASE_CONFIG") || localStorage.getItem("firebaseConfig") || "";
+  try { firebaseConfig = JSON.parse(_rawCfg); } catch (e) {
+    // parfois l’utilisateur a collé "const firebaseConfig = {...}" ou un objet non JSON
+    const m = (_rawCfg || "").match(/\{[\s\S]*\}/);
+    if (m) {
+      const candidate = m[0]
+        .replace(/(\w+)\s*:/g, '"$1":')
+        .replace(/'/g, '"');
+      try { firebaseConfig = JSON.parse(candidate); } catch (_) {}
+    }
   }
-  const firebaseConfig = JSON.parse(cfgStr);
-
+  if (!firebaseConfig || !firebaseConfig.apiKey) {
+    const modal = $("firebaseConfigModal") || $("firebaseConfigOfficial");
+    if (modal) modal.style.display = "block";
+    throw new Error("Firebase config manquante / invalide (localStorage PDM_FIREBASE_CONFIG).");
+  }
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
