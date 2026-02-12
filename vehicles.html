@@ -1,12 +1,11 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>PDM Admin — Partenariats</title>
-<link href="favicon.png" rel="icon" type="image/png"/>
-<style>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PDM Admin — Base véhicules</title>
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <style>
     :root{
       --bg:#07080c;
       --card:rgba(10,12,18,.62);
@@ -397,473 +396,453 @@ select, select option{background:#fff;color:#000}
 </style>
 </head>
 <body>
-<div class="app">
-<aside class="sidebar">
-<div class="brand">PDM ADMIN</div>
-<nav class="nav">
-<a href="dashboard.html">Dashboard</a>
-<a href="clients.html">Base clients</a>
-<a class="active" href="vehicles.html">Base véhicules</a>
-<a href="stock.html">Stock &amp; réservations</a>
-<a href="ventes.html">Ventes véhicules</a>
-<a href="partenariats.html">Partenariats</a>
-<a href="compta.html">Comptabilité</a>
-</nav>
-<div class="spacer"></div>
-<div class="side-actions">
-<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
-</div>
-</aside>
-<main class="main">
-<div class="topbar">
-<div class="chips">
-<div class="chip">Base véhicules</div>
-<div class="chip muted" id="chipUser">Chargement…</div>
-<div class="chip muted" id="chipRole">—</div>
-<div class="chip muted" id="chipEnv">Firestore • Live</div>
-</div>
-<div class="top-actions">
-<a class="btn small" href="ventes.html">Ventes</a>
-<a class="btn small" href="stock.html">Stock</a>
-<a class="btn small" href="dashboard.html">Dashboard</a>
-<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
-</div>
-</div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">PDM ADMIN</div>
+      <nav class="nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="clients.html">Base clients</a>
+        <a href="vehicles.html">Base véhicules</a>
+        <a href="stock.html">Stock & réservations</a>
+        <a href="ventes.html">Ventes véhicules</a>
+        <a class="active" href="partenariats.html">Partenariats</a>
+        <a href="compta.html">Comptabilité</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="side-actions">
+        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
+      </div>
+    </aside>
 
+    <main class="main">
+      <div class="topbar">
+        <div class="chips">
+          <div class="chip">BASE VÉHICULES</div>
+          <div id="chipUser" class="chip muted">Chargement…</div>
+          <div id="chipRole" class="chip muted">—</div>
+          <div id="chipEnv" class="chip muted">Firestore • Live</div>
+        </div>
+        <div class="top-actions">
+          <a class="btn small" href="ventes.html">Ventes</a>
+          <a class="btn small" href="stock.html">Stock</a>
+          <a class="btn small" href="dashboard.html">Dashboard</a>
+          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <section class="card">
+          <h3>Gestion de la base véhicules</h3>
+          <div class="sub">
+            Ajoute / modifie les véhicules et leurs prix (achat/vente). Utilisé ensuite dans <b>Stock</b> & <b>Ventes</b>.
+          </div>
+        </section>
+
+        <div class="two">
+          <section class="card">
+            <h3>Ajouter un véhicule</h3>
+
+            <div class="grid g2">
+              <div class="field">
+                <label>Nom du véhicule</label>
+                <input id="inName" placeholder="Ex: Sultan RS" />
+              </div>
+              <div class="field">
+                <label>Catégorie / Classe</label>
+                <input id="inClass" placeholder="Ex: Sport / Super / Moto…" />
+              </div>
+
+              <div class="field">
+                <label>Prix d'achat ($)</label>
+                <input id="inBuy" type="number" min="0" placeholder="Ex: 250000" />
+              </div>
+              <div class="field">
+                <label>Prix de vente ($)</label>
+                <input id="inSell" type="number" min="0" placeholder="Ex: 320000" />
+              </div>
+
+              <div class="field full">
+                <label>Notes (optionnel)</label>
+                <input id="inNotes" placeholder="Ex: prix promo, conditions, etc." />
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="btnAdd" class="btn gold">Ajouter</button>
+              <button id="btnReset" class="btn">Réinitialiser</button>
+            </div>
+
+            <div class="hint">
+              Astuce: tu peux laisser la classe/notes vides, mais le nom est obligatoire.
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="head-row">
+              <h3>Véhicules</h3>
+              <div class="pill" id="countPill">0 véhicule</div>
+            </div>
+
+            <div class="tools">
+              <div class="left">
+                <input id="qSearch" placeholder="Rechercher (nom / classe)…" />
+              </div>
+              <div class="right">
+                <select id="selSort">
+                  <option value="name">Nom (A→Z)</option>
+                  <option value="buyPrice">Prix achat</option>
+                  <option value="sellPrice">Prix vente</option>
+                </select>
+                <button id="btnRefresh" class="btn small">Rafraîchir</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Classe</th>
+                    <th class="num">Achat</th>
+                    <th class="num">Vente</th>
+                    <th>Notes</th>
+                    <th class="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyVehicles">
+                  <tr><td colspan="6" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="hint">
+              Staff peut créer/modifier. Suppression réservée à l’admin.
+            </div>
+          </section>
+        </div>
+      </div>
 </main>
-</div>
-<div class="toast" id="toast">
-<div class="t" id="toastTitle"></div>
-<div class="m" id="toastMsg"></div>
-</div>
-<!-- Modal -->
-<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
-<div class="modal">
-<h4 id="modalTitle">Modifier</h4>
-<div id="modalBody"></div>
-<div class="modal-actions">
-<button class="btn" id="btnModalCancel">Annuler</button>
-<button class="btn gold" id="btnModalSave">Enregistrer</button>
-</div>
-<div class="hint" id="modalHint"></div>
-</div>
-</div>
-<!-- Firebase config modal (auto) -->
-<div id="firebaseConfigModal" style="display:none">
-<div class="cfg-card">
-<div class="cfg-title">Configurer Firebase</div>
-<div class="cfg-sub">
+  </div>
+
+  <div id="toast" class="toast">
+    <div id="toastTitle" class="t"></div>
+    <div id="toastMsg" class="m"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h4 id="modalTitle">Modifier</h4>
+      <div id="modalBody"></div>
+      <div class="modal-actions">
+        <button id="btnModalCancel" class="btn">Annuler</button>
+        <button id="btnModalSave" class="btn gold">Enregistrer</button>
+      </div>
+      <div class="hint" id="modalHint"></div>
+    </div>
+  </div>
+
+  <!-- Firebase config modal (auto) -->
+  <div id="firebaseConfigModal" style="display:none">
+    <div class="cfg-card">
+      <div class="cfg-title">Configurer Firebase</div>
+      <div class="cfg-sub">
         Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
       </div>
-<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
-<div class="cfg-actions">
-<button class="btn" id="firebaseConfigCancel">Annuler</button>
-<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
-</div>
-<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
-</div>
-</div>
+      <textarea id="firebaseConfigText" class="cfg-text" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
+      <div class="cfg-actions">
+        <button id="firebaseConfigCancel" class="btn">Annuler</button>
+        <button id="firebaseConfigSave" class="btn gold">Sauvegarder</button>
+      </div>
+      <div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
+    </div>
+  </div>
 
-<div class="wrap">
-<div class="topbar">
-<div class="brand">
-<div class="title">PDM Admin</div>
-<div class="pill" id="mePill">Chargement…</div>
-</div>
-<div class="right">
-<div class="pill" id="envBadge">Firestore • Live</div>
-<button class="btn secondary" id="toDashboard">Dashboard</button>
-<button class="btn danger" id="logout">Déconnexion</button>
-</div>
-</div>
-<div class="grid">
-<div class="card">
-<h2>Base véhicules</h2>
-<div class="row">
-<div class="field">
-<label>Recherche</label>
-<input id="q" placeholder="Marque, modèle, type…"/>
-</div>
-<div class="field" style="max-width:220px">
-<label>Type</label>
-<select id="filterType">
-<option value="all">Tous</option>
-</select>
-</div>
-<div class="field" style="max-width:240px">
-<label>Tri</label>
-<select id="sortBy">
-<option value="type_asc">Type (A→Z)</option>
-<option value="type_desc">Type (Z→A)</option>
-<option value="price_asc">Prix de vente (↑)</option>
-<option value="price_desc">Prix de vente (↓)</option>
-<option value="brand_asc">Marque (A→Z)</option>
-<option value="brand_desc">Marque (Z→A)</option>
-</select>
-</div>
-<div class="field" style="max-width:200px">
-<label> </label>
-<button class="btn secondary" id="reset">Réinitialiser</button>
-</div>
-</div>
-<div class="hint" id="countInfo">—</div>
-<div style="overflow:auto">
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Marque</th>
-<th>Modèle</th>
-<th>Prix d'achat</th>
-<th>Prix de vente</th>
-<th class="actions">Actions</th>
-</tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
-</div>
-</div>
-<div class="card">
-<h2>Ajouter un véhicule</h2>
-<div class="row">
-<div class="field">
-<label>Type de véhicule</label>
-<input id="vType" placeholder="Ex: Compact, Sedans, SUV…"/>
-</div>
-<div class="field">
-<label>Marque</label>
-<input id="vBrand" placeholder="Ex: Benefactor, Dinka…"/>
-</div>
-<div class="field">
-<label>Modèle</label>
-<input id="vModel" placeholder="Ex: Panto, Blista…"/>
-</div>
-</div>
-<div class="row">
-<div class="field">
-<label>Prix de vente ($)</label>
-<input id="vSell" min="0" placeholder="Ex: 32000" step="1" type="number"/>
-</div>
-<div class="field">
-<label>Prix d'achat ($)</label>
-<input id="vBuy" min="0" placeholder="Auto: vente / 2" step="1" type="number"/>
-</div>
-<div class="field" style="max-width:240px">
-<label> </label>
-<button class="btn primary" id="add">Ajouter</button>
-</div>
-</div>
-<div class="hint">Règle: <span class="chip">Prix d'achat = Prix de vente / 2</span> (auto si vide).</div>
-</div>
-</div>
-</div><div aria-modal="true" class="modalOverlay" id="editOverlay" role="dialog">
-<div class="modal">
-<div class="modalHead">
-<h3>Modifier véhicule</h3>
-<button class="btn secondary" id="closeEdit">Fermer</button>
-</div>
-<div class="row">
-<div class="field">
-<label>Type</label>
-<input id="eType"/>
-</div>
-<div class="field">
-<label>Marque</label>
-<input id="eBrand"/>
-</div>
-<div class="field">
-<label>Modèle</label>
-<input id="eModel"/>
-</div>
-</div>
-<div class="row">
-<div class="field">
-<label>Prix de vente ($)</label>
-<input id="eSell" min="0" step="1" type="number"/>
-</div>
-<div class="field">
-<label>Prix d'achat ($)</label>
-<input id="eBuy" min="0" step="1" type="number"/>
-</div>
-<div class="field" style="max-width:260px">
-<label> </label>
-<button class="btn primary" id="saveEdit">Enregistrer</button>
-</div>
-</div>
-<div class="hint muted">Astuce: si tu laisses le prix d'achat vide, on recalculera automatiquement vente / 2.</div>
-</div>
-</div><script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, doc, updateDoc, deleteDoc,
-      onSnapshot, query
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc,
+    collection, addDoc, updateDoc, deleteDoc,
+    getDocs, query, orderBy, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ✅ Colle ici EXACTEMENT la même config que dans pdm-dashboard.html
-    const firebaseConfig = {
-  apiKey: "AIzaSyAI3qBm_8zltFCTyPyLFNLcY-aU9GI1itM",
-  authDomain: "pdm-urban-hills.firebaseapp.com",
-  projectId: "pdm-urban-hills",
-  storageBucket: "pdm-urban-hills.firebasestorage.app",
-  messagingSenderId: "426355558661",
-  appId: "1:426355558661:web:8364782043dd5ad2270f6c",
-  measurementId: "G-RGM2DWVFLT"
-};
+  // ========= Helpers UI =========
+  const $ = (id) => document.getElementById(id);
+  const toast = (msg, type="info") => {
+    const el = $("toast");
+    if (!el) return alert(msg);
+    el.textContent = msg;
+    el.className = "toast show " + type;
+    clearTimeout(window.__toastT);
+    window.__toastT = setTimeout(()=>{ el.className = "toast"; }, 2400);
+  };
 
-    const $ = (id) => document.getElementById(id);
-    const toastEl = $("toast");
-    const toastTitle = $("toastTitle");
-    const toastMsg = $("toastMsg");
-    let toastT = null;
+  const fmtMoney = (n) => {
+    const x = Number(n || 0);
+    return x.toLocaleString("en-US");
+  };
 
-    function showToast(title, msg){
-      toastTitle.textContent = title;
-      toastMsg.textContent = msg;
-      toastEl.style.display = "block";
-      clearTimeout(toastT);
-      toastT = setTimeout(() => (toastEl.style.display="none"), 2600);
-    }
+  // ========= Firebase init (auto via localStorage) =========
+  const cfgStr = localStorage.getItem("PDM_FIREBASE_CONFIG");
+  if (!cfgStr) {
+    // fallback: show modal (like other pages)
+    const m = $("firebaseConfigModal");
+    if (m) m.style.display = "block";
+    throw new Error("Missing PDM_FIREBASE_CONFIG in localStorage");
+  }
+  const firebaseConfig = JSON.parse(cfgStr);
 
-    const money = (n) => {
-      const v = Number(n);
-      if(!Number.isFinite(v)) return "—";
-      return new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 }).format(v);
-    };
-    const norm = (s) => (s ?? "").toString().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"").trim();
-    const escapeHtml = (s) => (s ?? "").toString()
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  // ========= Auth / role =========
+  let currentUser = null;
+  let currentRole = "—";
+  const isAdmin = () => currentRole === "admin";
+  const isStaff = () => currentRole === "admin" || currentRole === "staff";
 
-    let me = null;
-    let allVehicles = [];
-    let filtered = [];
+  async function loadRole(u){
+    const snap = await getDoc(doc(db, "users", u.uid));
+    const r = snap.exists() ? (snap.data().role || "staff") : "staff";
+    currentRole = r;
+    $("chipUser").textContent = (u.email || "Connecté");
+    $("chipRole").textContent = "Rôle • " + r;
+  }
 
-    const mePill = $("mePill");
-    $("toDashboard").addEventListener("click", () => window.location.href = "pdm-dashboard.html");
-    $("logout").addEventListener("click", async () => { await signOut(auth); window.location.href = "index.html"; });
+  // ========= Modal =========
+  function openModal(title, bodyHtml, actionsHtml){
+    $("modalTitle").textContent = title;
+    $("modalBody").innerHTML = bodyHtml;
+    $("modalActions").innerHTML = actionsHtml || `<button class="btn" id="mClose">Fermer</button>`;
+    $("modalOverlay").classList.add("show");
+    const c = $("mClose");
+    if (c) c.onclick = closeModal;
+  }
+  function closeModal(){
+    $("modalOverlay").classList.remove("show");
+    $("modalBody").innerHTML = "";
+    $("modalActions").innerHTML = "";
+  }
+  $("modalOverlay")?.addEventListener("click", (e)=>{ if(e.target.id==="modalOverlay") closeModal(); });
 
-    const qEl = $("q");
-    const filterType = $("filterType");
-    const sortBy = $("sortBy");
-    const rowsBody = $("rows");
-    const countInfo = $("countInfo");
+  // ========= Vehicles logic =========
+  let VEH = []; // {id, ...data}
+  const tbody = $("tbodyVehicles");
 
-    const vType = $("vType");
-    const vBrand = $("vBrand");
-    const vModel = $("vModel");
-    const vSell = $("vSell");
-    const vBuy = $("vBuy");
-    const addBtn = $("add");
+  function getSortField(){
+    const v = $("selSort").value;
+    if (v === "buyPrice") return ["buyPrice","desc"];
+    if (v === "sellPrice") return ["sellPrice","desc"];
+    return ["name","asc"];
+  }
 
-    const editOverlay = $("editOverlay");
-    $("closeEdit").addEventListener("click", () => { editOverlay.style.display="none"; editingId=null; });
-    editOverlay.addEventListener("click", (e) => { if(e.target===editOverlay){ editOverlay.style.display="none"; editingId=null; } });
+  function rowHtml(v){
+    const buy = v.buyPrice ?? 0;
+    const sell = v.sellPrice ?? 0;
+    const delBtn = isAdmin()
+      ? `<button class="btn small danger" data-act="del" data-id="${v.id}">Suppr.</button>`
+      : `<button class="btn small danger" disabled title="Admin uniquement">Suppr.</button>`;
+    return `
+      <tr>
+        <td><div class="strong">${escapeHtml(v.name || "—")}</div></td>
+        <td>${escapeHtml(v.class || "—")}</td>
+        <td class="num">$${fmtMoney(buy)}</td>
+        <td class="num">$${fmtMoney(sell)}</td>
+        <td>${escapeHtml(v.notes || "")}</td>
+        <td class="actions-col">
+          <button class="btn small" data-act="edit" data-id="${v.id}">Modifier</button>
+          ${delBtn}
+        </td>
+      </tr>
+    `;
+  }
 
-    const eType = $("eType"), eBrand = $("eBrand"), eModel = $("eModel"), eSell = $("eSell"), eBuy = $("eBuy");
-    const saveEdit = $("saveEdit");
-    let editingId = null;
+  function escapeHtml(s){
+    return String(s ?? "").replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+  }
 
-    function autoCalcBuyIfEmpty(sellInput, buyInput){
-      const sell = Number(sellInput.value);
-      if(!buyInput.value && Number.isFinite(sell) && sell > 0){
-        buyInput.value = String(Math.round(sell / 2));
-      }
-    }
-    vSell.addEventListener("input", () => autoCalcBuyIfEmpty(vSell, vBuy));
-    eSell.addEventListener("input", () => autoCalcBuyIfEmpty(eSell, eBuy));
+  function render(){
+    const q = ($("qSearch").value || "").trim().toLowerCase();
+    const filtered = VEH.filter(v=>{
+      if (!q) return true;
+      return (v.name||"").toLowerCase().includes(q) || (v.class||"").toLowerCase().includes(q);
+    });
 
-    function rebuildTypeFilterOptions(){
-      const types = Array.from(new Set(allVehicles.map(v => (v.type ?? "").toString().trim()).filter(Boolean)));
-      types.sort((a,b)=>a.localeCompare(b));
-      const current = filterType.value || "all";
-      filterType.innerHTML = `<option value="all">Tous</option>` + types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
-      if([ "all", ...types ].includes(current)) filterType.value = current;
-    }
+    $("countPill").textContent = `${filtered.length} véhicule${filtered.length>1?"s":""}`;
+    tbody.innerHTML = filtered.length ? filtered.map(rowHtml).join("") :
+      `<tr><td colspan="6" class="muted">Aucun résultat.</td></tr>`;
+  }
 
-    function applyFilters(){
-      const q = norm(qEl.value);
-      const t = filterType.value;
-      const so = sortBy.value;
-
-      filtered = allVehicles.filter(v => {
-        if(t !== "all" && (v.type ?? "") !== t) return false;
-        if(q){
-          const blob = norm(`${v.type} ${v.brand} ${v.model}`);
-          if(!blob.includes(q)) return false;
-        }
-        return true;
-      });
-
-      const byType = (a,b) => (a.type||"").localeCompare(b.type||"");
-      const byBrand = (a,b) => (a.brand||"").localeCompare(b.brand||"");
-      const byPrice = (a,b) => (Number(a.sellPrice||0) - Number(b.sellPrice||0));
-
-      switch(so){
-        case "type_desc": filtered.sort((a,b)=>-byType(a,b)); break;
-        case "price_asc": filtered.sort(byPrice); break;
-        case "price_desc": filtered.sort((a,b)=>-byPrice(a,b)); break;
-        case "brand_asc": filtered.sort(byBrand); break;
-        case "brand_desc": filtered.sort((a,b)=>-byBrand(a,b)); break;
-        default: filtered.sort(byType);
-      }
-
+  async function loadVehicles(){
+    try{
+      tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement…</td></tr>`;
+      const [field, dir] = getSortField();
+      const snap = await getDocs(query(collection(db,"vehicles"), orderBy(field, dir)));
+      VEH = snap.docs.map(d=>({ id:d.id, ...d.data() }));
       render();
+    }catch(e){
+      console.error(e);
+      tbody.innerHTML = `<tr><td colspan="6" class="muted">Erreur de chargement.</td></tr>`;
+      toast("Impossible de charger les véhicules (permissions ?)", "err");
     }
+  }
 
-    function render(){
-      countInfo.textContent = `${filtered.length} véhicule(s)`;
-      rowsBody.innerHTML = filtered.map(v => `
-        <tr>
-          <td><span class="chip">${escapeHtml(v.type || "—")}</span></td>
-          <td>${escapeHtml(v.brand || "—")}</td>
-          <td>${escapeHtml(v.model || "—")}</td>
-          <td>${money(v.buyPrice)}</td>
-          <td>${money(v.sellPrice)}</td>
-          <td class="actions">
-            <button class="btn secondary" data-act="edit" data-id="${v.id}">Modifier</button>
-            <button class="btn danger" data-act="del" data-id="${v.id}">Supprimer</button>
-          </td>
-        </tr>
-      `).join("") || `<tr><td colspan="6" class="muted">Aucun véhicule.</td></tr>`;
-    }
+  function resetForm(){
+    $("inName").value = "";
+    $("inClass").value = "";
+    $("inBuy").value = "";
+    $("inSell").value = "";
+    $("inNotes").value = "";
+  }
 
-    rowsBody.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-act]");
-      if(!btn) return;
-      const act = btn.dataset.act;
-      const id = btn.dataset.id;
-      const v = allVehicles.find(x => x.id === id);
-      if(!v) return;
+  $("btnReset").onclick = resetForm;
 
-      if(act === "edit"){
-        editingId = v.id;
-        eType.value = v.type || "";
-        eBrand.value = v.brand || "";
-        eModel.value = v.model || "";
-        eSell.value = v.sellPrice ?? "";
-        eBuy.value = v.buyPrice ?? "";
-        editOverlay.style.display = "flex";
-      }else if(act === "del"){
-        if(!confirm("Supprimer ce véhicule ?")) return;
-        try{
-          await deleteDoc(doc(db, "vehicles", id));
-          showToast("Véhicule", "Supprimé.");
-        }catch(err){
-          console.error(err);
-          showToast("Erreur", err?.message || "Suppression impossible.");
-        }
-      }
-    });
+  $("btnAdd").onclick = async () => {
+    if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
 
-    $("reset").addEventListener("click", () => {
-      qEl.value = "";
-      filterType.value = "all";
-      sortBy.value = "type_asc";
-      applyFilters();
-    });
-    qEl.addEventListener("input", applyFilters);
-    filterType.addEventListener("change", applyFilters);
-    sortBy.addEventListener("change", applyFilters);
+    const name = $("inName").value.trim();
+    const cls = $("inClass").value.trim();
+    const buy = Number($("inBuy").value || 0);
+    const sell = Number($("inSell").value || 0);
+    const notes = $("inNotes").value.trim();
 
-    addBtn.addEventListener("click", async () => {
-      const type = vType.value.trim();
-      const brand = vBrand.value.trim();
-      const model = vModel.value.trim();
-      const sell = Number(vSell.value);
-      let buy = vBuy.value ? Number(vBuy.value) : NaN;
+    if (!name) return toast("Nom du véhicule requis.", "err");
 
-      if(!type || !brand || !model){
-        showToast("Validation", "Type, Marque et Modèle sont obligatoires.");
-        return;
-      }
-      if(!Number.isFinite(sell) || sell <= 0){
-        showToast("Validation", "Prix de vente invalide.");
-        return;
-      }
-      if(!Number.isFinite(buy) || buy <= 0){
-        buy = Math.round(sell / 2);
-      }
-
-      try{
-        await addDoc(collection(db, "vehicles"), {
-          type, brand, model,
-          sellPrice: Math.round(sell),
-          buyPrice: Math.round(buy),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: me?.uid || null
-        });
-        vType.value=""; vBrand.value=""; vModel.value=""; vSell.value=""; vBuy.value="";
-        showToast("Véhicule", "Ajouté.");
-      }catch(err){
-        console.error(err);
-        showToast("Erreur", err?.message || "Ajout impossible.");
-      }
-    });
-
-    saveEdit.addEventListener("click", async () => {
-      if(!editingId) return;
-      const type = eType.value.trim();
-      const brand = eBrand.value.trim();
-      const model = eModel.value.trim();
-      const sell = Number(eSell.value);
-      let buy = eBuy.value ? Number(eBuy.value) : NaN;
-
-      if(!type || !brand || !model){
-        showToast("Validation", "Type, Marque et Modèle sont obligatoires.");
-        return;
-      }
-      if(!Number.isFinite(sell) || sell <= 0){
-        showToast("Validation", "Prix de vente invalide.");
-        return;
-      }
-      if(!Number.isFinite(buy) || buy <= 0){
-        buy = Math.round(sell / 2);
-      }
-
-      try{
-        await updateDoc(doc(db, "vehicles", editingId), {
-          type, brand, model,
-          sellPrice: Math.round(sell),
-          buyPrice: Math.round(buy),
-          updatedAt: new Date()
-        });
-        showToast("Véhicule", "Modifié.");
-        editOverlay.style.display="none";
-        editingId=null;
-      }catch(err){
-        console.error(err);
-        showToast("Erreur", err?.message || "Modification impossible.");
-      }
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if(!user){
-        window.location.href = "index.html";
-        return;
-      }
-      me = { uid: user.uid, email: user.email || "" };
-      mePill.textContent = me.email ? `Connecté: ${me.email}` : "Connecté";
-
-      const qVehicles = query(collection(db, "vehicles"));
-      onSnapshot(qVehicles, (snap) => {
-        allVehicles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        rebuildTypeFilterOptions();
-        applyFilters();
-      }, (err) => {
-        console.error(err);
-        showToast("Firestore", err?.message || "Erreur de lecture (vehicles).");
+    try{
+      await addDoc(collection(db,"vehicles"), {
+        name,
+        class: cls || "",
+        buyPrice: buy,
+        sellPrice: sell,
+        notes: notes || "",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
-    });
-
-    if(firebaseConfig.apiKey === "REPLACE_ME"){
-      showToast("Config", "⚠️ Colle ta firebaseConfig dans vehicles.html (REPLACE_ME).");
-      console.warn("firebaseConfig not set. Paste your real config in vehicles.html.");
+      toast("Véhicule ajouté.", "ok");
+      resetForm();
+      await loadVehicles();
+    }catch(e){
+      console.error(e);
+      toast("Erreur lors de l'ajout (permissions ?)", "err");
     }
-  </script></body>
+  };
+
+  $("btnRefresh").onclick = loadVehicles;
+  $("qSearch").addEventListener("input", render);
+  $("selSort").addEventListener("change", loadVehicles);
+
+  tbody.addEventListener("click", async (e)=>{
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    const act = btn.getAttribute("data-act");
+    const v = VEH.find(x=>x.id===id);
+    if (!v) return;
+
+    if (act === "edit"){
+      if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
+
+      openModal(
+        "Modifier le véhicule",
+        `
+          <div class="grid g2">
+            <div class="field">
+              <label>Nom</label>
+              <input id="mName" value="${escapeHtml(v.name||"")}" />
+            </div>
+            <div class="field">
+              <label>Classe</label>
+              <input id="mClass" value="${escapeHtml(v.class||"")}" />
+            </div>
+            <div class="field">
+              <label>Prix d'achat ($)</label>
+              <input id="mBuy" type="number" min="0" value="${Number(v.buyPrice||0)}" />
+            </div>
+            <div class="field">
+              <label>Prix de vente ($)</label>
+              <input id="mSell" type="number" min="0" value="${Number(v.sellPrice||0)}" />
+            </div>
+            <div class="field full">
+              <label>Notes</label>
+              <input id="mNotes" value="${escapeHtml(v.notes||"")}" />
+            </div>
+          </div>
+        `,
+        `
+          <button class="btn gold" id="mSave">Enregistrer</button>
+          <button class="btn" id="mClose">Annuler</button>
+        `
+      );
+
+      $("mClose").onclick = closeModal;
+      $("mSave").onclick = async ()=>{
+        const payload = {
+          name: $("mName").value.trim(),
+          class: $("mClass").value.trim(),
+          buyPrice: Number($("mBuy").value || 0),
+          sellPrice: Number($("mSell").value || 0),
+          notes: $("mNotes").value.trim(),
+          updatedAt: serverTimestamp()
+        };
+        if (!payload.name) return toast("Nom requis.", "err");
+        try{
+          await updateDoc(doc(db,"vehicles",id), payload);
+          toast("Véhicule modifié.", "ok");
+          closeModal();
+          await loadVehicles();
+        }catch(e){
+          console.error(e);
+          toast("Impossible de modifier (permissions ?)", "err");
+        }
+      };
+    }
+
+    if (act === "del"){
+      if (!isAdmin()) return toast("Suppression : admin uniquement.", "err");
+      openModal(
+        "Supprimer le véhicule",
+        `<div class="sub">Confirmer la suppression de <b>${escapeHtml(v.name)}</b> ?</div>`,
+        `
+          <button class="btn danger" id="mDoDel">Supprimer</button>
+          <button class="btn" id="mClose">Annuler</button>
+        `
+      );
+      $("mClose").onclick = closeModal;
+      $("mDoDel").onclick = async ()=>{
+        try{
+          await deleteDoc(doc(db,"vehicles",id));
+          toast("Véhicule supprimé.", "ok");
+          closeModal();
+          await loadVehicles();
+        }catch(e){
+          console.error(e);
+          toast("Impossible de supprimer (permissions ?)", "err");
+        }
+      };
+    }
+  });
+
+  // ========= Logout =========
+  $("btnLogoutTop").onclick = async () => {
+    try{ await signOut(auth); }catch(_){}
+    location.href = "index.html";
+  };
+
+  // ========= Boot =========
+  onAuthStateChanged(auth, async (u)=>{
+    if(!u){
+      // If your app uses an auth gate page, redirect
+      location.href = "index.html";
+      return;
+    }
+    currentUser = u;
+    await loadRole(u);
+    await loadVehicles();
+  });
+</script>
+
+</body>
 </html>
