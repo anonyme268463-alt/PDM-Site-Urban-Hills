@@ -561,6 +561,10 @@ select, select option{background:#fff;color:#000}
   
 
 <script>
+  function $(id) {
+  return document.getElementById(id);
+}
+
 (function(){
   const modal = document.getElementById("firebaseConfigModal");
   const ta = document.getElementById("firebaseConfigText");
