@@ -583,7 +583,22 @@ select, select option{background:#fff;color:#000}
   }
 
   // Parse JSON OR JS object literal (tolerant)
-  function safeParseFirebaseConfig(raw) {
+  
+function parseFirebaseConfig(raw) {
+  if (!raw) return null;
+  const t = raw.trim();
+  // If already valid JSON
+  try { if (t.startsWith("{")) return JSON.parse(t); } catch(e) {}
+  // Extract object from "const firebaseConfig = {...};" or similar
+  const s = t.indexOf("{");
+  const e = t.lastIndexOf("}");
+  if (s === -1 || e === -1 || e <= s) return null;
+  const objText = t.slice(s, e + 1);
+  try { return JSON.parse(objText); } catch(e1) {}
+  try { return Function("return (" + objText + ")")(); } catch(e2) {}
+  return null;
+}
+function safeParseFirebaseConfig(raw) {
     const s = (raw || "").trim();
     if (!s) throw new Error("Config vide.");
 
@@ -639,7 +654,7 @@ select, select option{background:#fff;color:#000}
       btnSave.addEventListener("click", () => {
         try {
           const cfg = safeParseFirebaseConfig(ta.value);
-          localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+          localStorage.setItem(LS_KEY, ta.value.trim());
           closeFirebaseConfigModal();
           location.reload();
         } catch (e) {
@@ -652,8 +667,7 @@ select, select option{background:#fff;color:#000}
 
   const firebaseConfig = getStoredConfig();
   if (!firebaseConfig) {
-    // Show modal and stop init
-    openFirebaseConfigModal("");
+    openFirebaseConfigModal();
     throw new Error("Firebase config manquante.");
   }
 
