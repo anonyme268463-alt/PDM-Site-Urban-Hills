@@ -559,6 +559,82 @@ select, select option{background:#fff;color:#000}
   </div>
 
   
+
+<script>
+(function(){
+  const modal = document.getElementById("firebaseConfigModal");
+  const ta = document.getElementById("firebaseConfigText");
+  const btnSave = document.getElementById("firebaseConfigSave");
+  const btnCancel = document.getElementById("firebaseConfigCancel");
+
+  if (!modal || !ta || !btnSave || !btnCancel) return;
+
+  function closeModal(){
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden","true");
+  }
+  function openModal(){
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden","false");
+    setTimeout(()=>ta.focus(), 0);
+  }
+
+  function extractObjectLiteral(txt){
+    // Accept plain JSON or "const firebaseConfig = {...};"
+    const trimmed = (txt||"").trim();
+    if (!trimmed) throw new Error("Config vide");
+    // If it looks like JSON object already
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
+
+    // Find first { and last } and take that slice
+    const first = trimmed.indexOf("{");
+    const last = trimmed.lastIndexOf("}");
+    if (first === -1 || last === -1 || last <= first) throw new Error("Impossible de trouver un objet JSON");
+    return trimmed.slice(first, last+1);
+  }
+
+  function safeParse(txt){
+    const objText = extractObjectLiteral(txt);
+    try {
+      return JSON.parse(objText);
+    } catch (e){
+      // Common fix: replace single quotes with double quotes (best-effort)
+      try {
+        const normalized = objText.replace(/'/g, '"');
+        return JSON.parse(normalized);
+      } catch (_) {
+        throw e;
+      }
+    }
+  }
+
+  btnSave.addEventListener("click", (ev)=>{
+    ev.preventDefault();
+    try{
+      const cfg = safeParse(ta.value);
+      localStorage.setItem("PDM_FIREBASE_CONFIG", JSON.stringify(cfg));
+      closeModal();
+      // Reload so the module script can boot with the saved config
+      location.reload();
+    }catch(err){
+      alert("Config invalide : " + (err && err.message ? err.message : err));
+    }
+  });
+
+  btnCancel.addEventListener("click", (ev)=>{
+    ev.preventDefault();
+    closeModal();
+  });
+
+  // If config already exists, keep modal closed; otherwise it should be shown by CSS/HTML
+  try{
+    const existing = localStorage.getItem("PDM_FIREBASE_CONFIG");
+    if (existing) closeModal();
+    else openModal();
+  }catch(_){}
+})();
+</script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
