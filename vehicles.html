@@ -1,13 +1,22 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>PDM Admin — Base véhicules</title>
-  <link rel="icon" type="image/png" href="favicon.png"/>
-  <style>
-    :root{
-      --bg:#07080c;
+< !doctype html >
+   <
+   html lang = "fr" >
+   <
+   head >
+   <
+   meta charset = "utf-8" / >
+   <
+   meta name = "viewport"
+content = "width=device-width,initial-scale=1" / >
+   <
+   title > PDM Admin— Base véhicules < /title> <
+   link rel = "icon"
+type = "image/png"
+href = "favicon.png" / >
+   <
+   style >
+   : root {
+      --bg: #07080c;
       --card:rgba(10,12,18,.62);
       --card2:rgba(10,12,18,.52);
       --stroke:rgba(255,255,255,.08);
@@ -15,10 +24,10 @@
       --text:rgba(255,255,255,.88);
       --muted:rgba(255,255,255,.55);
       --muted2:rgba(255,255,255,.42);
-      --gold1:#f6d26b;
-      --gold2:#b88222;
-      --danger:#ff6b6b;
-      --ok:#47e6a6;
+      --gold1:# f6d26b;
+      --gold2: #b88222;
+      --danger: #ff6b6b;
+      --ok: #47e6a6;
       --shadow: 0 18px 60px rgba(0,0,0,.55);
       --radius:18px;
       --radius2:14px;
@@ -32,91 +41,103 @@
       background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
                   radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
                   radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
-                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
-      color:var(--text);
-      overflow-x:hidden;
-    }
-    /* soft vignette like catalogue public */
-    body:before{
-      content:"";
-      position:fixed; inset:-20px;
-      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
-      pointer-events:none;
-      z-index:-1;
-    }
-    a{color:inherit; text-decoration:none}
-    .app{
-      display:flex;
-      min-height:100vh;
-      gap:22px;
-      padding:18px 18px 26px;
-    }
-    /* Sidebar */
-    .sidebar{
-      width:250px;
-      min-width:250px;
-      background: rgba(10,12,18,.46);
-      border:1px solid var(--stroke);
-      border-radius: 18px;
-      padding:14px;
-      box-shadow: var(--shadow);
-      position:sticky;
-      top:18px;
-      height: calc(100vh - 44px);
-      display:flex;
-      flex-direction:column;
-      backdrop-filter: blur(10px);
-    }
-    .brand{
-      font-weight:800;
-      letter-spacing:.12em;
-      font-size:12px;
-      color:rgba(255,255,255,.72);
-      margin-bottom:10px;
-    }
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:6px;
-    }
-    .nav a{
-      padding:11px 12px;
-      border-radius: 12px;
-      border:1px solid rgba(255,255,255,.06);
-      background: rgba(0,0,0,.18);
-      color:rgba(255,255,255,.76);
-      font-size:13px;
-    }
-    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
-    .nav a.active{
-      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
-      border-color: rgba(246,210,107,.22);
-      color: rgba(255,255,255,.9);
-    }
-    .spacer{flex:1}
-    .side-actions{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:12px;
-    }
-    .btn{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      color: rgba(255,255,255,.86);
-      padding:10px 12px;
-      border-radius: 12px;
-      cursor:pointer;
-      font-weight:650;
-      font-size:12px;
-      transition:.12s transform ease, .12s background ease, .12s border-color ease;
-    }
-    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
-    .btn.gold{
-      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
-      border-color: rgba(246,210,107,.30);
-      color:#1b1306;
+                  linear-gradient(180deg, # 06070 b, #07080c 70%, # 05060 a);
+color: var (--text);
+overflow - x: hidden;
+}
+/* soft vignette like catalogue public */
+body: before {
+   content: "";
+   position: fixed;inset: -20 px;
+   background: radial - gradient(1200 px 900 px at 50 % 45 % , transparent 0 % , rgba(0, 0, 0, .62) 65 % , rgba(0, 0, 0, .82) 100 % );
+   pointer - events: none;
+   z - index: -1;
+}
+a {
+   color: inherit;text - decoration: none
+}
+.app {
+   display: flex;
+   min - height: 100 vh;
+   gap: 22 px;
+   padding: 18 px 18 px 26 px;
+}
+/* Sidebar */
+.sidebar {
+   width: 250 px;
+   min - width: 250 px;
+   background: rgba(10, 12, 18, .46);
+   border: 1 px solid
+   var (--stroke);
+   border - radius: 18 px;
+   padding: 14 px;
+   box - shadow: var (--shadow);
+   position: sticky;
+   top: 18 px;
+   height: calc(100 vh - 44 px);
+   display: flex;
+   flex - direction: column;
+   backdrop - filter: blur(10 px);
+}
+.brand {
+   font - weight: 800;
+   letter - spacing: .12 em;
+   font - size: 12 px;
+   color: rgba(255, 255, 255, .72);
+   margin - bottom: 10 px;
+}
+.nav {
+   display: flex;
+   flex - direction: column;
+   gap: 10 px;
+   margin - top: 6 px;
+}
+.nav a {
+   padding: 11 px 12 px;
+   border - radius: 12 px;
+   border: 1 px solid rgba(255, 255, 255, .06);
+   background: rgba(0, 0, 0, .18);
+   color: rgba(255, 255, 255, .76);
+   font - size: 13 px;
+}
+.nav a: hover {
+      border - color: rgba(255, 255, 255, .12);
+      background: rgba(0, 0, 0, .22)
+   }
+   .nav a.active {
+      background: linear - gradient(180 deg, rgba(246, 210, 107, .22), rgba(184, 130, 34, .10));
+      border - color: rgba(246, 210, 107, .22);
+      color: rgba(255, 255, 255, .9);
+   }
+   .spacer {
+      flex: 1
+   }
+   .side - actions {
+      display: flex;
+      flex - direction: column;
+      gap: 10 px;
+      margin - top: 12 px;
+   }
+   .btn {
+      border: 1 px solid rgba(255, 255, 255, .10);
+      background: rgba(0, 0, 0, .22);
+      color: rgba(255, 255, 255, .86);
+      padding: 10 px 12 px;
+      border - radius: 12 px;
+      cursor: pointer;
+      font - weight: 650;
+      font - size: 12 px;
+      transition: .12 s transform ease,
+      .12 s background ease,
+      .12 s border - color ease;
+   }
+   .btn: hover {
+      transform: translateY(-1 px);border - color: rgba(255, 255, 255, .16);background: rgba(0, 0, 0, .26)
+   }
+   .btn.gold {
+      background: linear - gradient(180 deg, rgba(246, 210, 107, .92), rgba(184, 130, 34, .92));
+      border - color: rgba(246, 210, 107, .30);
+      color: #1b1306;
       box-shadow: 0 10px 22px rgba(184,130,34,.18);
     }
     .btn.danger{
@@ -199,8 +220,8 @@
       outline:none;
     }
     select option{
-      background:#ffffff;
-      color:#000000;
+      background:# ffffff;
+      color: #000000;
     }
     input::placeholder{color: rgba(255,255,255,.32)}
     .row-actions{display:flex; gap:10px; justify-content:flex-end}
@@ -320,38 +341,56 @@
     }
   
 /* Firebase config modal */
-#firebaseConfigModal{
-  position:fixed; inset:0; z-index:99999;
-  align-items:center; justify-content:center;
-  background:rgba(0,0,0,.65);
-  backdrop-filter: blur(8px);
-}
-#firebaseConfigModal .cfg-card{
-  width:min(720px, 92vw);
-  background: rgba(10,12,18,.92);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:16px;
-  padding:18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.55);
-}
-#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
-#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
-#firebaseConfigModal .cfg-text{
-  width:100%; height:220px; resize:vertical;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;
-  padding:12px;
-  color:#fff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size:12px;
-  outline:none;
-}
-#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
-
-/* Select readability */
-select, select option{background:#fff;color:#000}
+# firebaseConfigModal {
+         position: fixed;inset: 0;z - index: 99999;
+         align - items: center;justify - content: center;
+         background: rgba(0, 0, 0, .65);
+         backdrop - filter: blur(8 px);
+      }
+      #firebaseConfigModal.cfg - card {
+         width: min(720 px, 92 vw);
+         background: rgba(10, 12, 18, .92);
+         border: 1 px solid rgba(255, 255, 255, .10);
+         border - radius: 16 px;
+         padding: 18 px;
+         box - shadow: 0 18 px 60 px rgba(0, 0, 0, .55);
+      }
+      #firebaseConfigModal.cfg - title {
+         font - weight: 800;
+         letter - spacing: .2 px;
+         margin - bottom: 6 px;
+      }
+      #firebaseConfigModal.cfg - sub {
+         opacity: .85;font - size: 13 px;margin - bottom: 10 px;line - height: 1.35;
+      }
+      #firebaseConfigModal.cfg - text {
+         width: 100 % ;height: 220 px;resize: vertical;
+         background: rgba(0, 0, 0, .35);
+         border: 1 px solid rgba(255, 255, 255, .12);
+         border - radius: 12 px;
+         padding: 12 px;
+         color: #fff;
+         font - family: ui - monospace,
+         SFMono - Regular,
+         Menlo,
+         Monaco,
+         Consolas,
+         "Liberation Mono",
+         "Courier New",
+         monospace;
+         font - size: 12 px;
+         outline: none;
+      }
+      #firebaseConfigModal.cfg - actions {
+         display: flex;gap: 10 px;justify - content: flex - end;margin - top: 12 px;
+      }
+      #firebaseConfigModal.cfg - note {
+         opacity: .65;font - size: 12 px;margin - top: 10 px;
+      }
+      /* Select readability */
+      select,
+      select option {
+         background: #fff;color: #000}
 
   /* Extra layout for KPIs / form */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -396,271 +435,335 @@ select, select option{background:#fff;color:#000}
 </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">PDM ADMIN</div>
-      <nav class="nav">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="clients.html">Base clients</a>
-        <a href="vehicles.html">Base véhicules</a>
-        <a href="stock.html">Stock & réservations</a>
-        <a href="ventes.html">Ventes véhicules</a>
-        <a class="active" href="partenariats.html">Partenariats</a>
-        <a href="compta.html">Comptabilité</a>
-      </nav>
-      <div class="spacer"></div>
-      <div class="side-actions">
-        <button id="btnLogoutSide" class="btn danger">Déconnexion</button>
-      </div>
-    </aside>
+  <div class= "app" >
+            <
+            aside class = "sidebar" >
+            <
+            div class = "brand" > PDM ADMIN < /div> <
+            nav class = "nav" >
+            <
+            a href = "dashboard.html" > Dashboard < /a> <
+            a href = "clients.html" > Base clients < /a> <
+            a href = "vehicles.html" > Base véhicules < /a> <
+            a href = "stock.html" > Stock & réservations < /a> <
+            a href = "ventes.html" > Ventes véhicules < /a> <
+            a class = "active"
+         href = "partenariats.html" > Partenariats < /a> <
+         a href = "compta.html" > Comptabilité < /a> <
+         /nav> <
+         div class = "spacer" > < /div> <
+         div class = "side-actions" >
+         <
+         button id = "btnLogoutSide"
+         class = "btn danger" > Déconnexion < /button> <
+         /div> <
+         /aside> <
+         main class = "main" >
+         <
+         div class = "topbar" >
+         <
+         div class = "chips" >
+         <
+         div class = "chip" > BASE VÉHICULES < /div> <
+         div id = "chipUser"
+         class = "chip muted" > Chargement… < /div> <
+         div id = "chipRole"
+         class = "chip muted" > — < /div> <
+         div id = "chipEnv"
+         class = "chip muted" > Firestore• Live < /div> <
+         /div> <
+         div class = "top-actions" >
+         <
+         a class = "btn small"
+         href = "ventes.html" > Ventes < /a> <
+         a class = "btn small"
+         href = "stock.html" > Stock < /a> <
+         a class = "btn small"
+         href = "dashboard.html" > Dashboard < /a> <
+         button id = "btnLogoutTop"
+         class = "btn small danger" > Déconnexion < /button> <
+         /div> <
+         /div> <
+         div class = "layout" >
+         <
+         section class = "card" >
+         <
+         h3 > Gestion de la base véhicules < /h3> <
+         div class = "sub" >
+         Ajoute / modifie les véhicules et leurs prix(achat / vente).Utilisé ensuite dans < b > Stock < /b> & <b>Ventes</b > . <
+         /div> <
+         /section> <
+         div class = "two" >
+         <
+         section class = "card" >
+         <
+         h3 > Ajouter un véhicule < /h3> <
+         div class = "grid g2" >
+         <
+         div class = "field" >
+         <
+         label > Nom du véhicule < /label> <
+         input id = "inName"
+         placeholder = "Ex: Sultan RS" / >
+         <
+         /div> <
+         div class = "field" >
+         <
+         label > Catégorie / Classe < /label> <
+         input id = "inClass"
+         placeholder = "Ex: Sport / Super / Moto…" / >
+         <
+         /div> <
+         div class = "field" >
+         <
+         label > Prix d 'achat ($)</label> <
+         input id = "inBuy"
+         type = "number"
+         min = "0"
+         placeholder = "Ex: 250000" / >
+         <
+         /div> <
+         div class = "field" >
+         <
+         label > Prix de vente($) < /label> <
+         input id = "inSell"
+         type = "number"
+         min = "0"
+         placeholder = "Ex: 320000" / >
+         <
+         /div> <
+         div class = "field full" >
+         <
+         label > Notes(optionnel) < /label> <
+         input id = "inNotes"
+         placeholder = "Ex: prix promo, conditions, etc." / >
+         <
+         /div> <
+         /div> <
+         div class = "actions" >
+         <
+         button id = "btnAdd"
+         class = "btn gold" > Ajouter < /button> <
+         button id = "btnReset"
+         class = "btn" > Réinitialiser < /button> <
+         /div> <
+         div class = "hint" >
+         Astuce: tu peux laisser la classe / notes vides,
+         mais le nom est obligatoire. <
+         /div> <
+         /section> <
+         section class = "card" >
+         <
+         div class = "head-row" >
+         <
+         h3 > Véhicules < /h3> <
+         div class = "pill"
+         id = "countPill" > 0 véhicule < /div> <
+         /div> <
+         div class = "tools" >
+         <
+         div class = "left" >
+         <
+         input id = "qSearch"
+         placeholder = "Rechercher (nom / classe)…" / >
+         <
+         /div> <
+         div class = "right" >
+         <
+         select id = "selSort" >
+         <
+         option value = "name" > Nom(A→ Z) < /option> <
+         option value = "buyPrice" > Prix achat < /option> <
+         option value = "sellPrice" > Prix vente < /option> <
+         /select> <
+         button id = "btnRefresh"
+         class = "btn small" > Rafraîchir < /button> <
+         /div> <
+         /div> <
+         div class = "table-wrap" >
+         <
+         table class = "table" >
+         <
+         thead >
+         <
+         tr >
+         <
+         th > Nom < /th> <
+         th > Classe < /th> <
+         th class = "num" > Achat < /th> <
+         th class = "num" > Vente < /th> <
+         th > Notes < /th> <
+         th class = "actions-col" > Actions < /th> <
+         /tr> <
+         /thead> <
+         tbody id = "tbodyVehicles" >
+         <
+         tr > < td colspan = "6"
+         class = "muted" > Chargement… < /td></tr >
+         <
+         /tbody> <
+         /table> <
+         /div> <
+         div class = "hint" >
+         Staff peut créer / modifier.Suppression réservée à l’ admin. <
+         /div> <
+         /section> <
+         /div> <
+         /div> <
+         /main> <
+         /div> <
+         div id = "toast"
+         class = "toast" >
+         <
+         div id = "toastTitle"
+         class = "t" > < /div> <
+         div id = "toastMsg"
+         class = "m" > < /div> <
+         /div> <
+         !--Modal-- >
+         <
+         div id = "modalOverlay"
+         class = "modal-overlay"
+         role = "dialog"
+         aria - modal = "true" >
+         <
+         div class = "modal" >
+         <
+         h4 id = "modalTitle" > Modifier < /h4> <
+         div id = "modalBody" > < /div> <
+         div class = "modal-actions" >
+         <
+         button id = "btnModalCancel"
+         class = "btn" > Annuler < /button> <
+         button id = "btnModalSave"
+         class = "btn gold" > Enregistrer < /button> <
+         /div> <
+         div class = "hint"
+         id = "modalHint" > < /div> <
+         /div> <
+         /div> <
+         !--Firebase config modal(auto) -- >
+         <
+         div id = "firebaseConfigModal"
+         style = "display:none" >
+         <
+         div class = "cfg-card" >
+         <
+         div class = "cfg-title" > Configurer Firebase < /div> <
+         div class = "cfg-sub" >
+         Colle ici ta config < b > firebaseConfig < /b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages. <
+         /div> <
+         textarea id = "firebaseConfigText"
+         class = "cfg-text"
+         placeholder = "Colle ici : const firebaseConfig = { ... };" > < /textarea> <
+         div class = "cfg-actions" >
+         <
+         button id = "firebaseConfigCancel"
+         class = "btn" > Annuler < /button> <
+         button id = "firebaseConfigSave"
+         class = "btn gold" > Sauvegarder < /button> <
+         /div> <
+         div class = "cfg-note" > Si tu es sur iPhone / navigation privée,
+         le stockage peut être bloqué. < /div> <
+         /div> <
+         /div> <
+         script >
+         (function() {
+               const modal = document.getElementById("firebaseConfigModal");
+               const ta = document.getElementById("firebaseConfigText");
+               const btnSave = document.getElementById("firebaseConfigSave");
+               const btnCancel = document.getElementById("firebaseConfigCancel");
+               if (!modal || !ta || !btnSave || !btnCancel) return;
 
-    <main class="main">
-      <div class="topbar">
-        <div class="chips">
-          <div class="chip">BASE VÉHICULES</div>
-          <div id="chipUser" class="chip muted">Chargement…</div>
-          <div id="chipRole" class="chip muted">—</div>
-          <div id="chipEnv" class="chip muted">Firestore • Live</div>
-        </div>
-        <div class="top-actions">
-          <a class="btn small" href="ventes.html">Ventes</a>
-          <a class="btn small" href="stock.html">Stock</a>
-          <a class="btn small" href="dashboard.html">Dashboard</a>
-          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
-        </div>
-      </div>
+               function closeModal() {
+                  modal.classList.add("hidden");
+                  modal.setAttribute("aria-hidden", "true");
+               }
 
-      <div class="layout">
-        <section class="card">
-          <h3>Gestion de la base véhicules</h3>
-          <div class="sub">
-            Ajoute / modifie les véhicules et leurs prix (achat/vente). Utilisé ensuite dans <b>Stock</b> & <b>Ventes</b>.
-          </div>
-        </section>
+               function openModal() {
+                  modal.classList.remove("hidden");
+                  modal.setAttribute("aria-hidden", "false");
+                  setTimeout(() => ta.focus(), 0);
+               }
 
-        <div class="two">
-          <section class="card">
-            <h3>Ajouter un véhicule</h3>
+               function extractObjectLiteral(txt) {
+                  // Accept plain JSON or "const firebaseConfig = {...};"
+                  const trimmed = (txt || "").trim();
+                  if (!trimmed) throw new Error("Config vide");
+                  // If it looks like JSON object already
+                  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
+                  // Find first { and last } and take that slice
+                  const first = trimmed.indexOf("{");
+                  const last = trimmed.lastIndexOf("}");
+                  if (first === -1 || last === -1 || last <= first) throw new Error("Impossible de trouver un objet JSON");
+                  return trimmed.slice(first, last + 1);
+               }
 
-            <div class="grid g2">
-              <div class="field">
-                <label>Nom du véhicule</label>
-                <input id="inName" placeholder="Ex: Sultan RS" />
-              </div>
-              <div class="field">
-                <label>Catégorie / Classe</label>
-                <input id="inClass" placeholder="Ex: Sport / Super / Moto…" />
-              </div>
+               function safeParse(txt) {
+                  const objText = extractObjectLiteral(txt);
+                  // 1) Strict JSON first
+                  try {
+                     return JSON.parse(objText);
+                  } catch (e1) {}
+                  // 2) Try to accept a JS object literal (from Firebase docs)
+                  // - quote unquoted keys
+                  // - convert single quotes to double
+                  // - remove trailing commas
+                  // - strip comments
+                  try {
+                     let t = objText;
+                     // remove JS single-line comments
+                     t = t.replace(/\/\/.*$/gm, "");
+                     // remove JS block comments
+                     t = t.replace(/\/\*[\s\S]*?\*\//g, "");
+                     // quote keys: { apiKey: "x", authDomain: "y" } -> { "apiKey": "x", "authDomain": "y" }
+                     t = t.replace(/([\{,]\s*)([A-Za-z0-9_\-]+)\s*:/g, '$1"$2":');
+                     // normalize quotes
+                     t = t.replace(/'/g, '"');
+                     // remove trailing commas
+                     t = t.replace(/,\s*([}\]])/g, '$1');
+                     return JSON.parse(t);
+                  } catch (e2) {
+                     // bubble the original error (usually more relevant)
+                     throw e2;
+                  }
+               }
 
-              <div class="field">
-                <label>Prix d'achat ($)</label>
-                <input id="inBuy" type="number" min="0" placeholder="Ex: 250000" />
-              </div>
-              <div class="field">
-                <label>Prix de vente ($)</label>
-                <input id="inSell" type="number" min="0" placeholder="Ex: 320000" />
-              </div>
+               function openModal(title, bodyHtml, actionsHtml) {
+                  $("modalTitle").textContent = title;
+                  $("modalBody").innerHTML = bodyHtml;
+                  $("modalActions").innerHTML = actionsHtml || `<button class="btn" id="mClose">Fermer</button>`;
+                  $("modalOverlay").classList.add("show");
+                  const c = $("mClose");
+                  if (c) c.onclick = closeModal;
+               }
 
-              <div class="field full">
-                <label>Notes (optionnel)</label>
-                <input id="inNotes" placeholder="Ex: prix promo, conditions, etc." />
-              </div>
-            </div>
+               function closeModal() {
+                  $("modalOverlay").classList.remove("show");
+                  $("modalBody").innerHTML = "";
+                  $("modalActions").innerHTML = "";
+               }
+               $("modalOverlay")?.addEventListener("click", (e) => {
+                  if (e.target.id === "modalOverlay") closeModal();
+               });
+               // ========= Vehicles logic =========
+               let VEH = []; // {id, ...data}
+               const tbody = $("tbodyVehicles");
 
-            <div class="actions">
-              <button id="btnAdd" class="btn gold">Ajouter</button>
-              <button id="btnReset" class="btn">Réinitialiser</button>
-            </div>
+               function getSortField() {
+                  const v = $("selSort").value;
+                  if (v === "buyPrice") return ["buyPrice", "desc"];
+                  if (v === "sellPrice") return ["sellPrice", "desc"];
+                  return ["name", "asc"];
+               }
 
-            <div class="hint">
-              Astuce: tu peux laisser la classe/notes vides, mais le nom est obligatoire.
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="head-row">
-              <h3>Véhicules</h3>
-              <div class="pill" id="countPill">0 véhicule</div>
-            </div>
-
-            <div class="tools">
-              <div class="left">
-                <input id="qSearch" placeholder="Rechercher (nom / classe)…" />
-              </div>
-              <div class="right">
-                <select id="selSort">
-                  <option value="name">Nom (A→Z)</option>
-                  <option value="buyPrice">Prix achat</option>
-                  <option value="sellPrice">Prix vente</option>
-                </select>
-                <button id="btnRefresh" class="btn small">Rafraîchir</button>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Classe</th>
-                    <th class="num">Achat</th>
-                    <th class="num">Vente</th>
-                    <th>Notes</th>
-                    <th class="actions-col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyVehicles">
-                  <tr><td colspan="6" class="muted">Chargement…</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="hint">
-              Staff peut créer/modifier. Suppression réservée à l’admin.
-            </div>
-          </section>
-        </div>
-      </div>
-</main>
-  </div>
-
-  <div id="toast" class="toast">
-    <div id="toastTitle" class="t"></div>
-    <div id="toastMsg" class="m"></div>
-  </div>
-
-  <!-- Modal -->
-  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <h4 id="modalTitle">Modifier</h4>
-      <div id="modalBody"></div>
-      <div class="modal-actions">
-        <button id="btnModalCancel" class="btn">Annuler</button>
-        <button id="btnModalSave" class="btn gold">Enregistrer</button>
-      </div>
-      <div class="hint" id="modalHint"></div>
-    </div>
-  </div>
-
-  <!-- Firebase config modal (auto) -->
-  <div id="firebaseConfigModal" style="display:none">
-    <div class="cfg-card">
-      <div class="cfg-title">Configurer Firebase</div>
-      <div class="cfg-sub">
-        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
-      </div>
-      <textarea id="firebaseConfigText" class="cfg-text" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
-      <div class="cfg-actions">
-        <button id="firebaseConfigCancel" class="btn">Annuler</button>
-        <button id="firebaseConfigSave" class="btn gold">Sauvegarder</button>
-      </div>
-      <div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
-    </div>
-  </div>
-
-  
-
-<script>
-(function(){
-  const modal = document.getElementById("firebaseConfigModal");
-  const ta = document.getElementById("firebaseConfigText");
-  const btnSave = document.getElementById("firebaseConfigSave");
-  const btnCancel = document.getElementById("firebaseConfigCancel");
-
-  if (!modal || !ta || !btnSave || !btnCancel) return;
-
-  function closeModal(){
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden","true");
-  }
-  function openModal(){
-    modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden","false");
-    setTimeout(()=>ta.focus(), 0);
-  }
-
-  function extractObjectLiteral(txt){
-    // Accept plain JSON or "const firebaseConfig = {...};"
-    const trimmed = (txt||"").trim();
-    if (!trimmed) throw new Error("Config vide");
-    // If it looks like JSON object already
-    if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
-
-    // Find first { and last } and take that slice
-    const first = trimmed.indexOf("{");
-    const last = trimmed.lastIndexOf("}");
-    if (first === -1 || last === -1 || last <= first) throw new Error("Impossible de trouver un objet JSON");
-    return trimmed.slice(first, last+1);
-  }
-
-  function safeParse(txt){
-    const objText = extractObjectLiteral(txt);
-
-    // 1) Strict JSON first
-    try { return JSON.parse(objText); } catch (e1) {}
-
-    // 2) Try to accept a JS object literal (from Firebase docs)
-    // - quote unquoted keys
-    // - convert single quotes to double
-    // - remove trailing commas
-    // - strip comments
-    try {
-      let t = objText;
-
-      // remove JS single-line comments
-      t = t.replace(/\/\/.*$/gm, "");
-      // remove JS block comments
-      t = t.replace(/\/\*[\s\S]*?\*\//g, "");
-
-      // quote keys: { apiKey: "x", authDomain: "y" } -> { "apiKey": "x", "authDomain": "y" }
-      t = t.replace(/([\{,]\s*)([A-Za-z0-9_\-]+)\s*:/g, '$1"$2":');
-
-      // normalize quotes
-      t = t.replace(/'/g, '"');
-
-      // remove trailing commas
-      t = t.replace(/,\s*([}\]])/g, '$1');
-
-      return JSON.parse(t);
-    } catch (e2) {
-      // bubble the original error (usually more relevant)
-      throw e2;
-    }
-  }
-
-function openModal(title, bodyHtml, actionsHtml){
-    $("modalTitle").textContent = title;
-    $("modalBody").innerHTML = bodyHtml;
-    $("modalActions").innerHTML = actionsHtml || `<button class="btn" id="mClose">Fermer</button>`;
-    $("modalOverlay").classList.add("show");
-    const c = $("mClose");
-    if (c) c.onclick = closeModal;
-  }
-  function closeModal(){
-    $("modalOverlay").classList.remove("show");
-    $("modalBody").innerHTML = "";
-    $("modalActions").innerHTML = "";
-  }
-  $("modalOverlay")?.addEventListener("click", (e)=>{ if(e.target.id==="modalOverlay") closeModal(); });
-
-  // ========= Vehicles logic =========
-  let VEH = []; // {id, ...data}
-  const tbody = $("tbodyVehicles");
-
-  function getSortField(){
-    const v = $("selSort").value;
-    if (v === "buyPrice") return ["buyPrice","desc"];
-    if (v === "sellPrice") return ["sellPrice","desc"];
-    return ["name","asc"];
-  }
-
-  function rowHtml(v){
-    const buy = v.buyPrice ?? 0;
-    const sell = v.sellPrice ?? 0;
-    const delBtn = isAdmin()
-      ? `<button class="btn small danger" data-act="del" data-id="${v.id}">Suppr.</button>`
-      : `<button class="btn small danger" disabled title="Admin uniquement">Suppr.</button>`;
-    return `
+               function rowHtml(v) {
+                  const buy = v.buyPrice ?? 0;
+                  const sell = v.sellPrice ?? 0;
+                  const delBtn = isAdmin() ?
+                     `<button class="btn small danger" data-act="del" data-id="${v.id}">Suppr.</button>` :
+                     `<button class="btn small danger" disabled title="Admin uniquement">Suppr.</button>`;
+                  return `
       <tr>
         <td><div class="strong">${escapeHtml(v.name || "—")}</div></td>
         <td>${escapeHtml(v.class || "—")}</td>
@@ -673,96 +776,94 @@ function openModal(title, bodyHtml, actionsHtml){
         </td>
       </tr>
     `;
-  }
+               }
 
-  function escapeHtml(s){
-    return String(s ?? "").replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
-  }
+               function escapeHtml(s) {
+                  return String(s ?? "").replace(/[&<>"']/g, (m) => ({
+                     "&": "&amp;",
+                     "<": "&lt;",
+                     ">": "&gt;",
+                     "\"": "&quot;",
+                     "'": "&#39;"
+                  } [m]));
+               }
 
-  function render(){
-    const q = ($("qSearch").value || "").trim().toLowerCase();
-    const filtered = VEH.filter(v=>{
-      if (!q) return true;
-      return (v.name||"").toLowerCase().includes(q) || (v.class||"").toLowerCase().includes(q);
-    });
+               function render() {
+                  const q = ($("qSearch").value || "").trim().toLowerCase();
+                  const filtered = VEH.filter(v => {
+                     if (!q) return true;
+                     return (v.name || "").toLowerCase().includes(q) || (v.class || "").toLowerCase().includes(q);
+                  });
+                  $("countPill").textContent = `${filtered.length} véhicule${filtered.length>1?"s":""}`;
+                  tbody.innerHTML = filtered.length ? filtered.map(rowHtml).join("") :
+                     `<tr><td colspan="6" class="muted">Aucun résultat.</td></tr>`;
+               }
+               async function loadVehicles() {
+                  try {
+                     tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement…</td></tr>`;
+                     const [field, dir] = getSortField();
+                     const snap = await getDocs(query(collection(db, "vehicles"), orderBy(field, dir)));
+                     VEH = snap.docs.map(d => ({
+                        id: d.id,
+                        ...d.data()
+                     }));
+                     render();
+                  } catch (e) {
+                     console.error(e);
+                     tbody.innerHTML = `<tr><td colspan="6" class="muted">Erreur de chargement.</td></tr>`;
+                     toast("Impossible de charger les véhicules (permissions ?)", "err");
+                  }
+               }
 
-    $("countPill").textContent = `${filtered.length} véhicule${filtered.length>1?"s":""}`;
-    tbody.innerHTML = filtered.length ? filtered.map(rowHtml).join("") :
-      `<tr><td colspan="6" class="muted">Aucun résultat.</td></tr>`;
-  }
-
-  async function loadVehicles(){
-    try{
-      tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement…</td></tr>`;
-      const [field, dir] = getSortField();
-      const snap = await getDocs(query(collection(db,"vehicles"), orderBy(field, dir)));
-      VEH = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      render();
-    }catch(e){
-      console.error(e);
-      tbody.innerHTML = `<tr><td colspan="6" class="muted">Erreur de chargement.</td></tr>`;
-      toast("Impossible de charger les véhicules (permissions ?)", "err");
-    }
-  }
-
-  function resetForm(){
-    $("inName").value = "";
-    $("inClass").value = "";
-    $("inBuy").value = "";
-    $("inSell").value = "";
-    $("inNotes").value = "";
-  }
-
-  $("btnReset").onclick = resetForm;
-
-  $("btnAdd").onclick = async () => {
-    if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
-
-    const name = $("inName").value.trim();
-    const cls = $("inClass").value.trim();
-    const buy = Number($("inBuy").value || 0);
-    const sell = Number($("inSell").value || 0);
-    const notes = $("inNotes").value.trim();
-
-    if (!name) return toast("Nom du véhicule requis.", "err");
-
-    try{
-      await addDoc(collection(db,"vehicles"), {
-        name,
-        class: cls || "",
-        buyPrice: buy,
-        sellPrice: sell,
-        notes: notes || "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      toast("Véhicule ajouté.", "ok");
-      resetForm();
-      await loadVehicles();
-    }catch(e){
-      console.error(e);
-      toast("Erreur lors de l'ajout (permissions ?)", "err");
-    }
-  };
-
-  $("btnRefresh").onclick = loadVehicles;
-  $("qSearch").addEventListener("input", render);
-  $("selSort").addEventListener("change", loadVehicles);
-
-  tbody.addEventListener("click", async (e)=>{
-    const btn = e.target.closest("button[data-act]");
-    if (!btn) return;
-    const id = btn.getAttribute("data-id");
-    const act = btn.getAttribute("data-act");
-    const v = VEH.find(x=>x.id===id);
-    if (!v) return;
-
-    if (act === "edit"){
-      if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
-
-      openModal(
-        "Modifier le véhicule",
-        `
+               function resetForm() {
+                  $("inName").value = "";
+                  $("inClass").value = "";
+                  $("inBuy").value = "";
+                  $("inSell").value = "";
+                  $("inNotes").value = "";
+               }
+               $("btnReset").onclick = resetForm;
+               $("btnAdd").onclick = async () => {
+                  if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
+                  const name = $("inName").value.trim();
+                  const cls = $("inClass").value.trim();
+                  const buy = Number($("inBuy").value || 0);
+                  const sell = Number($("inSell").value || 0);
+                  const notes = $("inNotes").value.trim();
+                  if (!name) return toast("Nom du véhicule requis.", "err");
+                  try {
+                     await addDoc(collection(db, "vehicles"), {
+                        name,
+                        class: cls || "",
+                        buyPrice: buy,
+                        sellPrice: sell,
+                        notes: notes || "",
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                     });
+                     toast("Véhicule ajouté.", "ok");
+                     resetForm();
+                     await loadVehicles();
+                  } catch (e) {
+                     console.error(e);
+                     toast("Erreur lors de l'ajout (permissions ?)", "err");
+                  }
+               };
+               $("btnRefresh").onclick = loadVehicles;
+               $("qSearch").addEventListener("input", render);
+               $("selSort").addEventListener("change", loadVehicles);
+               tbody.addEventListener("click", async (e) => {
+                  const btn = e.target.closest("button[data-act]");
+                  if (!btn) return;
+                  const id = btn.getAttribute("data-id");
+                  const act = btn.getAttribute("data-act");
+                  const v = VEH.find(x => x.id === id);
+                  if (!v) return;
+                  if (act === "edit") {
+                     if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
+                     openModal(
+                        "Modifier le véhicule",
+                        `
           <div class="grid g2">
             <div class="field">
               <label>Nom</label>
@@ -786,78 +887,75 @@ function openModal(title, bodyHtml, actionsHtml){
             </div>
           </div>
         `,
-        `
+                        `
           <button class="btn gold" id="mSave">Enregistrer</button>
           <button class="btn" id="mClose">Annuler</button>
         `
-      );
-
-      $("mClose").onclick = closeModal;
-      $("mSave").onclick = async ()=>{
-        const payload = {
-          name: $("mName").value.trim(),
-          class: $("mClass").value.trim(),
-          buyPrice: Number($("mBuy").value || 0),
-          sellPrice: Number($("mSell").value || 0),
-          notes: $("mNotes").value.trim(),
-          updatedAt: serverTimestamp()
-        };
-        if (!payload.name) return toast("Nom requis.", "err");
-        try{
-          await updateDoc(doc(db,"vehicles",id), payload);
-          toast("Véhicule modifié.", "ok");
-          closeModal();
-          await loadVehicles();
-        }catch(e){
-          console.error(e);
-          toast("Impossible de modifier (permissions ?)", "err");
-        }
-      };
-    }
-
-    if (act === "del"){
-      if (!isAdmin()) return toast("Suppression : admin uniquement.", "err");
-      openModal(
-        "Supprimer le véhicule",
-        `<div class="sub">Confirmer la suppression de <b>${escapeHtml(v.name)}</b> ?</div>`,
-        `
+                     );
+                     $("mClose").onclick = closeModal;
+                     $("mSave").onclick = async () => {
+                        const payload = {
+                           name: $("mName").value.trim(),
+                           class: $("mClass").value.trim(),
+                           buyPrice: Number($("mBuy").value || 0),
+                           sellPrice: Number($("mSell").value || 0),
+                           notes: $("mNotes").value.trim(),
+                           updatedAt: serverTimestamp()
+                        };
+                        if (!payload.name) return toast("Nom requis.", "err");
+                        try {
+                           await updateDoc(doc(db, "vehicles", id), payload);
+                           toast("Véhicule modifié.", "ok");
+                           closeModal();
+                           await loadVehicles();
+                        } catch (e) {
+                           console.error(e);
+                           toast("Impossible de modifier (permissions ?)", "err");
+                        }
+                     };
+                  }
+                  if (act === "del") {
+                     if (!isAdmin()) return toast("Suppression : admin uniquement.", "err");
+                     openModal(
+                        "Supprimer le véhicule",
+                        `<div class="sub">Confirmer la suppression de <b>${escapeHtml(v.name)}</b> ?</div>`,
+                        `
           <button class="btn danger" id="mDoDel">Supprimer</button>
           <button class="btn" id="mClose">Annuler</button>
         `
-      );
-      $("mClose").onclick = closeModal;
-      $("mDoDel").onclick = async ()=>{
-        try{
-          await deleteDoc(doc(db,"vehicles",id));
-          toast("Véhicule supprimé.", "ok");
-          closeModal();
-          await loadVehicles();
-        }catch(e){
-          console.error(e);
-          toast("Impossible de supprimer (permissions ?)", "err");
-        }
-      };
-    }
-  });
-
-  // ========= Logout =========
-  $("btnLogoutTop").onclick = async () => {
-    try{ await signOut(auth); }catch(_){}
-    location.href = "index.html";
-  };
-
-  // ========= Boot =========
-  onAuthStateChanged(auth, async (u)=>{
-    if(!u){
-      // If your app uses an auth gate page, redirect
-      location.href = "index.html";
-      return;
-    }
-    currentUser = u;
-    await loadRole(u);
-    await loadVehicles();
-  });
-</script>
-
-</body>
-</html>
+                     );
+                     $("mClose").onclick = closeModal;
+                     $("mDoDel").onclick = async () => {
+                        try {
+                           await deleteDoc(doc(db, "vehicles", id));
+                           toast("Véhicule supprimé.", "ok");
+                           closeModal();
+                           await loadVehicles();
+                        } catch (e) {
+                           console.error(e);
+                           toast("Impossible de supprimer (permissions ?)", "err");
+                        }
+                     };
+                  }
+               });
+               // ========= Logout =========
+               $("btnLogoutTop").onclick = async () => {
+                  try {
+                     await signOut(auth);
+                  } catch (_) {}
+                  location.href = "index.html";
+               };
+               // ========= Boot =========
+               onAuthStateChanged(auth, async (u) => {
+                  if (!u) {
+                     // If your app uses an auth gate page, redirect
+                     location.href = "index.html";
+                     return;
+                  }
+                  currentUser = u;
+                  await loadRole(u);
+                  await loadVehicles();
+               }); <
+               /script> <
+               /body> <
+               /html>
