@@ -560,304 +560,390 @@ select, select option{background:#fff;color:#000}
 
   
 
-<script>
-(function(){
-  const modal = document.getElementById("firebaseConfigModal");
-  const ta = document.getElementById("firebaseConfigText");
-  const btnSave = document.getElementById("firebaseConfigSave");
-  const btnCancel = document.getElementById("firebaseConfigCancel");
 
-  if (!modal || !ta || !btnSave || !btnCancel) return;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, query, orderBy,
+    serverTimestamp, doc, updateDoc, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  function closeModal(){
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden","true");
+  // =========================
+  // Firebase config (localStorage)
+  // =========================
+  const LS_KEY = "PDM_FIREBASE_CONFIG";
+
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    if (!t) return alert(msg);
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
   }
-  function openModal(){
+
+  // Parse JSON OR JS object literal (tolerant)
+  function safeParseFirebaseConfig(raw) {
+    const s = (raw || "").trim();
+    if (!s) throw new Error("Config vide.");
+
+    // Try pure JSON
+    try { return JSON.parse(s); } catch (_) {}
+
+    // Try JS object literal: allow unquoted keys + single quotes + trailing commas
+    let t = s;
+
+    // remove leading "const firebaseConfig =" etc
+    t = t.replace(/^\s*(const|let|var)\s+\w+\s*=\s*/i, "");
+    t = t.replace(/;\s*$/, "");
+
+    // single quotes -> double quotes
+    t = t.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, inner) => `"${inner.replace(/"/g,'\\"')}"`);
+
+    // quote unquoted keys
+    t = t.replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":');
+
+    // remove trailing commas
+    t = t.replace(/,\s*([}\]])/g, "$1");
+
+    return JSON.parse(t);
+  }
+
+  function getStoredConfig() {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function openFirebaseConfigModal(prefill = "") {
+    const modal = document.getElementById("firebaseConfigModal");
+    const ta = document.getElementById("firebaseConfigText");
+    if (!modal || !ta) return alert("Modal de config introuvable.");
+    ta.value = prefill || "";
     modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden","false");
-    setTimeout(()=>ta.focus(), 0);
+    setTimeout(() => ta.focus(), 50);
   }
 
-  function extractObjectLiteral(txt){
-    // Accept plain JSON or "const firebaseConfig = {...};"
-    const trimmed = (txt||"").trim();
-    if (!trimmed) throw new Error("Config vide");
-    // If it looks like JSON object already
-    if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
-
-    // Find first { and last } and take that slice
-    const first = trimmed.indexOf("{");
-    const last = trimmed.lastIndexOf("}");
-    if (first === -1 || last === -1 || last <= first) throw new Error("Impossible de trouver un objet JSON");
-    return trimmed.slice(first, last+1);
+  function closeFirebaseConfigModal() {
+    const modal = document.getElementById("firebaseConfigModal");
+    if (modal) modal.classList.add("hidden");
   }
 
-  function safeParse(txt){
-    const objText = extractObjectLiteral(txt);
+  // Wire config modal buttons
+  (() => {
+    const btnSave = document.getElementById("btnSaveFirebase");
+    const btnCancel = document.getElementById("btnCancelFirebase");
+    const ta = document.getElementById("firebaseConfigText");
 
-    // 1) Strict JSON first
-    try { return JSON.parse(objText); } catch (e1) {}
+    if (btnSave && ta) {
+      btnSave.addEventListener("click", () => {
+        try {
+          const cfg = safeParseFirebaseConfig(ta.value);
+          localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+          closeFirebaseConfigModal();
+          location.reload();
+        } catch (e) {
+          alert(`Config invalide : ${e.message || e}`);
+        }
+      });
+    }
+    if (btnCancel) btnCancel.addEventListener("click", closeFirebaseConfigModal);
+  })();
 
-    // 2) Try to accept a JS object literal (from Firebase docs)
-    // - quote unquoted keys
-    // - convert single quotes to double
-    // - remove trailing commas
-    // - strip comments
+  const firebaseConfig = getStoredConfig();
+  if (!firebaseConfig) {
+    // Show modal and stop init
+    openFirebaseConfigModal("");
+    throw new Error("Firebase config manquante.");
+  }
+
+  // =========================
+  // Init Firebase
+  // =========================
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // =========================
+  // Topbar (email/role/state) + logout
+  // =========================
+  const elTopEmail = document.getElementById("topEmail");
+  const elTopRole = document.getElementById("topRole");
+  const elTopState = document.getElementById("topState");
+
+  async function getRoleForUid(uid) {
     try {
-      let t = objText;
+      const snap = await getDocs(query(collection(db, "users")));
+      // If you store users as /users/{uid}, better read doc directly, but keep it simple:
+      // We'll attempt direct doc read via getDoc.
+    } catch(_) {}
+    return "staff";
+  }
 
-      // remove JS single-line comments
-      t = t.replace(/\/\/.*$/gm, "");
-      // remove JS block comments
-      t = t.replace(/\/\*[\s\S]*?\*\//g, "");
-
-      // quote keys: { apiKey: "x", authDomain: "y" } -> { "apiKey": "x", "authDomain": "y" }
-      t = t.replace(/([\{,]\s*)([A-Za-z0-9_\-]+)\s*:/g, '$1"$2":');
-
-      // normalize quotes
-      t = t.replace(/'/g, '"');
-
-      // remove trailing commas
-      t = t.replace(/,\s*([}\]])/g, '$1');
-
-      return JSON.parse(t);
-    } catch (e2) {
-      // bubble the original error (usually more relevant)
-      throw e2;
+  async function readUserRole(uid) {
+    try {
+      const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const d = await getDoc(doc(db, "users", uid));
+      return d.exists() ? (d.data().role || "staff") : "staff";
+    } catch {
+      return "staff";
     }
   }
 
-function openModal(title, bodyHtml, actionsHtml){
-    $("modalTitle").textContent = title;
-    $("modalBody").innerHTML = bodyHtml;
-    $("modalActions").innerHTML = actionsHtml || `<button class="btn" id="mClose">Fermer</button>`;
-    $("modalOverlay").classList.add("show");
-    const c = $("mClose");
-    if (c) c.onclick = closeModal;
+  function wireLogout() {
+    const a = document.getElementById("btnLogoutTop");
+    const b = document.getElementById("btnLogoutSide");
+    const fn = async () => {
+      try { await signOut(auth); } catch(e) { toast("Erreur déconnexion"); }
+    };
+    if (a) a.addEventListener("click", fn);
+    if (b) b.addEventListener("click", fn);
   }
-  function closeModal(){
-    $("modalOverlay").classList.remove("show");
-    $("modalBody").innerHTML = "";
-    $("modalActions").innerHTML = "";
+  wireLogout();
+
+  // =========================
+  // Vehicles UI
+  // =========================
+  const inName = document.getElementById("inName");
+  const inClass = document.getElementById("inClass");
+  const inBuy = document.getElementById("inBuy");
+  const inSell = document.getElementById("inSell");
+  const inNotes = document.getElementById("inNotes");
+  const btnAdd = document.getElementById("btnAdd");
+  const btnReset = document.getElementById("btnReset");
+
+  const qSearch = document.getElementById("qSearch");
+  const selSort = document.getElementById("selSort");
+  const btnRefresh = document.getElementById("btnRefresh");
+
+  const tbody = document.getElementById("tbodyVehicles");
+  const badgeCount = document.getElementById("badgeCount");
+
+  // Edit modal
+  const modal = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalBody = document.getElementById("modalBody");
+  const modalHint = document.getElementById("modalHint");
+  const btnModalCancel = document.getElementById("btnModalCancel");
+  const btnModalSave = document.getElementById("btnModalSave");
+
+  let currentUser = null;
+  let currentRole = "staff";
+  let vehiclesCache = [];
+  let editingId = null;
+
+  function money(n) {
+    const x = Number(n || 0);
+    return x.toLocaleString("en-US");
   }
-  $("modalOverlay")?.addEventListener("click", (e)=>{ if(e.target.id==="modalOverlay") closeModal(); });
 
-  // ========= Vehicles logic =========
-  let VEH = []; // {id, ...data}
-  const tbody = $("tbodyVehicles");
-
-  function getSortField(){
-    const v = $("selSort").value;
-    if (v === "buyPrice") return ["buyPrice","desc"];
-    if (v === "sellPrice") return ["sellPrice","desc"];
-    return ["name","asc"];
+  function resetForm() {
+    if (inName) inName.value = "";
+    if (inClass) inClass.value = "";
+    if (inBuy) inBuy.value = "";
+    if (inSell) inSell.value = "";
+    if (inNotes) inNotes.value = "";
   }
 
-  function rowHtml(v){
-    const buy = v.buyPrice ?? 0;
-    const sell = v.sellPrice ?? 0;
-    const delBtn = isAdmin()
-      ? `<button class="btn small danger" data-act="del" data-id="${v.id}">Suppr.</button>`
-      : `<button class="btn small danger" disabled title="Admin uniquement">Suppr.</button>`;
-    return `
-      <tr>
-        <td><div class="strong">${escapeHtml(v.name || "—")}</div></td>
-        <td>${escapeHtml(v.class || "—")}</td>
-        <td class="num">$${fmtMoney(buy)}</td>
-        <td class="num">$${fmtMoney(sell)}</td>
-        <td>${escapeHtml(v.notes || "")}</td>
-        <td class="actions-col">
-          <button class="btn small" data-act="edit" data-id="${v.id}">Modifier</button>
-          ${delBtn}
-        </td>
-      </tr>
+  function openEdit(id, v) {
+    editingId = id;
+    if (!modal) return;
+
+    modalTitle.textContent = "Modifier le véhicule";
+    modalHint.textContent = "Modifie puis enregistre.";
+    modalBody.innerHTML = `
+      <div class="grid">
+        <div class="field"><label>Nom</label><input id="editName" value="${(v.name||"").replace(/"/g,"&quot;")}"></div>
+        <div class="field"><label>Classe</label><input id="editClass" value="${(v.class||"").replace(/"/g,"&quot;")}"></div>
+        <div class="field"><label>Prix d'achat ($)</label><input id="editBuy" type="number" value="${Number(v.buyPrice||0)}"></div>
+        <div class="field"><label>Prix de vente ($)</label><input id="editSell" type="number" value="${Number(v.sellPrice||0)}"></div>
+        <div class="field full"><label>Notes</label><input id="editNotes" value="${(v.notes||"").replace(/"/g,"&quot;")}"></div>
+      </div>
     `;
+    modal.classList.remove("hidden");
   }
 
-  function escapeHtml(s){
-    return String(s ?? "").replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+  function closeEdit() {
+    editingId = null;
+    if (modal) modal.classList.add("hidden");
   }
 
-  function render(){
-    const q = ($("qSearch").value || "").trim().toLowerCase();
-    const filtered = VEH.filter(v=>{
-      if (!q) return true;
-      return (v.name||"").toLowerCase().includes(q) || (v.class||"").toLowerCase().includes(q);
-    });
+  if (btnModalCancel) btnModalCancel.addEventListener("click", closeEdit);
+  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeEdit(); });
 
-    $("countPill").textContent = `${filtered.length} véhicule${filtered.length>1?"s":""}`;
-    tbody.innerHTML = filtered.length ? filtered.map(rowHtml).join("") :
-      `<tr><td colspan="6" class="muted">Aucun résultat.</td></tr>`;
-  }
+  async function saveEdit() {
+    if (!editingId) return;
+    const name = document.getElementById("editName")?.value?.trim();
+    const cls = document.getElementById("editClass")?.value?.trim();
+    const buy = Number(document.getElementById("editBuy")?.value || 0);
+    const sell = Number(document.getElementById("editSell")?.value || 0);
+    const notes = document.getElementById("editNotes")?.value?.trim() || "";
 
-  async function loadVehicles(){
-    try{
-      tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement…</td></tr>`;
-      const [field, dir] = getSortField();
-      const snap = await getDocs(query(collection(db,"vehicles"), orderBy(field, dir)));
-      VEH = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      render();
-    }catch(e){
-      console.error(e);
-      tbody.innerHTML = `<tr><td colspan="6" class="muted">Erreur de chargement.</td></tr>`;
-      toast("Impossible de charger les véhicules (permissions ?)", "err");
-    }
-  }
+    if (!name) return toast("Nom requis.");
 
-  function resetForm(){
-    $("inName").value = "";
-    $("inClass").value = "";
-    $("inBuy").value = "";
-    $("inSell").value = "";
-    $("inNotes").value = "";
-  }
-
-  $("btnReset").onclick = resetForm;
-
-  $("btnAdd").onclick = async () => {
-    if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
-
-    const name = $("inName").value.trim();
-    const cls = $("inClass").value.trim();
-    const buy = Number($("inBuy").value || 0);
-    const sell = Number($("inSell").value || 0);
-    const notes = $("inNotes").value.trim();
-
-    if (!name) return toast("Nom du véhicule requis.", "err");
-
-    try{
-      await addDoc(collection(db,"vehicles"), {
+    try {
+      await updateDoc(doc(db, "vehicles", editingId), {
         name,
         class: cls || "",
         buyPrice: buy,
         sellPrice: sell,
-        notes: notes || "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        notes,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser?.uid || null
       });
-      toast("Véhicule ajouté.", "ok");
+      toast("Véhicule mis à jour.");
+      closeEdit();
+      await loadVehicles();
+    } catch (e) {
+      console.error(e);
+      toast("Erreur: update");
+    }
+  }
+  if (btnModalSave) btnModalSave.addEventListener("click", saveEdit);
+
+  async function removeVehicle(id, name) {
+    if (!confirm(`Supprimer "${name}" ?`)) return;
+    try {
+      await deleteDoc(doc(db, "vehicles", id));
+      toast("Supprimé.");
+      await loadVehicles();
+    } catch (e) {
+      console.error(e);
+      toast("Erreur: delete");
+    }
+  }
+
+  function applyFilterAndRender() {
+    const q = (qSearch?.value || "").trim().toLowerCase();
+    const sort = selSort?.value || "name_az";
+
+    let rows = vehiclesCache.slice();
+
+    if (q) {
+      rows = rows.filter(v => {
+        const name = (v.name || "").toLowerCase();
+        const cls = (v.class || "").toLowerCase();
+        return name.includes(q) || cls.includes(q);
+      });
+    }
+
+    const cmpStr = (a, b) => (a || "").localeCompare(b || "");
+    const cmpNum = (a, b) => (Number(a||0) - Number(b||0));
+
+    rows.sort((A, B) => {
+      if (sort === "name_az") return cmpStr(A.name, B.name);
+      if (sort === "name_za") return cmpStr(B.name, A.name);
+      if (sort === "sell_desc") return cmpNum(B.sellPrice, A.sellPrice);
+      if (sort === "sell_asc") return cmpNum(A.sellPrice, B.sellPrice);
+      return cmpStr(A.name, B.name);
+    });
+
+    if (badgeCount) badgeCount.textContent = `${rows.length} véhicule${rows.length>1?"s":""}`;
+
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    for (const v of rows) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${v.name || "—"}</td>
+        <td class="muted">${v.class || "—"}</td>
+        <td>$${money(v.buyPrice)}</td>
+        <td>$${money(v.sellPrice)}</td>
+        <td class="muted">${v.notes ? v.notes : "—"}</td>
+        <td class="actions">
+          <button class="btn mini" data-act="edit">Modifier</button>
+          ${currentRole === "admin" ? `<button class="btn mini danger" data-act="del">Supprimer</button>` : ``}
+        </td>
+      `;
+      tr.querySelector('[data-act="edit"]').addEventListener("click", () => openEdit(v.id, v));
+      const del = tr.querySelector('[data-act="del"]');
+      if (del) del.addEventListener("click", () => removeVehicle(v.id, v.name || "véhicule"));
+      tbody.appendChild(tr);
+    }
+
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6" class="muted">Aucun véhicule.</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  async function loadVehicles() {
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement…</td></tr>`;
+    try {
+      const snap = await getDocs(query(collection(db, "vehicles"), orderBy("name")));
+      vehiclesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyFilterAndRender();
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = `<tr><td colspan="6" class="muted">Erreur de lecture.</td></tr>`;
+      toast("Permissions / règles Firestore ?");
+    }
+  }
+
+  async function addVehicle() {
+    const name = inName?.value?.trim();
+    const cls = inClass?.value?.trim() || "";
+    const buy = Number(inBuy?.value || 0);
+    const sell = Number(inSell?.value || 0);
+    const notes = inNotes?.value?.trim() || "";
+
+    if (!name) return toast("Nom requis.");
+
+    try {
+      await addDoc(collection(db, "vehicles"), {
+        name,
+        class: cls,
+        buyPrice: buy,
+        sellPrice: sell,
+        notes,
+        createdAt: serverTimestamp(),
+        createdBy: currentUser?.uid || null,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser?.uid || null
+      });
+      toast("Véhicule ajouté.");
       resetForm();
       await loadVehicles();
-    }catch(e){
+    } catch (e) {
       console.error(e);
-      toast("Erreur lors de l'ajout (permissions ?)", "err");
+      toast("Erreur: ajout");
     }
-  };
+  }
 
-  $("btnRefresh").onclick = loadVehicles;
-  $("qSearch").addEventListener("input", render);
-  $("selSort").addEventListener("change", loadVehicles);
+  if (btnAdd) btnAdd.addEventListener("click", addVehicle);
+  if (btnReset) btnReset.addEventListener("click", resetForm);
+  if (btnRefresh) btnRefresh.addEventListener("click", loadVehicles);
+  if (qSearch) qSearch.addEventListener("input", applyFilterAndRender);
+  if (selSort) selSort.addEventListener("change", applyFilterAndRender);
 
-  tbody.addEventListener("click", async (e)=>{
-    const btn = e.target.closest("button[data-act]");
-    if (!btn) return;
-    const id = btn.getAttribute("data-id");
-    const act = btn.getAttribute("data-act");
-    const v = VEH.find(x=>x.id===id);
-    if (!v) return;
+  // =========================
+  // Auth bootstrap
+  // =========================
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
 
-    if (act === "edit"){
-      if (!isStaff()) return toast("Accès refusé (staff requis).", "err");
-
-      openModal(
-        "Modifier le véhicule",
-        `
-          <div class="grid g2">
-            <div class="field">
-              <label>Nom</label>
-              <input id="mName" value="${escapeHtml(v.name||"")}" />
-            </div>
-            <div class="field">
-              <label>Classe</label>
-              <input id="mClass" value="${escapeHtml(v.class||"")}" />
-            </div>
-            <div class="field">
-              <label>Prix d'achat ($)</label>
-              <input id="mBuy" type="number" min="0" value="${Number(v.buyPrice||0)}" />
-            </div>
-            <div class="field">
-              <label>Prix de vente ($)</label>
-              <input id="mSell" type="number" min="0" value="${Number(v.sellPrice||0)}" />
-            </div>
-            <div class="field full">
-              <label>Notes</label>
-              <input id="mNotes" value="${escapeHtml(v.notes||"")}" />
-            </div>
-          </div>
-        `,
-        `
-          <button class="btn gold" id="mSave">Enregistrer</button>
-          <button class="btn" id="mClose">Annuler</button>
-        `
-      );
-
-      $("mClose").onclick = closeModal;
-      $("mSave").onclick = async ()=>{
-        const payload = {
-          name: $("mName").value.trim(),
-          class: $("mClass").value.trim(),
-          buyPrice: Number($("mBuy").value || 0),
-          sellPrice: Number($("mSell").value || 0),
-          notes: $("mNotes").value.trim(),
-          updatedAt: serverTimestamp()
-        };
-        if (!payload.name) return toast("Nom requis.", "err");
-        try{
-          await updateDoc(doc(db,"vehicles",id), payload);
-          toast("Véhicule modifié.", "ok");
-          closeModal();
-          await loadVehicles();
-        }catch(e){
-          console.error(e);
-          toast("Impossible de modifier (permissions ?)", "err");
-        }
-      };
-    }
-
-    if (act === "del"){
-      if (!isAdmin()) return toast("Suppression : admin uniquement.", "err");
-      openModal(
-        "Supprimer le véhicule",
-        `<div class="sub">Confirmer la suppression de <b>${escapeHtml(v.name)}</b> ?</div>`,
-        `
-          <button class="btn danger" id="mDoDel">Supprimer</button>
-          <button class="btn" id="mClose">Annuler</button>
-        `
-      );
-      $("mClose").onclick = closeModal;
-      $("mDoDel").onclick = async ()=>{
-        try{
-          await deleteDoc(doc(db,"vehicles",id));
-          toast("Véhicule supprimé.", "ok");
-          closeModal();
-          await loadVehicles();
-        }catch(e){
-          console.error(e);
-          toast("Impossible de supprimer (permissions ?)", "err");
-        }
-      };
-    }
-  });
-
-  // ========= Logout =========
-  $("btnLogoutTop").onclick = async () => {
-    try{ await signOut(auth); }catch(_){}
-    location.href = "index.html";
-  };
-
-  // ========= Boot =========
-  onAuthStateChanged(auth, async (u)=>{
-    if(!u){
-      // If your app uses an auth gate page, redirect
-      location.href = "index.html";
+    if (!user) {
+      if (elTopEmail) elTopEmail.textContent = "Non connecté";
+      if (elTopRole) elTopRole.textContent = "Role: —";
+      if (elTopState) elTopState.textContent = "Firestore - Live";
+      // keep the app visible, but nothing will load without auth.
+      vehiclesCache = [];
+      applyFilterAndRender();
       return;
     }
-    currentUser = u;
-    await loadRole(u);
+
+    if (elTopEmail) elTopEmail.textContent = user.email || user.uid;
+
+    currentRole = await readUserRole(user.uid);
+    if (elTopRole) elTopRole.textContent = `Rôle: ${currentRole}`;
+
     await loadVehicles();
   });
+
 </script>
+
 
 </body>
 </html>
