@@ -636,18 +636,19 @@ function safeParseFirebaseConfig(raw) {
     if (!modal || !ta) return alert("Modal de config introuvable.");
     ta.value = prefill || "";
     modal.classList.remove("hidden");
+    modal.style.display = "flex";
     setTimeout(() => ta.focus(), 50);
   }
 
   function closeFirebaseConfigModal() {
     const modal = document.getElementById("firebaseConfigModal");
-    if (modal) modal.classList.add("hidden");
+    if (modal) { modal.classList.add("hidden"); modal.style.display = "none"; }
   }
 
   // Wire config modal buttons
   (() => {
-    const btnSave = document.getElementById("btnSaveFirebase");
-    const btnCancel = document.getElementById("btnCancelFirebase");
+    const btnSave = document.getElementById("firebaseConfigSave");
+    const btnCancel = document.getElementById("firebaseConfigCancel");
     const ta = document.getElementById("firebaseConfigText");
 
     if (btnSave && ta) {
@@ -775,11 +776,12 @@ function safeParseFirebaseConfig(raw) {
       </div>
     `;
     modal.classList.remove("hidden");
+    modal.style.display = "flex";
   }
 
   function closeEdit() {
     editingId = null;
-    if (modal) modal.classList.add("hidden");
+    if (modal) { modal.classList.add("hidden"); modal.style.display = "none"; }
   }
 
   if (btnModalCancel) btnModalCancel.addEventListener("click", closeEdit);
