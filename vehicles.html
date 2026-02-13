@@ -572,7 +572,9 @@ select, select option{background:#fff;color:#000}
   // =========================
   // Firebase config (localStorage)
   // =========================
+  // Clé principale + compat (anciens fichiers)
   const LS_KEY = "PDM_FIREBASE_CONFIG";
+  const LS_KEY_COMPAT = "firebaseConfig";
 
   function toast(msg) {
     const t = document.getElementById("toast");
@@ -625,16 +627,38 @@ function safeParseFirebaseConfig(raw) {
   }
 
   function getStoredConfig() {
-    const raw = localStorage.getItem(LS_KEY);
+    const rawA = localStorage.getItem(LS_KEY);
+    const rawB = localStorage.getItem(LS_KEY_COMPAT);
+    const raw = rawA || rawB;
     if (!raw) return null;
+
+    const isValid = (o) => !!(o && typeof o === "object" && o.apiKey && o.authDomain && o.projectId);
+
     // 1) normal case: stored as JSON
-    try { return JSON.parse(raw); } catch {}
+    try {
+      const obj = JSON.parse(raw);
+      if (!isValid(obj)) throw new Error("invalid-config-shape");
+      // si ça venait de l'ancienne clé, on recopie vers la clé principale
+      try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch {}
+      return obj;
+    } catch {}
+
     // 2) legacy: stored as "const firebaseConfig = {...}" or JS object
-    const legacy = safeParseFirebaseConfig(raw);
-    if (legacy) {
-      try { localStorage.setItem(LS_KEY, JSON.stringify(legacy)); } catch {}
-      return legacy;
+    try {
+      const legacy = safeParseFirebaseConfig(raw);
+      if (legacy && isValid(legacy)) {
+        try {
+          const packed = JSON.stringify(legacy);
+          localStorage.setItem(LS_KEY, packed);
+          localStorage.setItem(LS_KEY_COMPAT, packed);
+        } catch {}
+        return legacy;
+      }
+    } catch (e) {
+      // config présente mais invalide => on la laisse visible à l'utilisateur
+      console.warn("Config Firebase invalide en localStorage", e);
     }
+
     return null;
   }
 
@@ -663,7 +687,12 @@ function safeParseFirebaseConfig(raw) {
       btnSave.addEventListener("click", () => {
         try {
           const cfg = safeParseFirebaseConfig(ta.value);
+          if (!(cfg && typeof cfg === "object" && cfg.apiKey && cfg.authDomain && cfg.projectId)) {
+            throw new Error("Champs requis manquants (apiKey/authDomain/projectId)");
+          }
           localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+          // compat: certains fichiers lisent encore "firebaseConfig"
+          try { localStorage.setItem(LS_KEY_COMPAT, JSON.stringify(cfg)); } catch {}
           try { ta.value = JSON.stringify(cfg, null, 2); } catch {}
           closeFirebaseConfigModal();
           location.reload();
