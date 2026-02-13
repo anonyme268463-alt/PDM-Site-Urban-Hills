@@ -627,7 +627,15 @@ function safeParseFirebaseConfig(raw) {
   function getStoredConfig() {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return null;
-    try { return JSON.parse(raw); } catch { return null; }
+    // 1) normal case: stored as JSON
+    try { return JSON.parse(raw); } catch {}
+    // 2) legacy: stored as "const firebaseConfig = {...}" or JS object
+    const legacy = safeParseFirebaseConfig(raw);
+    if (legacy) {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(legacy)); } catch {}
+      return legacy;
+    }
+    return null;
   }
 
   function openFirebaseConfigModal(prefill = "") {
@@ -655,7 +663,8 @@ function safeParseFirebaseConfig(raw) {
       btnSave.addEventListener("click", () => {
         try {
           const cfg = safeParseFirebaseConfig(ta.value);
-          localStorage.setItem(LS_KEY, ta.value.trim());
+          localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+          try { ta.value = JSON.stringify(cfg, null, 2); } catch {}
           closeFirebaseConfigModal();
           location.reload();
         } catch (e) {
