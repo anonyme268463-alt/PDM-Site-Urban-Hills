@@ -405,7 +405,7 @@ select, select option{background:#fff;color:#000}
         <a class="active" href="vehicles.html">Base véhicules</a>
         <a href="stock.html">Stock & réservations</a>
         <a href="ventes.html">Ventes véhicules</a>
-        <a href="partenariats.html">Partenariats</a>
+        <a class="active" href="partenariats.html">Partenariats</a>
         <a href="compta.html">Comptabilité</a>
       </nav>
       <div class="spacer"></div>
@@ -415,112 +415,83 @@ select, select option{background:#fff;color:#000}
     </aside>
 
     <main class="main">
-      <div class="topbar">
-        <div class="chips">
-          <div class="chip">BASE VÉHICULES</div>
-          <div id="chipUser" class="chip muted">Chargement…</div>
-          <div id="chipRole" class="chip muted">—</div>
-          <div id="chipEnv" class="chip muted">Firestore • Live</div>
+  <div class="section">
+    <h2>Gestion de la base véhicules</h2>
+    <p class="muted">Ajoute / modifie les véhicules et leurs prix (achat/vente). Utilisé ensuite dans Stock & Ventes.</p>
+  </div>
+
+  <div class="grid-2">
+    <section class="card">
+      <h3>Ajouter un véhicule</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Marque</label>
+          <input id="inBrand" placeholder="Ex: Ocelot" />
         </div>
-        <div class="top-actions">
-          <a class="btn small" href="ventes.html">Ventes</a>
-          <a class="btn small" href="stock.html">Stock</a>
-          <a class="btn small" href="dashboard.html">Dashboard</a>
-          <button id="btnLogoutTop" class="btn small danger">Déconnexion</button>
+        <div class="field">
+          <label>Modèle</label>
+          <input id="inModel" placeholder="Ex: XA-21" />
         </div>
-      </div>
-
-      <div class="layout">
-        <section class="card">
-          <h3>Gestion de la base véhicules</h3>
-          <div class="sub">
-            Ajoute / modifie les véhicules et leurs prix (achat/vente). Utilisé ensuite dans <b>Stock</b> & <b>Ventes</b>.
-          </div>
-        </section>
-
-        <div class="two">
-          <section class="card">
-            <h3>Ajouter un véhicule</h3>
-
-            <div class="grid g2">
-              <div class="field">
-                <label>Nom du véhicule</label>
-                <input id="inName" placeholder="Ex: Sultan RS" />
-              </div>
-              <div class="field">
-                <label>Catégorie / Classe</label>
-                <input id="inClass" placeholder="Ex: Sport / Super / Moto…" />
-              </div>
-
-              <div class="field">
-                <label>Prix d'achat ($)</label>
-                <input id="inBuy" type="number" min="0" placeholder="Ex: 250000" />
-              </div>
-              <div class="field">
-                <label>Prix de vente ($)</label>
-                <input id="inSell" type="number" min="0" placeholder="Ex: 320000" />
-              </div>
-
-              <div class="field full">
-                <label>Notes (optionnel)</label>
-                <input id="inNotes" placeholder="Ex: prix promo, conditions, etc." />
-              </div>
-            </div>
-
-            <div class="actions">
-              <button id="btnAdd" class="btn gold">Ajouter</button>
-              <button id="btnReset" class="btn">Réinitialiser</button>
-            </div>
-
-            <div class="hint">
-              Astuce: tu peux laisser la classe/notes vides, mais le nom est obligatoire.
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="head-row">
-              <h3>Véhicules</h3>
-              <div class="pill" id="countPill">0 véhicule</div>
-            </div>
-
-            <div class="tools">
-              <div class="left">
-                <input id="qSearch" placeholder="Rechercher (nom / classe)…" />
-              </div>
-              <div class="right">
-                <select id="selSort">
-                  <option value="name">Nom (A→Z)</option>
-                  <option value="buyPrice">Prix achat</option>
-                  <option value="sellPrice">Prix vente</option>
-                </select>
-                <button id="btnRefresh" class="btn small">Rafraîchir</button>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Classe</th>
-                    <th class="num">Achat</th>
-                    <th class="num">Vente</th>
-                    <th>Notes</th>
-                    <th class="actions-col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyVehicles">
-                  <tr><td colspan="6" class="muted">Chargement…</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="hint">
-              Staff peut créer/modifier. Suppression réservée à l’admin.
-            </div>
-          </section>
+        <div class="field">
+          <label>Catégorie / Classe</label>
+          <input id="inType" placeholder="Ex: Sport / Supersport" />
+        </div>
+        <div class="field">
+          <label>Prix d'achat ($)</label>
+          <input id="inBuy" type="number" placeholder="Ex: 70000" />
+        </div>
+        <div class="field">
+          <label>Prix de vente ($)</label>
+          <input id="inSell" type="number" placeholder="Ex: 120000" />
+        </div>
+        <div class="field full">
+          <label>Notes (optionnel)</label>
+          <input id="inNotes" placeholder="Ex: prix promo, limité, etc." />
         </div>
       </div>
+      <div class="actions">
+        <button id="btnAddVehicle" class="btn gold">Ajouter</button>
+        <button id="btnReset" class="btn">Réinitialiser</button>
+      </div>
+      <div class="hint">Astuce : tu peux laisser la catégorie vide, mais le nom ou la marque est obligatoire.</div>
+    </section>
+
+    <section class="card">
+      <h3>Véhicules</h3>
+      <div class="toolbar">
+        <input id="search" class="search" placeholder="Rechercher (marque / modèle / classe)..." />
+        <select id="sort" class="select">
+          <option value="name_az">Nom (A→Z)</option>
+          <option value="name_za">Nom (Z→A)</option>
+          <option value="sell_desc">Vente (↓)</option>
+          <option value="sell_asc">Vente (↑)</option>
+          <option value="buy_desc">Achat (↓)</option>
+          <option value="buy_asc">Achat (↑)</option>
+        </select>
+        <button id="btnRefresh" class="btn">Rafraîchir</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Classe</th>
+              <th>Achat</th>
+              <th>Vente</th>
+              <th>Notes</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyVehicles">
+            <tr><td colspan="6" class="muted">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="hint" id="countHint">—</div>
+    </section>
+  </div>
 </main>
   </div>
 
@@ -558,82 +529,316 @@ select, select option{background:#fff;color:#000}
     </div>
   </div>
 
-  
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+const $ = (id) => document.getElementById(id);
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import {
-    getFirestore, collection, addDoc, getDocs, query, orderBy,
-    serverTimestamp, doc, updateDoc, deleteDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  // =========================
-  // Firebase config (localStorage)
-  // =========================
-  // Clé principale + compat (anciens fichiers)
-  const LS_KEY = "PDM_FIREBASE_CONFIG";
-  const LS_KEY_COMPAT = "firebaseConfig";
-
-  function toast(msg) {
-    const t = document.getElementById("toast");
-    if (!t) return alert(msg);
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 2800);
-  }
-
-  // Parse JSON OR JS object literal (tolerant)
-  
-function parseFirebaseConfig(raw) {
-  if (!raw) return null;
-  const t = raw.trim();
-  // If already valid JSON
-  try { if (t.startsWith("{")) return JSON.parse(t); } catch(e) {}
-  // Extract object from "const firebaseConfig = {...};" or similar
-  const s = t.indexOf("{");
-  const e = t.lastIndexOf("}");
-  if (s === -1 || e === -1 || e <= s) return null;
-  const objText = t.slice(s, e + 1);
-  try { return JSON.parse(objText); } catch(e1) {}
-  try { return Function("return (" + objText + ")")(); } catch(e2) {}
-  return null;
+function toast(title, msg, ms = 2600) {
+  const box = $("toast");
+  $("toastTitle").textContent = title || "";
+  $("toastMsg").textContent = msg || "";
+  box.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => box.classList.remove("show"), ms);
 }
-function safeParseFirebaseConfig(raw) {
-    const s = (raw || "").trim();
-    if (!s) throw new Error("Config vide.");
 
-    // Try pure JSON
-    try { return JSON.parse(s); } catch (_) {}
+function openModal({ title, bodyHtml, onSave, hint = "" }) {
+  $("modalTitle").textContent = title || "Modifier";
+  $("modalBody").innerHTML = bodyHtml || "";
+  $("modalHint").textContent = hint || "";
+  $("modalOverlay").classList.add("show");
 
-    // Try JS object literal: allow unquoted keys + single quotes + trailing commas
-    let t = s;
+  const close = () => {
+    $("modalOverlay").classList.remove("show");
+    $("btnModalSave").onclick = null;
+    $("btnModalCancel").onclick = null;
+  };
 
-    // remove leading "const firebaseConfig =" etc
-    t = t.replace(/^\s*(const|let|var)\s+\w+\s*=\s*/i, "");
-    t = t.replace(/;\s*$/, "");
+  $("btnModalCancel").onclick = close;
+  $("modalOverlay").onclick = (e) => { if (e.target === $("modalOverlay")) close(); };
 
-    // single quotes -> double quotes
-    t = t.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, inner) => `"${inner.replace(/"/g,'\\"')}"`);
+  $("btnModalSave").onclick = async () => {
+    try { await onSave?.(close); }
+    catch (e) { console.error(e); toast("Erreur", e?.message || String(e)); }
+  };
+}
 
-    // quote unquoted keys
-    t = t.replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g, '$1"$2":');
+// ===== Firebase config =====
+const LS_KEY = "PDM_FIREBASE_CONFIG";
 
-    // remove trailing commas
-    t = t.replace(/,\s*([}\]])/g, "$1");
-
-    return JSON.parse(t);
+function normalizeConfigText(raw) {
+  let t = (raw || "").trim();
+  t = t.replace(/^\s*(const|let|var)\s+\w+\s*=\s*/i, "");
+  t = t.replace(/^\s*\w+\s*=\s*/i, "");
+  t = t.replace(/;+\s*$/, "");
+  if (t.startsWith("{") && t.endsWith("}")) {
+    try { JSON.parse(t); return t; } catch {}
+    let j = t.replace(/(\{|,)\s*([A-Za-z0-9_]+)\s*:/g, '$1 "$2":');
+    j = j.replace(/'/g, '"');
+    return j;
   }
+  return t;
+}
 
-  function getStoredConfig() {
+function getStoredConfig() {
   const raw = localStorage.getItem(LS_KEY);
   if (!raw) return null;
-  const cfg = parseFirebaseConfigText(raw);
-  return isValidFirebaseConfig(cfg) ? cfg : null;
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
-function isValidFirebaseConfig(cfg) {
-  return !!(cfg && typeof cfg === "object" && cfg.apiKey && cfg.projectId && cfg.appId);
+function openFirebaseConfigModal() {
+  const modal = $("firebaseConfigModal");
+  modal.style.display = "block";
+  $("firebaseConfigText").value = localStorage.getItem(LS_KEY) || "";
+  $("firebaseConfigSave").onclick = () => {
+    const raw = $("firebaseConfigText").value;
+    const normalized = normalizeConfigText(raw);
+    try {
+      const obj = JSON.parse(normalized);
+      localStorage.setItem(LS_KEY, JSON.stringify(obj));
+      modal.style.display = "none";
+      toast("OK", "Config Firebase sauvegardée.");
+      setTimeout(() => location.reload(), 250);
+    } catch (e) {
+      alert("Config invalide : " + (e?.message || e));
+    }
+  };
+  $("firebaseConfigCancel").onclick = () => { modal.style.display = "none"; };
 }
->
+
+const firebaseConfig = getStoredConfig();
+if (!firebaseConfig) {
+  openFirebaseConfigModal();
+  throw new Error("Firebase config manquante");
+}
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ===== Auth / Role =====
+let CURRENT_UID = null;
+let CURRENT_ROLE = "staff";
+
+async function loadRole(uid) {
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    return snap.exists() ? (snap.data().role || "staff") : "staff";
+  } catch {
+    return "staff";
+  }
+}
+
+function setChips(user, role) {
+  $("chipUser").textContent = user?.email || "—";
+  $("chipRole").textContent = role ? `Rôle : ${role}` : "Rôle : —";
+  $("chipStatus").textContent = "Firestore • Live";
+}
+
+$("btnLogout")?.addEventListener("click", async () => {
+  try { await signOut(auth); } catch {}
+  location.href = "index.html";
+});
+
+// ===== Vehicles UI =====
+const els = {
+  inBrand: $("inBrand"),
+  inModel: $("inModel"),
+  inType: $("inType"),
+  inBuy: $("inBuy"),
+  inSell: $("inSell"),
+  inNotes: $("inNotes"),
+  btnAdd: $("btnAddVehicle"),
+  btnReset: $("btnReset"),
+  btnRefresh: $("btnRefresh"),
+  tbody: $("tbodyVehicles"),
+  search: $("search"),
+  sort: $("sort"),
+  countHint: $("countHint"),
+};
+
+let ALL = [];
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+function num(v) {
+  const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+function money(v) {
+  const n = num(v);
+  return n ? ("$" + n.toLocaleString("en-US")) : "—";
+}
+function nameOf(v) {
+  const b = (v.brand || "").trim();
+  const m = (v.model || "").trim();
+  return (b + " " + m).trim() || "—";
+}
+function resetForm() {
+  els.inBrand.value = "";
+  els.inModel.value = "";
+  els.inType.value = "";
+  els.inBuy.value = "";
+  els.inSell.value = "";
+  els.inNotes.value = "";
+}
+
+els.btnReset?.addEventListener("click", resetForm);
+els.btnRefresh?.addEventListener("click", refreshList);
+els.search?.addEventListener("input", render);
+els.sort?.addEventListener("change", render);
+
+els.btnAdd?.addEventListener("click", async () => {
+  if (!CURRENT_UID) return toast("Erreur", "Non connecté.");
+  const brand = els.inBrand.value.trim();
+  const model = els.inModel.value.trim();
+  const type = els.inType.value.trim();
+  const buyPrice = num(els.inBuy.value);
+  const sellPrice = num(els.inSell.value);
+  const notes = els.inNotes.value.trim();
+
+  if (!brand && !model) return toast("Champs requis", "Marque ou modèle obligatoire.");
+  if (!sellPrice) return toast("Champs requis", "Prix de vente obligatoire.");
+
+  await addDoc(collection(db, "vehicles"), {
+    brand, model, type, buyPrice, sellPrice, notes,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    createdBy: CURRENT_UID
+  });
+
+  toast("OK", "Véhicule ajouté.");
+  resetForm();
+  await refreshList();
+});
+
+async function refreshList() {
+  if (!CURRENT_UID) return;
+  els.tbody.innerHTML = `<tr><td colspan="6" class="muted">Chargement...</td></tr>`;
+  const qy = query(collection(db, "vehicles"), orderBy("brand"), orderBy("model"));
+  const snap = await getDocs(qy);
+  ALL = [];
+  snap.forEach(d => ALL.push({ id: d.id, ...d.data() }));
+  render();
+}
+
+function getFilteredSorted() {
+  const q = (els.search.value || "").trim().toLowerCase();
+  let arr = ALL.slice();
+  if (q) arr = arr.filter(v => `${v.brand||""} ${v.model||""} ${v.type||""} ${v.notes||""}`.toLowerCase().includes(q));
+
+  const mode = els.sort.value;
+  const byName = (a,b) => nameOf(a).localeCompare(nameOf(b), "fr", { sensitivity:"base" });
+  const byNum = (key, dir) => (a,b) => (num(a[key]) - num(b[key])) * dir;
+
+  switch (mode) {
+    case "name_za": arr.sort((a,b)=>-byName(a,b)); break;
+    case "sell_desc": arr.sort(byNum("sellPrice",-1)); break;
+    case "sell_asc": arr.sort(byNum("sellPrice",1)); break;
+    case "buy_desc": arr.sort(byNum("buyPrice",-1)); break;
+    case "buy_asc": arr.sort(byNum("buyPrice",1)); break;
+    default: arr.sort(byName);
+  }
+  return arr;
+}
+
+function render() {
+  const arr = getFilteredSorted();
+  els.countHint.textContent = `${arr.length} véhicule${arr.length>1?"s":""}`;
+
+  if (!arr.length) {
+    els.tbody.innerHTML = `<tr><td colspan="6" class="muted">Aucun véhicule.</td></tr>`;
+    return;
+  }
+
+  els.tbody.innerHTML = arr.map(v => {
+    const canDelete = (CURRENT_ROLE === "admin");
+    return `
+      <tr>
+        <td>${esc(nameOf(v))}</td>
+        <td>${esc(v.type || "—")}</td>
+        <td>${money(v.buyPrice)}</td>
+        <td>${money(v.sellPrice)}</td>
+        <td class="muted">${esc((v.notes || "").slice(0, 40))}</td>
+        <td>
+          <button class="btn tiny" data-act="edit" data-id="${v.id}">Modifier</button>
+          ${canDelete ? `<button class="btn tiny danger" data-act="del" data-id="${v.id}">Suppr.</button>` : ``}
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  els.tbody.querySelectorAll("button[data-act]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const act = btn.getAttribute("data-act");
+      const v = ALL.find(x => x.id === id);
+      if (!v) return;
+      if (act === "edit") openEdit(v);
+      if (act === "del") doDelete(v);
+    });
+  });
+}
+
+function openEdit(v) {
+  const bodyHtml = `
+    <div class="form-grid">
+      <div class="field"><label>Marque</label><input id="mBrand" value="${esc(v.brand||"")}" /></div>
+      <div class="field"><label>Modèle</label><input id="mModel" value="${esc(v.model||"")}" /></div>
+      <div class="field"><label>Catégorie / Classe</label><input id="mType" value="${esc(v.type||"")}" /></div>
+      <div class="field"><label>Prix d'achat ($)</label><input id="mBuy" type="number" value="${num(v.buyPrice)}" /></div>
+      <div class="field"><label>Prix de vente ($)</label><input id="mSell" type="number" value="${num(v.sellPrice)}" /></div>
+      <div class="field full"><label>Notes</label><input id="mNotes" value="${esc(v.notes||"")}" /></div>
+    </div>
+  `;
+
+  openModal({
+    title: "Modifier le véhicule",
+    bodyHtml,
+    hint: "Enregistrer pour appliquer les modifications.",
+    onSave: async (close) => {
+      const brand = $("mBrand").value.trim();
+      const model = $("mModel").value.trim();
+      const type = $("mType").value.trim();
+      const buyPrice = num($("mBuy").value);
+      const sellPrice = num($("mSell").value);
+      const notes = $("mNotes").value.trim();
+
+      if (!brand && !model) throw new Error("Marque ou modèle obligatoire.");
+      if (!sellPrice) throw new Error("Prix de vente obligatoire.");
+
+      await updateDoc(doc(db, "vehicles", v.id), { brand, model, type, buyPrice, sellPrice, notes, updatedAt: serverTimestamp() });
+      toast("OK", "Véhicule modifié.");
+      close();
+      await refreshList();
+    }
+  });
+}
+
+async function doDelete(v) {
+  if (CURRENT_ROLE !== "admin") return toast("Refusé", "Seul un admin peut supprimer.");
+  if (!confirm(`Supprimer "${nameOf(v)}" ?`)) return;
+  await deleteDoc(doc(db, "vehicles", v.id));
+  toast("OK", "Véhicule supprimé.");
+  await refreshList();
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    setChips(null, null);
+    toast("Connexion requise", "Connecte-toi pour accéder aux véhicules.");
+    return;
+  }
+  CURRENT_UID = user.uid;
+  CURRENT_ROLE = await loadRole(user.uid);
+  setChips(user, CURRENT_ROLE);
+  await refreshList();
+});
+
+</script>
+</body>
+</html>
