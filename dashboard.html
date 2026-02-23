@@ -1,731 +1,88 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>PDM Admin — Partenariats</title>
-<link href="favicon.png" rel="icon" type="image/png"/>
-<style>
-    :root{
-      --bg:#07080c;
-      --card:rgba(10,12,18,.62);
-      --card2:rgba(10,12,18,.52);
-      --stroke:rgba(255,255,255,.08);
-      --stroke2:rgba(255,255,255,.12);
-      --text:rgba(255,255,255,.88);
-      --muted:rgba(255,255,255,.55);
-      --muted2:rgba(255,255,255,.42);
-      --gold1:#f6d26b;
-      --gold2:#b88222;
-      --danger:#ff6b6b;
-      --ok:#47e6a6;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius:18px;
-      --radius2:14px;
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:var(--font);
-      background: radial-gradient(1200px 700px at 20% 30%, rgba(40,80,255,.25), transparent 60%),
-                  radial-gradient(900px 600px at 78% 40%, rgba(255,60,60,.25), transparent 60%),
-                  radial-gradient(800px 600px at 55% 92%, rgba(255,210,80,.18), transparent 60%),
-                  linear-gradient(180deg, #06070b, #07080c 70%, #05060a);
-      color:var(--text);
-      overflow-x:hidden;
-    }
-    /* soft vignette like catalogue public */
-    body:before{
-      content:"";
-      position:fixed; inset:-20px;
-      background: radial-gradient(1200px 900px at 50% 45%, transparent 0%, rgba(0,0,0,.62) 65%, rgba(0,0,0,.82) 100%);
-      pointer-events:none;
-      z-index:-1;
-    }
-    a{color:inherit; text-decoration:none}
-    .app{
-      display:flex;
-      min-height:100vh;
-      gap:22px;
-      padding:18px 18px 26px;
-    }
-    /* Sidebar */
-    .sidebar{
-      width:250px;
-      min-width:250px;
-      background: rgba(10,12,18,.46);
-      border:1px solid var(--stroke);
-      border-radius: 18px;
-      padding:14px;
-      box-shadow: var(--shadow);
-      position:sticky;
-      top:18px;
-      height: calc(100vh - 44px);
-      display:flex;
-      flex-direction:column;
-      backdrop-filter: blur(10px);
-    }
-    .brand{
-      font-weight:800;
-      letter-spacing:.12em;
-      font-size:12px;
-      color:rgba(255,255,255,.72);
-      margin-bottom:10px;
-    }
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:6px;
-    }
-    .nav a{
-      padding:11px 12px;
-      border-radius: 12px;
-      border:1px solid rgba(255,255,255,.06);
-      background: rgba(0,0,0,.18);
-      color:rgba(255,255,255,.76);
-      font-size:13px;
-    }
-    .nav a:hover{border-color:rgba(255,255,255,.12); background: rgba(0,0,0,.22)}
-    .nav a.active{
-      background: linear-gradient(180deg, rgba(246,210,107,.22), rgba(184,130,34,.10));
-      border-color: rgba(246,210,107,.22);
-      color: rgba(255,255,255,.9);
-    }
-    .spacer{flex:1}
-    .side-actions{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:12px;
-    }
-    .btn{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      color: rgba(255,255,255,.86);
-      padding:10px 12px;
-      border-radius: 12px;
-      cursor:pointer;
-      font-weight:650;
-      font-size:12px;
-      transition:.12s transform ease, .12s background ease, .12s border-color ease;
-    }
-    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.16); background: rgba(0,0,0,.26)}
-    .btn.gold{
-      background: linear-gradient(180deg, rgba(246,210,107,.92), rgba(184,130,34,.92));
-      border-color: rgba(246,210,107,.30);
-      color:#1b1306;
-      box-shadow: 0 10px 22px rgba(184,130,34,.18);
-    }
-    .btn.danger{
-      background: rgba(255,80,80,.12);
-      border-color: rgba(255,80,80,.24);
-      color: rgba(255,210,210,.95);
-    }
-    .btn.small{padding:8px 10px; font-size:11px; border-radius: 11px}
-    /* Main */
-    .main{
-      flex:1;
-      max-width: 980px;
-      margin: 0 auto;
-      width:100%;
-    }
-    .topbar{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      justify-content:space-between;
-      padding:10px 12px;
-      border:1px solid var(--stroke);
-      border-radius: 16px;
-      background: rgba(10,12,18,.44);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-    .chips{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .chip{
-      padding:7px 10px;
-      border-radius: 999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      color: rgba(255,255,255,.8);
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .chip.muted{color:rgba(255,255,255,.6)}
-    .top-actions{display:flex; gap:10px; align-items:center}
-    .layout{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      margin-top:14px;
-    }
-    .card{
-      background: var(--card);
-      border:1px solid var(--stroke);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding:14px;
-      backdrop-filter: blur(12px);
-    }
-    .card h3{
-      margin:0 0 10px;
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color: rgba(255,255,255,.75);
-    }
-    .sub{
-      font-size:12px;
-      color: var(--muted);
-      margin:-4px 0 10px;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: 1.1fr 1.1fr .7fr 1.1fr;
-      gap:10px;
-      align-items:end;
-    }
-    label{display:block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.62); margin-bottom:6px}
-    input, select{
-      width:100%;
-      padding:10px 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.10);
-      color: rgba(255,255,255,.9);
-      outline:none;
-    }
-    select option{
-      background:#ffffff;
-      color:#000000;
-    }
-    input::placeholder{color: rgba(255,255,255,.32)}
-    .row-actions{display:flex; gap:10px; justify-content:flex-end}
-    .hint{font-size:11px; color: rgba(255,255,255,.48); margin-top:8px}
-    .two{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:14px;
-    }
-    .tools{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .tools .left, .tools .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .pill{
-      padding:8px 10px;
-      border-radius: 999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      color: rgba(255,255,255,.75);
-      font-size:12px;
-    }
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      overflow:hidden;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.08);
-    }
-    thead th{
-      text-align:left;
-      font-size:11px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color: rgba(255,255,255,.62);
-      padding:10px 10px;
-      background: rgba(0,0,0,.22);
-      border-bottom:1px solid rgba(255,255,255,.08);
-    }
-    tbody td{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      color: rgba(255,255,255,.82);
-      font-size:13px;
-      vertical-align:middle;
-    }
-    tbody tr:hover td{background: rgba(255,255,255,.02)}
-    tbody tr:last-child td{border-bottom:none}
-    .tag{
-      display:inline-flex;
-      padding:6px 9px;
-      border-radius: 999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      font-size:12px;
-      color: rgba(255,255,255,.72);
-    }
-    .tag.ok{border-color: rgba(71,230,166,.22); background: rgba(71,230,166,.10); color: rgba(171,255,225,.92)}
-    .tag.warn{border-color: rgba(246,210,107,.22); background: rgba(246,210,107,.10); color: rgba(255,240,200,.92)}
-    .tag.bad{border-color: rgba(255,80,80,.22); background: rgba(255,80,80,.10); color: rgba(255,210,210,.92)}
-    .td-actions{white-space:nowrap; text-align:right}
-    .toast{
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      max-width: 460px;
-      background: rgba(10,12,18,.82);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 16px;
-      padding: 12px 12px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      display:none;
-      z-index:50;
-    }
-    .toast.show{display:block}
-    .toast .t{font-weight:800; font-size:13px; margin-bottom:3px}
-    .toast .m{font-size:12px; color:rgba(255,255,255,.66)}
-    .modal-overlay{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:60;
-      padding:18px;
-    }
-    .modal-overlay.show{display:flex}
-    .modal{
-      width:min(740px, 96vw);
-      border-radius: 18px;
-      background: rgba(10,12,18,.86);
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: var(--shadow);
-      padding:14px;
-      backdrop-filter: blur(12px);
-    }
-    .modal h4{
-      margin:0 0 10px;
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color: rgba(255,255,255,.72);
-    }
-    .modal .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:12px}
-    @media (max-width: 980px){
-      .app{flex-direction:column}
-      .sidebar{position:relative; width:100%; height:auto; min-width:unset}
-      .main{max-width:100%}
-      .two{grid-template-columns:1fr}
-      .grid{grid-template-columns:1fr 1fr; }
-    }
-  
-/* Firebase config modal */
-#firebaseConfigModal{
-  position:fixed; inset:0; z-index:99999;
-  align-items:center; justify-content:center;
-  background:rgba(0,0,0,.65);
-  backdrop-filter: blur(8px);
-}
-#firebaseConfigModal .cfg-card{
-  width:min(720px, 92vw);
-  background: rgba(10,12,18,.92);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:16px;
-  padding:18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.55);
-}
-#firebaseConfigModal .cfg-title{ font-weight:800; letter-spacing:.2px; margin-bottom:6px; }
-#firebaseConfigModal .cfg-sub{ opacity:.85; font-size:13px; margin-bottom:10px; line-height:1.35; }
-#firebaseConfigModal .cfg-text{
-  width:100%; height:220px; resize:vertical;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;
-  padding:12px;
-  color:#fff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size:12px;
-  outline:none;
-}
-#firebaseConfigModal .cfg-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-#firebaseConfigModal .cfg-note{ opacity:.65; font-size:12px; margin-top:10px; }
-
-/* Select readability */
-select, select option{background:#fff;color:#000}
-
-  /* Extra layout for KPIs / form */
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .kpi{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18)}
-  .kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
-  .kpi .v{margin-top:6px;font-size:18px;font-weight:800}
-  .kpi .s{margin-top:2px;font-size:12px;color:rgba(255,255,255,.55)}
-  .grid-sale{display:grid; grid-template-columns: 1.25fr 1fr .8fr .6fr 1.25fr; gap:10px; align-items:end}
-  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  .help{font-size:12px;color:rgba(255,255,255,.55);line-height:1.35}
-  @media (max-width: 980px){
-    .kpis{grid-template-columns:repeat(2,1fr)}
-    .grid-sale{grid-template-columns:1fr 1fr}
-  }
-  @media (max-width: 520px){
-    .kpis{grid-template-columns:1fr}
-  }
-  
-/* combo autocomplete (like base clients) */
-.combo{ position:relative; }
-.combo-list{
-  position:absolute; left:0; right:0; top:calc(100% + 6px);
-  background: rgba(10,12,18,.96);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:14px;
-  overflow:hidden;
-  box-shadow: 0 18px 60px rgba(0,0,0,.55);
-  display:none;
-  z-index:80;
-}
-.combo-item{
-  padding:10px 12px;
-  cursor:pointer;
-  border-top:1px solid rgba(255,255,255,.06);
-  color: rgba(255,255,255,.88);
-  font-size:12px;
-}
-.combo-item:first-child{ border-top:none; }
-.combo-item:hover, .combo-item.active{ background: rgba(255,255,255,.06); }
-.combo-item .meta{ display:block; margin-top:2px; font-size:11px; opacity:.7; }
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Premium Deluxe Motorsport</title>
+    <link rel="stylesheet" href="app.css">
+    <link rel="icon" href="favicon-1.jpg" type="image/jpg">
 </head>
 <body>
-<div class="app">
-<aside class="sidebar">
-<div class="brand">PDM ADMIN</div>
-<nav class="nav">
-<a href="dashboard.html">Dashboard</a>
-<a href="clients.html">Base clients</a>
-<a href="vehicles.html">Base véhicules</a>
-<a href="stock.html">Stock &amp; réservations</a>
-<a href="ventes.html">Ventes véhicules</a>
-<a href="partenariats.html">Partenariats</a>
-<a href="compta.html">Comptabilité</a>
-</nav>
-<div class="spacer"></div>
-<div class="side-actions">
-<button class="btn danger" id="btnLogoutSide">Déconnexion</button>
-</div>
-</aside>
-<main class="main">
-<div class="topbar">
-<div class="chips">
-<div class="chip">Dashboard</div>
-<div class="chip muted" id="chipUser">Chargement…</div>
-<div class="chip muted" id="chipRole">—</div>
-<div class="chip muted" id="chipEnv">Firestore • Live</div>
-</div>
-<div class="top-actions">
-<a class="btn small" href="ventes.html">Ventes</a>
-<a class="btn small" href="stock.html">Stock</a>
-<a class="btn small" href="dashboard.html">Dashboard</a>
-<button class="btn small danger" id="btnLogoutTop">Déconnexion</button>
-</div>
-</div>
+    <!-- HEADER (commun à toutes les pages) -->
+    <header class="header">
+        <div class="header-left">
+            <h1>PDM Urban Hills</h1>
+            <span class="subtitle">Premium Deluxe Motorsport</span>
+        </div>
+        <div class="header-right">
+            <button class="btn-logout" onclick="logout()">Déconnexion</button>
+        </div>
+    </header>
 
-<div class="layout">
-<section class="card">
-<h3>Vue globale</h3>
-<div class="sub">Ce dashboard est <b>lecture seule</b>. Les ventes se font dans <b>Ventes véhicules</b>.</div>
-<div class="kpis">
-<div class="kpi">
-<div class="k">CA semaine (ventes)</div>
-<div class="v" id="kWeekSales">$ 0</div>
-<div class="s" id="kWeekSalesS">—</div>
-</div>
-<div class="kpi">
-<div class="k">CA total (ventes)</div>
-<div class="v" id="kAllSales">$ 0</div>
-<div class="s" id="kAllSalesS">—</div>
-</div>
-<div class="kpi">
-<div class="k">Stock</div>
-<div class="v" id="kStock">0</div>
-<div class="s" id="kStockS">items</div>
-</div>
-<div class="kpi">
-<div class="k">Réservations</div>
-<div class="v" id="kResa">0</div>
-<div class="s" id="kResaS">items</div>
-</div>
-</div>
-<div class="hint" style="margin-top:10px">
-            Sources:
-            <span class="mono">transactions</span> (ventes) + <span class="mono">inventory</span> (stock/résa).
-          </div>
-</section>
-<section class="card">
-<h3>Activité récente</h3>
-<div class="tools">
-<div class="left">
-<input id="q" placeholder="Rechercher client / véhicule / vendeur…"/>
-<select id="filterType">
-<option value="all">Toutes ventes</option>
-<option value="sale_direct">Vente directe</option>
-<option value="sale_stock">Vente depuis stock</option>
-<option value="sale_reservation">Vente depuis réservation</option>
-</select>
-</div>
-<div class="right">
-<span class="pill" id="count">0</span>
-<button class="btn" id="btnRefresh">Rafraîchir</button>
-</div>
-</div>
-<div style="overflow:auto">
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Type</th>
-<th>Client</th>
-<th>Véhicule</th>
-<th>Qté</th>
-<th>Vendeur</th>
-<th style="text-align:right">Montant</th>
-</tr>
-</thead>
-<tbody id="rows"></tbody>
-</table>
-</div>
-</section>
-</div></main>
-</div>
-<div class="toast" id="toast">
-<div class="t" id="toastTitle"></div>
-<div class="m" id="toastMsg"></div>
-</div>
-<!-- Modal -->
-<div aria-modal="true" class="modal-overlay" id="modalOverlay" role="dialog">
-<div class="modal">
-<h4 id="modalTitle">Modifier</h4>
-<div id="modalBody"></div>
-<div class="modal-actions">
-<button class="btn" id="btnModalCancel">Annuler</button>
-<button class="btn gold" id="btnModalSave">Enregistrer</button>
-</div>
-<div class="hint" id="modalHint"></div>
-</div>
-</div>
-<!-- Firebase config modal (auto) -->
-<div id="firebaseConfigModal" style="display:none">
-<div class="cfg-card">
-<div class="cfg-title">Configurer Firebase</div>
-<div class="cfg-sub">
-        Colle ici ta config <b>firebaseConfig</b>. Elle sera sauvegardée dans ton navigateur (localStorage) et réutilisée sur toutes les pages.
-      </div>
-<textarea class="cfg-text" id="firebaseConfigText" placeholder="Colle ici : const firebaseConfig = { ... };"></textarea>
-<div class="cfg-actions">
-<button class="btn" id="firebaseConfigCancel">Annuler</button>
-<button class="btn gold" id="firebaseConfigSave">Sauvegarder</button>
-</div>
-<div class="cfg-note">Si tu es sur iPhone / navigation privée, le stockage peut être bloqué.</div>
-</div>
-</div>
+    <!-- SIDEBAR (menu commun à toutes les pages) -->
+    <aside class="sidebar">
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-link active">Dashboard</a>
+            <a href="clients-1.html" class="nav-link">Clients</a>
+            <a href="vehicles.html" class="nav-link">Véhicules</a>
+            <a href="stock.html" class="nav-link">Stock</a>
+            <a href="ventes-2.html" class="nav-link">Ventes</a>
+            <a href="partenariats.html" class="nav-link">Partenariats</a>
+            <a href="compta.html" class="nav-link">Comptabilité</a>
+        </nav>
+    </aside>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore, collection, doc, getDoc, getDocs,
-      query, where, orderBy, limit
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <!-- CONTENU PRINCIPAL (change selon la page) -->
+    <main class="main-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Véhicules</h3>
+                <div class="stat-number">--</div>
+            </div>
+            <div class="stat-card">
+                <h3>Clients Actifs</h3>
+                <div class="stat-number">--</div>
+            </div>
+            <div class="stat-card">
+                <h3>Chiffre d'Affaires</h3>
+                <div class="stat-number">--</div>
+            </div>
+            <div class="stat-card">
+                <h3>Stock Disponible</h3>
+                <div class="stat-number">--</div>
+            </div>
+        </div>
 
-    function loadFirebaseConfig(){
-      try{
-        const raw = localStorage.getItem("PDM_FIREBASE_CONFIG");
-        if(!raw) return null;
-        let txt = String(raw).trim();
-        const objMatch = txt.match(/\{[\s\S]*\}/);
-        if(objMatch) txt = objMatch[0];
-        try{ return JSON.parse(txt); }catch(e){}
-        try{ return (new Function("return (" + txt + ");"))(); }catch(e){}
-        return null;
-      }catch(e){
-        return null;
-      }
-    }
+        <div class="content-section">
+            <h2>Activité récente</h2>
+            <div class="table-container">
+                <!-- Tableau des dernières transactions/clients/ventes -->
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Véhicule</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Les lignes seront remplies par JavaScript -->
+                        <tr><td colspan="5">Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-    function showFirebaseConfigModal(){
-      return new Promise((resolve)=>{
-        const modal = document.getElementById("firebaseConfigModal");
-        const ta = document.getElementById("firebaseConfigText");
-        const btn = document.getElementById("firebaseConfigSave");
-        const cancel = document.getElementById("firebaseConfigCancel");
-        modal.style.display = "flex";
-
-        btn.onclick = () => {
-          const v = ta.value.trim();
-          if(!v){ alert("Colle ta config Firebase (bloc firebaseConfig)."); return; }
-          localStorage.setItem("PDM_FIREBASE_CONFIG", v);
-          modal.style.display = "none";
-          resolve(true);
-          location.reload();
-        };
-        cancel.onclick = () => {
-          modal.style.display = "none";
-          resolve(false);
-        };
-      });
-    }
-
-    async function ensureFirebaseConfig(){
-      const cfg = loadFirebaseConfig();
-      if(cfg) return cfg;
-      await showFirebaseConfigModal();
-      throw new Error("Firebase config manquante");
-    }
-
-    const firebaseConfig = await ensureFirebaseConfig();
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const $ = (id)=>document.getElementById(id);
-    let toastTimer=null;
-    function toast(title,msg){
-      $("toastTitle").textContent = title;
-      $("toastMsg").textContent = msg || "";
-      $("toast").classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(()=> $("toast").classList.remove("show"), 4200);
-    }
-
-    const norm = (s)=> (s ?? "").toString().trim();
-    const normKey = (s)=> norm(s).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
-    const esc = (s)=> (s ?? "").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    const fmtMoney = (n)=> "$ " + Number(n||0).toLocaleString("en-US");
-    const fmtDate = (ts)=> {
-      if(!ts) return "—";
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleString("fr-FR", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
-    };
-
-    function bindLogout(btn){
-      btn.addEventListener("click", async ()=>{
-        try{ await signOut(auth); }catch(e){}
-        window.location.href = "pdm-staff.html";
-      });
-    }
-    bindLogout($("btnLogoutTop"));
-    bindLogout($("btnLogoutSide"));
-
-    let me=null;
-    async function loadProfile(uid){
-      const snap = await getDoc(doc(db,"users",uid));
-      if(!snap.exists()) return null;
-      const d = snap.data();
-      if(d.active === false) return null;
-      return { uid, name: d.name || "Utilisateur", role: (d.role || "staff").toLowerCase() };
-    }
-
-    const invCol = collection(db,"inventory");
-    const txCol = collection(db,"transactions");
-
-    let sales=[];
-    function saleTypeText(t){
-      if(t==="sale_reservation") return "Vente depuis réservation";
-      if(t==="sale_stock") return "Vente depuis stock";
-      return "Vente directe";
-    }
-
-    function startOfWeek(d){
-      // week starts Monday
-      const x = new Date(d);
-      const day = (x.getDay()+6)%7; // 0..6
-      x.setHours(0,0,0,0);
-      x.setDate(x.getDate()-day);
-      return x;
-    }
-
-    async function refreshAll(){
-      try{
-        // Inventory counts
-        const sSnap = await getDocs(query(invCol, where("status","==","stock")));
-        const rSnap = await getDocs(query(invCol, where("status","==","reservation")));
-        $("kStock").textContent = String(sSnap.size);
-        $("kResa").textContent = String(rSnap.size);
-
-        // Sales
-        const txSnap = await getDocs(query(txCol, orderBy("createdAt","desc"), limit(400)));
-        sales = txSnap.docs.map(d=>({id:d.id, ...d.data()})).filter(x=> String(x.type||"").startsWith("sale_"));
-
-        const total = sales.reduce((acc,x)=> acc + Number(x.sellPrice ?? x.price ?? 0), 0);
-        $("kAllSales").textContent = fmtMoney(total);
-        $("kAllSalesS").textContent = sales.length + " vente(s)";
-
-        const weekStart = startOfWeek(new Date());
-        const weekSales = sales.filter(x=>{
-          const dt = x.createdAt?.toDate ? x.createdAt.toDate() : null;
-          return dt && dt >= weekStart;
+    <!-- Scripts -->
+    <script type="module" src="app.js"></script>
+    <script>
+        // Fonction spécifique au dashboard (sera appelée au chargement)
+        window.addEventListener('load', function() {
+            loadDashboard(); // À implémenter dans app.js
         });
-        const wTotal = weekSales.reduce((acc,x)=> acc + Number(x.sellPrice ?? x.price ?? 0), 0);
-        $("kWeekSales").textContent = fmtMoney(wTotal);
-        $("kWeekSalesS").textContent = weekSales.length + " vente(s)";
-
-        renderSales();
-      }catch(e){
-        console.error(e);
-        toast("Erreur Firestore", e.message || String(e));
-      }
-    }
-
-    function renderSales(){
-      const q = normKey($("q").value);
-      const ft = $("filterType").value;
-
-      let rows = sales.filter(x=>{
-        if(ft!=="all" && x.type!==ft) return false;
-        if(!q) return true;
-        const hay = normKey((x.clientName||x.client||"") + " " + (x.vehicle||"") + " " + (x.sellerName||"") + " " + (x.detail||""));
-        return hay.includes(q);
-      });
-
-      $("count").textContent = String(rows.length);
-
-      $("rows").innerHTML = rows.slice(0,120).map(x=>{
-        const amt = Number(x.sellPrice ?? x.price ?? 0);
-        return `
-          <tr>
-            <td>${fmtDate(x.createdAt)}</td>
-            <td><span class="tag warn">${esc(saleTypeText(x.type))}</span></td>
-            <td>${esc(x.clientName || x.client || "—")}</td>
-            <td>${esc(x.vehicle || ((x.brand||"") + " " + (x.model||"")).trim())}</td>
-            <td><span class="tag ok">${Number(x.qty||1)}</span></td>
-            <td>${esc(x.sellerName||"—")}</td>
-            <td style="text-align:right"><span class="tag ok">${fmtMoney(amt)}</span></td>
-          </tr>
-        `;
-      }).join("") || `<tr><td colspan="7" style="padding:14px;color:rgba(255,255,255,.55)">Aucune vente.</td></tr>`;
-    }
-
-    $("btnRefresh").addEventListener("click", refreshAll);
-    $("q").addEventListener("input", renderSales);
-    $("filterType").addEventListener("change", renderSales);
-
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user){
-        $("chipUser").textContent = "Non connecté";
-        $("chipRole").textContent = "—";
-        toast("Connexion requise","Connecte-toi pour accéder au dashboard.");
-        return;
-      }
-      me = await loadProfile(user.uid);
-      if(!me){
-        $("chipUser").textContent = "Accès refusé";
-        $("chipRole").textContent = "—";
-        toast("Accès refusé","Profil Firestore manquant/désactivé.");
-        return;
-      }
-      $("chipUser").textContent = me.name;
-      $("chipRole").textContent = me.role === "admin" ? "ADMIN" : "STAFF";
-      await refreshAll();
-    });
-  </script></body>
+    </script>
+</body>
 </html>
