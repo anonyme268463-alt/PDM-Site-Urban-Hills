@@ -1,137 +1,10 @@
-/* ===== Layout global (sidebar + main) ===== */
-.layout{
-  display:flex;
-  min-height:100vh;
-}
+/* RESET + BASE */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #fff; }
 
-.sidebar{
-  width:260px;
-  padding:16px;
-  position:sticky;
-  top:0;
-  height:100vh;
-  border-right:1px solid rgba(255,255,255,.08);
-  background:rgba(0,0,0,.35);
-  backdrop-filter: blur(10px);
-}
-
-.sb-title{
-  font-weight:800;
-  letter-spacing:.08em;
-  margin-bottom:16px;
-  opacity:.9;
-}
-
-.sb-link{
-  display:block;
-  padding:10px 12px;
-  border-radius:12px;
-  margin-bottom:8px;
-  text-decoration:none;
-  color:inherit;
-  border:1px solid rgba(255,255,255,.06);
-  background:rgba(255,255,255,.03);
-}
-
-.sb-link:hover{
-  background:rgba(255,255,255,.06);
-}
-
-.sb-spacer{
-  height:16px;
-  margin-top:16px;
-  border-top:1px solid rgba(255,255,255,.08);
-}
-
-.sb-btn{
-  width:100%;
-  margin-top:16px;
-  padding:10px 12px;
-  border-radius:12px;
-  border:none;
-  cursor:pointer;
-}
-
-.main{
-  flex:1;
-  padding:20px;
-}
-
-/* petite aide visuelle si ta page a un fond sombre */
-body{
-  margin:0;
-  color:#eee;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-}
-/* ---- PDM theme bridge (prevents flashbang) ---- */
-body.pdm{
-  margin:0;
-  background: #05070b;
-  color: rgba(255,255,255,.9);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
-
-/* main zone looks like dashboard panels */
-body.pdm .main{
-  padding: 28px;
-}
-
-body.pdm h1, body.pdm h2, body.pdm h3{
-  color: rgba(255,255,255,.92);
-}
-/* ---- Sidebar dark/glass ---- */
-body.pdm .layout{
-  display:flex;
-  min-height:100vh;
-}
-
-body.pdm .sidebar{
-  width: 240px;
-  padding: 18px;
-  background: rgba(255,255,255,.06);
-  border-right: 1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(12px);
-}
-
-body.pdm .sb-title{
-  font-weight: 800;
-  letter-spacing: .08em;
-  opacity: .9;
-  margin-bottom: 14px;
-}
-
-body.pdm .sb-link{
-  display:block;
-  padding: 10px 12px;
-  border-radius: 12px;
-  color: rgba(255,255,255,.86);
-  text-decoration:none;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(0,0,0,.20);
-  margin-bottom: 10px;
-}
-
-body.pdm .sb-link:hover{
-  background: rgba(255,255,255,.08);
-}
-
-body.pdm .sb-link.active{
-  outline: 2px solid rgba(212,175,55,.35);
-}
-
-body.pdm .sb-btn{
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 0;
-  cursor: pointer;
-  font-weight: 800;
-  background: linear-gradient(180deg,#ffbb4b,#ff5e5e);
-  color: #1a0606;
-
-  /* Layout staff commun */
+/* HEADER */
 .header {
-    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    background: #1a1a1a;
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
@@ -141,11 +14,19 @@ body.pdm .sb-btn{
     top: 0;
     z-index: 100;
 }
-
-.header h1 { color: #ff6b35; margin: 0; font-size: 1.8rem; }
+.header h1 { color: #ff6b35; font-size: 1.8rem; }
 .subtitle { color: #ccc; font-size: 0.9rem; }
-.btn-logout { background: #ff4757; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; }
+.btn-logout {
+    background: #ff4757;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
 
+/* SIDEBAR */
 .sidebar {
     width: 250px;
     background: #111;
@@ -156,8 +37,7 @@ body.pdm .sb-btn{
     padding: 2rem 0;
     box-shadow: 2px 0 10px rgba(0,0,0,0.3);
 }
-
-.nav-link {
+.nav-menu a {
     display: block;
     padding: 1rem 2rem;
     color: #ccc;
@@ -165,13 +45,13 @@ body.pdm .sb-btn{
     border-left: 3px solid transparent;
     transition: all 0.3s;
 }
-
-.nav-link:hover, .nav-link.active { 
-    background: #ff6b35; 
-    color: white; 
-    border-left-color: #e55a2b; 
+.nav-menu a:hover, .nav-menu a.active {
+    background: #ff6b35;
+    color: white;
+    border-left-color: #e55a2b;
 }
 
+/* MAIN CONTENT */
 .main-content {
     margin-left: 250px;
     margin-top: 80px;
@@ -179,13 +59,13 @@ body.pdm .sb-btn{
     min-height: calc(100vh - 80px);
 }
 
+/* STATS CARDS */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
-
 .stat-card {
     background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
     padding: 1.5rem;
@@ -193,22 +73,28 @@ body.pdm .sb-btn{
     text-align: center;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
+.stat-number {
+    font-size: 2.5rem;
+    color: #ff6b35;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
 
-.stat-number { font-size: 2.5rem; color: #ff6b35; font-weight: bold; margin-top: 0.5rem; }
-
+/* TABLEAU */
+.content-section { margin-bottom: 2rem; }
+.table-container { background: #2d2d2d; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    background: #2d2d2d;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
-
-.data-table th, .data-table td {
+.data-table th {
+    background: #ff6b35;
+    color: white;
     padding: 1rem;
     text-align: left;
+}
+.data-table td {
+    padding: 1rem;
     border-bottom: 1px solid #444;
 }
-
-.data-table th { background: #ff6b35; color: white; }
+.data-table tr:hover { background: #3a3a3a; }
