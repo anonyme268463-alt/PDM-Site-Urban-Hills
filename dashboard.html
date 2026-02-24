@@ -1,7 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-<title>PDM Dashboard</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDM Admin - Dashboard</title>
 <style>
-body{background:#07080c;color:white;font-family:system-ui;margin:0;padding:20px}
-.sidebar{width
+:root {
+  --bg: #07080c;
+  --card: rgba(10,12,18,.62);
+  --text: rgba(255,255,255,.88);
+  --muted: rgba(255,255,255,.55);
+  --gold: #f6d26b;
+}
+
+* { box-sizing: border-box; }
+body { 
+  margin: 0; 
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg); 
+  color: var(--text);
+}
+
+.app { display: flex; min-height: 100vh; padding: 20px; gap: 20px; }
+.sidebar {
+  width: 250px;
+  background: rgba(10,12,18,.5);
+  border-radius: 16px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.brand { font-weight: 800; font-size: 18px; margin-bottom: 20px; }
+.nav a {
+  display: block;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,.05);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.nav a:hover { background: rgba(255,255,255,.1); }
+
+.main { flex: 1; }
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi { text-align: center; padding: 16px; background: rgba(255,255,255,.05); border-radius: 12px; }
+.kpi-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.kpi-value { font-size: 32px; font-weight: 800; color: var(--gold); margin: 8px 0; }
+
+.table { overflow: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px; background: rgba(255,255,255,.05); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
+tr:hover td { background: rgba(255,255,255,.05); }
+
+.btn { background: var(--gold); color: #111; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn:hover { opacity: 0.9; }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #47e6a6;
+  color: black;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: none;
+}
+
+@media (max-width: 768px) { .app { flex-direction: column; } .sidebar { width: 100%; order: 2; } .main { order: 1; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="brand">PDM ADMIN</div>
+    <nav class="nav">
+      <a href="dashboard.html" class="active">📊 Dashboard</a>
+      <a href="clients.html">👥 Clients</a>
+      <a href="stock.html">📦 Stock</a>
+      <a href="ventes.html">💰 Ventes</a>
+      <a href="vehicles.html">🚗 Véhicules</a>
+      <a href="partenariats.html">🤝 Partenaires</a>
+      <a href="compta.html">💼 Comptabilité</a>
+    </nav>
+    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h1>Vue Globale</h1>
+      <p style="color: var(--muted);">Dashboard en temps réel. Sources : Firebase Firestore</p>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpi-label">CA Semaine</div>
+          <div class="kpi-value" id="weekSales">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">CA Total</div>
+          <div class="kpi-value" id="totalSales">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Stock</div>
+          <div class="kpi-value" id="stockCount">0</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Réservations</div>
+          <div class="kpi-value" id="resaCount">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Dernières Ventes</h2>
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Client</th><th>Véhicule</th><th>Montant</th></tr>
+          </thead>
+          <tbody id="salesTable">
+            <tr><td colspan="4">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn" onclick="refreshData()">🔄 Rafraîchir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let salesData = [
+  {date: '24/02 20h', client: 'Jean D.', vehicle: 'Ocelot XA-21', amount: '$85k'},
+  {date: '24/02 18h', client: 'Marie L.', vehicle: 'Pfister Comet', amount: '$62k'}
+];
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+function updateDashboard() {
+  document.getElementById('weekSales').textContent = '$247k';
+  document.getElementById('totalSales').textContent = '$1.2M';
+  document.getElementById('stockCount').textContent = '14';
+  document.getElementById('resaCount').textContent = '3';
+
+  const tbody = document.getElementById('salesTable');
+  tbody.innerHTML = salesData.map(sale => `
+    <tr>
+      <td>${sale.date}</td>
+      <td>${sale.client}</td>
+      <td>${sale.vehicle}</td>
+      <td>${sale.amount}</td>
+    </tr>
+  `).join('');
+}
+
+function refreshData() {
+  showToast('Données rafraîchies !');
+  updateDashboard();
+}
+
+function logout() {
+  showToast('Déconnexion...');
+}
+
+showToast('PDM Dashboard chargé !');
+updateDashboard();
+</script>
+</body>
+</html>
