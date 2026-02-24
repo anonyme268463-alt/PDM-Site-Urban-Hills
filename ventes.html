@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PDM Admin - Ventes</title>
+  <link rel="stylesheet" href="app.css">
 <style>
 :root {
   --bg: #07080c;
@@ -164,28 +165,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 <div class="toast" id="toast"></div>
 
 <script>
-let sales = [
-  {
-    date: '24/02 20h',
-    type: 'Vente directe',
-    client: 'Anonyme',
-    vehicle: 'Ocelot XA-21',
-    qty: 1,
-    seller: 'Paul R.',
-    buy: 65000,
-    sell: 85000
-  },
-  {
-    date: '24/02 18h',
-    type: 'Vente depuis réservation',
-    client: 'Jean D.',
-    vehicle: 'Pfister Comet',
-    qty: 1,
-    seller: 'Marie L.',
-    buy: 45000,
-    sell: 62000
-  }
-];
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
