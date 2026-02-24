@@ -1,37 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="app.css">
 <title>PDM Dashboard</title>
-</head>
-<body>
-<div class="sidebar">
-<h2>PDM Admin</h2>
-<a href="dashboard.html"><div class="btn">Dashboard</div></a>
-<a href="clients.html"><div class="btn">Clients</div></a>
-<a href="stock.html"><div class="btn">Stock</div></a>
-<a href="ventes.html"><div class="btn">Ventes</div></a>
-</div>
-<div class="main">
-<h1>Dashboard PDM</h1>
-<div class="chip">CA Semaine: $0</div>
-<div class="chip">Stock: 0 items</div>
-<div class="table">
-<table>
-<tr><th>Véhicule</th><th>Prix</th></tr>
-<tr><td>Chargement...</td></tr>
-</table>
-</div>
-<div class="toast" id="toast">OK !</div>
-</div>
-
-<script>
-function showToast(msg) {
-  document.getElementById('toast').innerText = msg;
-  document.getElementById('toast').style.display = 'block';
-  setTimeout(()=>document.getElementById('toast').style.display = 'none', 2000);
-}
-showToast('Dashboard OK !');
-</script>
-</body>
-</html>
+<style>
+body{background:#07080c;color:white;font-family:system-ui;margin:0;padding:20px}
+.sidebar{width
