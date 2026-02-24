@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PDM Admin - Clients</title>
+<link rel="stylesheet" href="app.css">
 <style>
 :root {
   --bg: #07080c;
@@ -146,10 +147,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 <div class="toast" id="toast"></div>
 
 <script>
-let clients = [
-  {name: 'Jean Dupont', phone: '06 12 34 56 78', permis: 'B', voiture: 'Oui', moto: 'Non', camion: 'Non'},
-  {name: 'Marie Martin', phone: '06 98 76 54 32', permis: 'B+E', voiture: 'Oui', moto: 'Oui', camion: 'Oui'}
-];
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
