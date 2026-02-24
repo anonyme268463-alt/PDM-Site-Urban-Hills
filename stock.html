@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PDM Admin - Stock & Réservations</title>
+  <link rel="stylesheet" href="app.css">
 <style>
 :root {
   --bg: #07080c;
@@ -178,14 +179,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 <div class="toast" id="toast"></div>
 
 <script>
-let stock = [
-  {brand: 'Ocelot', model: 'XA-21', qty: 2},
-  {brand: 'Pfister', model: 'Comet', qty: 1}
-];
-
-let reservations = [
-  {client: 'Jean D.', brand: 'Benefactor', model: 'Surron', qty: 1}
-];
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
