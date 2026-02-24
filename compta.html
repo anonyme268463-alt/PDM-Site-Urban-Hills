@@ -324,17 +324,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 <div class="toast" id="toast"></div>
 
 <script>
-let transactions = [
-  {date: '24/02 20h', vehicle: 'Ocelot XA-21', buy: 65000, sell: 85000, seller: 'Paul R.'},
-  {date: '24/02 18h', vehicle: 'Pfister Comet', buy: 45000, sell: 62000, seller: 'Marie L.'}
-];
-
-let cashbook = [
-  {date: '24/02', type: 'Revenu', amount: 5000, reason: 'Tombola'},
-  {date: '24/02', type: 'Dépense', amount: -1200, reason: 'Team building'}
-];
-
-let previousCash = 150000;
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
