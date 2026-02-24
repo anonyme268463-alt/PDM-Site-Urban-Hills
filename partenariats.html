@@ -1,1 +1,345 @@
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDM Admin - Partenariats</title>
+<style>
+:root {
+  --bg: #07080c;
+  --card: rgba(10,12,18,.62);
+  --text: rgba(255,255,255,.88);
+  --muted: rgba(255,255,255,.55);
+  --gold: #f6d26b;
+  --ok: #47e6a6;
+}
+
+* { box-sizing: border-box; }
+body { 
+  margin: 0; 
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg); 
+  color: var(--text);
+}
+
+.app { display: flex; min-height: 100vh; padding: 20px; gap: 20px; }
+.sidebar {
+  width: 250px;
+  background: rgba(10,12,18,.5);
+  border-radius: 16px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.brand { font-weight: 800; font-size: 18px; margin-bottom: 20px; }
+.nav a {
+  display: block;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,.05);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.nav a:hover { background: rgba(255,255,255,.1); }
+.nav a.active { background: rgba(246,210,107,.2); border-color: var(--gold); }
+
+.main { flex: 1; }
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.tools { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.input { 
+  padding: 12px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 16px;
+  flex: 1;
+}
+
+.input::placeholder { color: var(--muted); }
+.btn { 
+  background: var(--gold); 
+  color: #111; 
+  padding: 12px 20px; 
+  border: none; 
+  border-radius: 12px; 
+  cursor: pointer; 
+  font-weight: 600; 
+}
+.btn:hover { opacity: 0.9; }
+.btn.danger { background: #ff6b6b; color: white; }
+.btn.small { padding: 8px 16px; font-size: 14px; }
+
+.table { overflow: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px; background: rgba(255,255,255,.05); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
+tr:hover td { background: rgba(255,255,255,.05); }
+
+.tag {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag.ok { background: rgba(71,230,166,.2); color: var(--ok); }
+
+.pill { background: rgba(255,255,255,.1); padding: 6px 12px; border-radius: 20px; font-size: 14px; }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #47e6a6;
+  color: black;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: none;
+}
+
+@media (max-width: 768px) { 
+  .app { flex-direction: column; } 
+  .sidebar { width: 100%; order: 2; } 
+  .main { order: 1; }
+  .two { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="brand">PDM ADMIN</div>
+    <nav class="nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="clients.html">👥 Clients</a>
+      <a href="stock.html">📦 Stock</a>
+      <a href="ventes.html">💰 Ventes</a>
+      <a href="vehicles.html">🚗 Véhicules</a>
+      <a href="partenariats.html" class="active">🤝 Partenaires</a>
+      <a href="compta.html">💼 Comptabilité</a>
+    </nav>
+    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+  </div>
+
+  <div class="main">
+    <div class="two">
+      <div class="card">
+        <h2>Entreprises Partenaires</h2>
+        <div class="tools">
+          <input class="input" id="partnerSearch" placeholder="Rechercher entreprise...">
+          <button class="btn small" onclick="refreshPartners()">🔄</button>
+        </div>
+        <div class="pill" id="partnerCount">0 entreprises</div>
+        <div class="table">
+          <table>
+            <thead>
+              <tr><th>Entreprise</th><th>Clients</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="partnersTable">
+              <tr><td colspan="3">Aucune entreprise</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px">
+          <input class="input" id="newPartner" placeholder="Nouvelle entreprise...">
+          <button class="btn" onclick="addPartner()">➕ Ajouter</button>
+        </div>
+      </div>
+
+      <div class="card" id="membersPanel" style="display:none">
+        <h2>Clients & Taux <span id="partnerName"></span></h2>
+        <div class="tools">
+          <input class="input" id="memberSearch" placeholder="Rechercher client...">
+          <span class="pill" id="memberCount">0 clients</span>
+        </div>
+        <div class="grid">
+          <input class="input" id="newMemberName" placeholder="Nom client">
+          <input class="input" id="newMemberRate" type="number" min="0" max="100" placeholder="Taux %">
+          <button class="btn" onclick="addMember()">➕ Ajouter</button>
+        </div>
+        <div class="table">
+          <table>
+            <thead>
+              <tr><th>Client</th><th>Taux %</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="membersTable">
+              <tr><td colspan="3">Sélectionne une entreprise</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tools">
+          <button class="btn" onclick="renamePartner()">✏️ Renommer</button>
+          <button class="btn danger" onclick="deletePartner()">🗑️ Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let partners = [
+  {name: 'Benny\'s Original Motor Works', members: [
+    {name: 'Jean D.', rate: 15},
+    {name: 'Paul R.', rate: 10}
+  ]},
+  {name: 'LSPD Parts', members: [
+    {name: 'Marie L.', rate: 20}
+  ]}
+];
+
+let selectedPartnerIndex = -1;
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+function updatePartners() {
+  document.getElementById('partnerCount').textContent = `${partners.length} entreprises`;
+
+  const tbody = document.getElementById('partnersTable');
+  tbody.innerHTML = partners.map((partner, index) => `
+    <tr onclick="selectPartner(${index})" style="cursor:pointer">
+      <td><strong>${partner.name}</strong></td>
+      <td><span class="pill">${partner.members.length}</span></td>
+      <td>
+        <button class="btn small" onclick="event.stopPropagation(); editPartner(${index})">✏️</button>
+        <button class="btn danger small" onclick="event.stopPropagation(); deletePartner(${index})">🗑️</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="3">Aucune entreprise partenaire</td></tr>';
+}
+
+function selectPartner(index) {
+  selectedPartnerIndex = index;
+  const partner = partners[index];
+  document.getElementById('partnerName').textContent = partner.name;
+  document.getElementById('membersPanel').style.display = 'block';
+
+  const tbody = document.getElementById('membersTable');
+  tbody.innerHTML = partner.members.map((member, mIndex) => `
+    <tr>
+      <td>${member.name}</td>
+      <td><span class="tag ok">${member.rate}%</span></td>
+      <td>
+        <button class="btn small" onclick="editMember(${index}, ${mIndex})">✏️</button>
+        <button class="btn danger small" onclick="deleteMember(${index}, ${mIndex})">🗑️</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="3">Aucun client</td></tr>';
+
+  document.getElementById('memberCount').textContent = `${partner.members.length} clients`;
+}
+
+function addPartner() {
+  const name = document.getElementById('newPartner').value.trim();
+  if (!name) return showToast('Nom entreprise requis !');
+
+  partners.push({name, members: []});
+  document.getElementById('newPartner').value = '';
+  updatePartners();
+  showToast('Entreprise ajoutée !');
+}
+
+function editPartner(index) {
+  const name = prompt('Nom entreprise :', partners[index].name);
+  if (name) {
+    partners[index].name = name;
+    updatePartners();
+    showToast('Entreprise renommée !');
+  }
+}
+
+function deletePartner(index) {
+  if (confirm('Supprimer cette entreprise ET ses clients ?')) {
+    partners.splice(index, 1);
+    if (selectedPartnerIndex === index) {
+      document.getElementById('membersPanel').style.display = 'none';
+      selectedPartnerIndex = -1;
+    }
+    updatePartners();
+    showToast('Entreprise supprimée !');
+  }
+}
+
+function addMember() {
+  if (selectedPartnerIndex === -1) return showToast('Sélectionne une entreprise !');
+
+  const name = document.getElementById('newMemberName').value.trim();
+  const rate = parseInt(document.getElementById('newMemberRate').value) || 0;
+
+  if (!name) return showToast('Nom client requis !');
+  if (rate < 0 || rate > 100) return showToast('Taux 0-100% !');
+
+  partners[selectedPartnerIndex].members.push({name, rate});
+  document.getElementById('newMemberName').value = '';
+  document.getElementById('newMemberRate').value = '';
+
+  selectPartner(selectedPartnerIndex);
+  showToast('Client ajouté !');
+}
+
+function editMember(pIndex, mIndex) {
+  const member = partners[pIndex].members[mIndex];
+  const name = prompt('Nom client :', member.name);
+  const rate = parseInt(prompt('Taux % :', member.rate));
+
+  if (name !== null) member.name = name;
+  if (!isNaN(rate)) member.rate = Math.max(0, Math.min(100, rate));
+
+  selectPartner(pIndex);
+  showToast('Client modifié !');
+}
+
+function deleteMember(pIndex, mIndex) {
+  if (confirm('Supprimer ce client partenaire ?')) {
+    partners[pIndex].members.splice(mIndex, 1);
+    selectPartner(pIndex);
+    showToast('Client supprimé !');
+  }
+}
+
+function logout() {
+  showToast('Déconnexion...');
+}
+
+// Recherche partenaires
+document.getElementById('partnerSearch').addEventListener('input', function() {
+  const term = this.value.toLowerCase();
+  const filtered = partners.filter(p => p.name.toLowerCase().includes(term));
+
+  const tbody = document.getElementById('partnersTable');
+  tbody.innerHTML = filtered.map((partner, index) => `
+    <tr onclick="selectPartner(${partners.indexOf(partner)})" style="cursor:pointer">
+      <td><strong>${partner.name}</strong></td>
+      <td><span class="pill">${partner.members.length}</span></td>
+      <td>
+        <button class="btn small" onclick="event.stopPropagation(); editPartner(${partners.indexOf(partner)})">✏️</button>
+        <button class="btn danger small" onclick="event.stopPropagation(); deletePartner(${partners.indexOf(partner)})">🗑️</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="3">Aucune entreprise trouvée</td></tr>';
+});
+
+showToast('PDM Partenariats chargé !');
+updatePartners();
+</script>
+</body>
+</html>
