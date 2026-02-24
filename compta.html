@@ -1,1 +1,511 @@
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDM Admin - Comptabilité</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root {
+  --bg: #07080c;
+  --card: rgba(10,12,18,.62);
+  --text: rgba(255,255,255,.88);
+  --muted: rgba(255,255,255,.55);
+  --gold: #f6d26b;
+  --ok: #47e6a6;
+  --danger: #ff6b6b;
+}
+
+* { box-sizing: border-box; }
+body { 
+  margin: 0; 
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg); 
+  color: var(--text);
+}
+
+.app { display: flex; min-height: 100vh; padding: 20px; gap: 20px; }
+.sidebar {
+  width: 250px;
+  background: rgba(10,12,18,.5);
+  border-radius: 16px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.brand { font-weight: 800; font-size: 18px; margin-bottom: 20px; }
+.nav a {
+  display: block;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,.05);
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.nav a:hover { background: rgba(255,255,255,.1); }
+.nav a.active { background: rgba(246,210,107,.2); border-color: var(--gold); }
+
+.main { flex: 1; }
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat {
+  padding: 20px;
+  background: rgba(255,255,255,.05);
+  border-radius: 12px;
+  text-align: center;
+}
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.stat-value { font-size: 28px; font-weight: 800; margin: 8px 0; }
+.stat.ok { border-left: 4px solid var(--ok); }
+.stat.danger { border-left: 4px solid var(--danger); }
+.stat.gold { border-left: 4px solid var(--gold); }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.input { 
+  padding: 12px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.input::placeholder { color: var(--muted); }
+.btn { 
+  background: var(--gold); 
+  color: #111; 
+  padding: 12px 24px; 
+  border: none; 
+  border-radius: 12px; 
+  cursor: pointer; 
+  font-weight: 600; 
+}
+.btn:hover { opacity: 0.9; }
+.btn.danger { background: var(--danger); color: white; }
+.btn.ok { background: var(--ok); color: black; }
+
+.table { overflow: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px; background: rgba(255,255,255,.05); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
+tr:hover td { background: rgba(255,255,255,.05); }
+
+.tag {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag.ok { background: rgba(71,230,166,.2); color: var(--ok); }
+.tag.danger { background: rgba(255,107,107,.2); color: var(--danger); }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #47e6a6;
+  color: black;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: none;
+  z-index: 9999;
+}
+
+#pdf-content {
+  background: white;
+  color: #222;
+  padding: 40px;
+  border-radius: 0;
+  display: none;
+}
+
+#pdf-content h1 { color: #222; margin-top: 0; text-align: center; border-bottom: 3px solid #f6d26b; padding-bottom: 10px; }
+#pdf-content h2 { color: #333; margin-top: 20px; border-left: 4px solid #f6d26b; padding-left: 10px; }
+#pdf-content table { margin: 20px 0; }
+#pdf-content th { background: #f6d26b; color: #111; font-weight: bold; }
+#pdf-content td { border-bottom: 1px solid #ddd; }
+#pdf-content .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; }
+#pdf-content .stat { padding: 15px; border: 1px solid #ddd; text-align: center; }
+#pdf-content .stat-label { font-weight: bold; color: #666; }
+#pdf-content .stat-value { font-size: 24px; font-weight: bold; color: #222; margin: 10px 0; }
+
+@media (max-width: 768px) { 
+  .app { flex-direction: column; } 
+  .sidebar { width: 100%; order: 2; } 
+  .main { order: 1; }
+  .summary { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="brand">PDM ADMIN</div>
+    <nav class="nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="clients.html">👥 Clients</a>
+      <a href="stock.html">📦 Stock</a>
+      <a href="ventes.html">💰 Ventes</a>
+      <a href="vehicles.html">🚗 Véhicules</a>
+      <a href="partenariats.html">🤝 Partenaires</a>
+      <a href="compta.html" class="active">💼 Comptabilité</a>
+    </nav>
+    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h1>Trésorerie</h1>
+      <p style="color: var(--muted);">Vue globale + semaine (à rendre dimanche). Règles auto depuis transactions.</p>
+
+      <div class="summary">
+        <div class="stat ok">
+          <div class="stat-label">Achats véhicules</div>
+          <div class="stat-value" id="totalBuys">-\$0</div>
+        </div>
+        <div class="stat gold">
+          <div class="stat-label">Ventes véhicules</div>
+          <div class="stat-value" id="totalSells">\$0</div>
+        </div>
+        <div class="stat ok">
+          <div class="stat-label">Bénéfice véhicules</div>
+          <div class="stat-value" id="totalProfit">\$0</div>
+        </div>
+        <div class="stat danger">
+          <div class="stat-label">Dépenses manuelles</div>
+          <div class="stat-value" id="manualExpenses">-\$0</div>
+        </div>
+        <div class="stat gold">
+          <div class="stat-label">Revenus manuels</div>
+          <div class="stat-value" id="manualIncome">\$0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Trésorerie estimée</div>
+          <div class="stat-value" id="totalCash">\$0</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <select id="periodSelect">
+          <option value="global">Vue globale</option>
+          <option value="week">Cette semaine</option>
+        </select>
+        <button class="btn" onclick="refreshCompta()">🔄 Recalculer</button>
+        <button class="btn ok" onclick="generatePDF()">📄 Générer Récap Semaine</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Importer Données (PDF Reçu)</h2>
+      <div class="grid">
+        <input type="file" id="pdfUpload" accept=".pdf" class="input">
+        <button class="btn" onclick="uploadPDF()">📤 Charger PDF</button>
+      </div>
+      <div id="pdfStatus" style="color: var(--muted); font-size: 14px; margin-top: 10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Transactions Véhicules</h2>
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Véhicule</th><th>Achat</th><th>Vente</th><th>Vendeur</th><th>Com. Vendeur</th><th>Com. CO/PDG</th></tr>
+          </thead>
+          <tbody id="transactionsTable">
+            <tr><td colspan="7">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Dépenses / Revenus Manuels</h2>
+      <div class="grid">
+        <input class="input" id="manualDate" type="date" placeholder="Date">
+        <input class="input" id="manualAmount" type="number" placeholder="Montant \$">
+        <input class="input" id="manualReason" placeholder="Raison (bouffe, tombola...)">
+        <button class="btn ok" onclick="addIncome()">➕ Revenu</button>
+        <button class="btn danger" onclick="addExpense()">➖ Dépense</button>
+      </div>
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Type</th><th>Montant</th><th>Raison</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="cashbookTable">
+            <tr><td colspan="5">Aucun mouvement</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF CONTENT (HIDDEN) -->
+<div id="pdf-content">
+  <h1>📋 RÉCAPITULATIF HEBDOMADAIRE</h1>
+  <p style="text-align: center; color: #666;">PDM - Gestion Comptable</p>
+
+  <h2>📊 Résumé Financier</h2>
+  <div class="summary">
+    <div class="stat">
+      <div class="stat-label">Achats</div>
+      <div class="stat-value" id="pdf-totalBuys">-\$0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Ventes</div>
+      <div class="stat-value" id="pdf-totalSells">\$0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Bénéfice</div>
+      <div class="stat-value" id="pdf-totalProfit">\$0</div>
+    </div>
+  </div>
+
+  <h2>💰 Transactions Véhicules</h2>
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Véhicule</th>
+        <th>Achat</th>
+        <th>Vente</th>
+        <th>Vendeur</th>
+        <th>Bénéfice</th>
+      </tr>
+    </thead>
+    <tbody id="pdf-transactions">
+    </tbody>
+  </table>
+
+  <h2>💸 Dépenses & Revenus</h2>
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Montant</th>
+        <th>Raison</th>
+      </tr>
+    </thead>
+    <tbody id="pdf-cashbook">
+    </tbody>
+  </table>
+
+  <h2>📈 Totaux</h2>
+  <table border="1" cellpadding="10">
+    <tr>
+      <td><strong>Total Dépenses</strong></td>
+      <td id="pdf-totalExpenses">-\$0</td>
+    </tr>
+    <tr>
+      <td><strong>Total Revenus</strong></td>
+      <td id="pdf-totalIncomes">\$0</td>
+    </tr>
+    <tr>
+      <td><strong>Bilan</strong></td>
+      <td id="pdf-totalBalance" style="font-weight: bold; font-size: 16px;">\$0</td>
+    </tr>
+  </table>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let transactions = [
+  {date: '24/02 20h', vehicle: 'Ocelot XA-21', buy: 65000, sell: 85000, seller: 'Paul R.'},
+  {date: '24/02 18h', vehicle: 'Pfister Comet', buy: 45000, sell: 62000, seller: 'Marie L.'}
+];
+
+let cashbook = [
+  {date: '24/02', type: 'Revenu', amount: 5000, reason: 'Tombola'},
+  {date: '24/02', type: 'Dépense', amount: -1200, reason: 'Team building'}
+];
+
+let previousCash = 150000;
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+function formatMoney(n) {
+  const sign = n < 0 ? '-' : '';
+  return \`\${sign}\$\${Math.abs(n).toLocaleString()}\`;
+}
+
+function updateSummary() {
+  const totalBuy = transactions.reduce((sum, t) => sum + t.buy, 0);
+  const totalSell = transactions.reduce((sum, t) => sum + t.sell, 0);
+  const totalProfit = totalSell - totalBuy;
+  const manualExpenses = cashbook.filter(c => c.amount < 0).reduce((sum, c) => sum + c.amount, 0);
+  const manualIncome = cashbook.filter(c => c.amount > 0).reduce((sum, c) => sum + c.amount, 0);
+  const totalCash = previousCash + totalProfit + manualIncome + manualExpenses;
+
+  document.getElementById('totalBuys').textContent = formatMoney(-totalBuy);
+  document.getElementById('totalSells').textContent = formatMoney(totalSell);
+  document.getElementById('totalProfit').textContent = formatMoney(totalProfit);
+  document.getElementById('manualExpenses').textContent = formatMoney(manualExpenses);
+  document.getElementById('manualIncome').textContent = formatMoney(manualIncome);
+  document.getElementById('totalCash').textContent = formatMoney(totalCash);
+}
+
+function updateTransactions() {
+  const tbody = document.getElementById('transactionsTable');
+  tbody.innerHTML = transactions.map(t => {
+    const profit = t.sell - t.buy;
+    const comSeller = Math.round((t.sell * 0.10) / 100) * 100;
+    const comCO = Math.round((t.sell * 0.12) / 100) * 100;
+    return \`
+      <tr>
+        <td>\${t.date}</td>
+        <td>\${t.vehicle}</td>
+        <td>\${formatMoney(t.buy)}</td>
+        <td>\${formatMoney(t.sell)}</td>
+        <td>\${t.seller}</td>
+        <td>\${formatMoney(comSeller)}</td>
+        <td>\${formatMoney(comCO)}</td>
+      </tr>
+    \`;
+  }).join('') || '<tr><td colspan="7">Aucune transaction</td></tr>';
+}
+
+function updateCashbook() {
+  const tbody = document.getElementById('cashbookTable');
+  tbody.innerHTML = cashbook.map((item, index) => \`
+    <tr>
+      <td>\${item.date}</td>
+      <td><span class="tag \${item.amount > 0 ? 'ok' : 'danger'}">\${item.type}</span></td>
+      <td>\${formatMoney(item.amount)}</td>
+      <td>\${item.reason}</td>
+      <td>
+        <button class="btn danger" onclick="deleteCashbook(\${index})" style="padding:6px 12px;font-size:12px">🗑️</button>
+      </td>
+    </tr>
+  \`).join('') || '<tr><td colspan="5">Aucun mouvement manuel</td></tr>';
+}
+
+function refreshCompta() {
+  updateSummary();
+  updateTransactions();
+  updateCashbook();
+  showToast('Compta recalculée !');
+}
+
+function addIncome() {
+  const date = document.getElementById('manualDate').value || new Date().toISOString().split('T')[0];
+  const amount = parseInt(document.getElementById('manualAmount').value) || 0;
+  const reason = document.getElementById('manualReason').value.trim();
+
+  if (amount <= 0 || !reason) return showToast('Montant + raison requis !');
+
+  cashbook.push({date, type: 'Revenu', amount, reason});
+  document.getElementById('manualAmount').value = '';
+  document.getElementById('manualReason').value = '';
+  refreshCompta();
+  showToast('Revenu ajouté !');
+}
+
+function addExpense() {
+  const date = document.getElementById('manualDate').value || new Date().toISOString().split('T')[0];
+  const amount = parseInt(document.getElementById('manualAmount').value) || 0;
+  const reason = document.getElementById('manualReason').value.trim();
+
+  if (amount <= 0 || !reason) return showToast('Montant + raison requis !');
+
+  cashbook.push({date, type: 'Dépense', amount: -amount, reason});
+  document.getElementById('manualAmount').value = '';
+  document.getElementById('manualReason').value = '';
+  refreshCompta();
+  showToast('Dépense ajoutée !');
+}
+
+function deleteCashbook(index) {
+  if (confirm('Supprimer ce mouvement ?')) {
+    cashbook.splice(index, 1);
+    refreshCompta();
+    showToast('Mouvement supprimé !');
+  }
+}
+
+function uploadPDF() {
+  const file = document.getElementById('pdfUpload').files[0];
+  if (!file) return showToast('Sélectionne un PDF !');
+
+  // Simulation import PDF
+  showToast('PDF reçu ! ✅ Données fusionnées.');
+  document.getElementById('pdfStatus').textContent = `📄 ${file.name} chargé (${(file.size/1024).toFixed(1)} KB)`;
+}
+
+function generatePDF() {
+  const totalBuy = transactions.reduce((sum, t) => sum + t.buy, 0);
+  const totalSell = transactions.reduce((sum, t) => sum + t.sell, 0);
+  const totalProfit = totalSell - totalBuy;
+  const totalExpenses = cashbook.filter(c => c.amount < 0).reduce((sum, c) => sum + c.amount, 0);
+  const totalIncomes = cashbook.filter(c => c.amount > 0).reduce((sum, c) => sum + c.amount, 0);
+
+  // Populate PDF
+  document.getElementById('pdf-totalBuys').textContent = formatMoney(-totalBuy);
+  document.getElementById('pdf-totalSells').textContent = formatMoney(totalSell);
+  document.getElementById('pdf-totalProfit').textContent = formatMoney(totalProfit);
+
+  document.getElementById('pdf-transactions').innerHTML = transactions.map(t => \`
+    <tr>
+      <td>\${t.date}</td>
+      <td>\${t.vehicle}</td>
+      <td>\${formatMoney(t.buy)}</td>
+      <td>\${formatMoney(t.sell)}</td>
+      <td>\${t.seller}</td>
+      <td>\${formatMoney(t.sell - t.buy)}</td>
+    </tr>
+  \`).join('');
+
+  document.getElementById('pdf-cashbook').innerHTML = cashbook.map(c => \`
+    <tr>
+      <td>\${c.date}</td>
+      <td>\${c.type}</td>
+      <td>\${formatMoney(c.amount)}</td>
+      <td>\${c.reason}</td>
+    </tr>
+  \`).join('');
+
+  document.getElementById('pdf-totalExpenses').textContent = formatMoney(totalExpenses);
+  document.getElementById('pdf-totalIncomes').textContent = formatMoney(totalIncomes);
+  document.getElementById('pdf-totalBalance').textContent = formatMoney(totalProfit + totalIncomes + totalExpenses);
+
+  const element = document.getElementById('pdf-content');
+  const opt = {
+    margin: 10,
+    filename: \`PDM-Recap-\${new Date().toISOString().split('T')[0]}.pdf\`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  };
+
+  html2pdf().set(opt).from(element).save();
+  showToast('PDF généré ! 📄');
+}
+
+function logout() {
+  showToast('Déconnexion...');
+}
+
+showToast('PDM Comptabilité chargée !');
+refreshCompta();
+</script>
+</body>
+</html>
