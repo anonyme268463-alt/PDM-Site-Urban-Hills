@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PDM Admin - Partenariats</title>
+  <link rel="stylesheet" href="app.css">
 <style>
 :root {
   --bg: #07080c;
@@ -192,24 +193,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 <div class="toast" id="toast"></div>
 
 <script>
-let partners = [
-  {name: 'Benny\'s Original Motor Works', members: [
-    {name: 'Jean D.', rate: 15},
-    {name: 'Paul R.', rate: 10}
-  ]},
-  {name: 'LSPD Parts', members: [
-    {name: 'Marie L.', rate: 20}
-  ]}
-];
-
-let selectedPartnerIndex = -1;
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
 
 function updatePartners() {
   document.getElementById('partnerCount').textContent = `${partners.length} entreprises`;
