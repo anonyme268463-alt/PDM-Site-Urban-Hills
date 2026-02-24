@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PDM Admin - Véhicules</title>
+  <link rel="stylesheet" href="app.css">
 <style>
 :root {
   --bg: #07080c;
@@ -154,29 +155,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 <div class="toast" id="toast"></div>
 
 <script>
-let vehicles = [
-  {
-    brand: 'Ocelot',
-    model: 'XA-21',
-    type: 'Sport',
-    buy: 65000,
-    sell: 120000
-  },
-  {
-    brand: 'Pfister',
-    model: 'Comet S2',
-    type: 'Sport',
-    buy: 45000,
-    sell: 85000
-  },
-  {
-    brand: 'Benefactor',
-    model: 'Surron',
-    type: 'Moto',
-    buy: 8000,
-    sell: 15000
-  }
-];
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
