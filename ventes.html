@@ -1,1 +1,133 @@
-<h1>ventes</h1>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin - Ventes</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="app.css" />
+  <script type="module" src="ventes.js"></script>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h2>PDM ADMIN</h2>
+
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clients.html">Clients</a>
+    <a href="stock.html">Stock</a>
+    <a class="active" href="ventes.html">Ventes</a>
+    <a href="vehicles.html">Vehicules</a>
+    <a href="partenariats.html">Partenaires</a>
+    <a href="compta.html">Comptabilite</a>
+    <a href="catalogue.html">Catalogue</a>
+    <a href="gestion.html">Gestion</a>
+
+    <button id="logoutBtn">Deconnexion</button>
+  </aside>
+
+  <main class="content">
+    <h1>Ventes</h1>
+
+    <div class="cards" style="grid-template-columns: repeat(3, minmax(220px, 1fr));">
+      <div class="card">
+        <div>CA total</div>
+        <h2 id="kpiCA">$0</h2>
+      </div>
+      <div class="card">
+        <div>Profit total</div>
+        <h2 id="kpiProfit">$0</h2>
+      </div>
+      <div class="card">
+        <div>Nombre de ventes</div>
+        <h2 id="kpiCount">0</h2>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px; margin-bottom:14px;">
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input id="search" type="text" placeholder="Rechercher client ou modele..." style="max-width:420px;">
+        <button class="btn btn-gold" id="addBtn">Ajouter une vente</button>
+        <button class="btn" id="refreshBtn">Rafraichir</button>
+      </div>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Client</th>
+          <th>Modele</th>
+          <th>Achat</th>
+          <th>Vente</th>
+          <th>Profit</th>
+          <th>Vendeur</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="txTable">
+        <tr><td colspan="8">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+
+<!-- MODAL AJOUT / EDIT -->
+<div id="txModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="mTitle">Ajouter une vente</div>
+      <div class="close" id="closeModal">X</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="cards" style="grid-template-columns: repeat(2, minmax(220px,1fr));">
+      <div class="card">
+        <div>Date</div>
+        <input id="fDate" type="date">
+      </div>
+
+      <div class="card">
+        <div>Client</div>
+        <select id="fClient"></select>
+      </div>
+
+      <div class="card">
+        <div>Modele</div>
+        <input id="fModel" type="text" placeholder="Ex: Toros">
+      </div>
+
+      <div class="card">
+        <div>Detail (optionnel)</div>
+        <input id="fDetail" type="text" placeholder="Ex: Vente directe">
+      </div>
+
+      <div class="card">
+        <div>Buy price</div>
+        <input id="fBuy" type="number" min="0" step="1" placeholder="90000">
+      </div>
+
+      <div class="card">
+        <div>Sell price</div>
+        <input id="fSell" type="number" min="0" step="1" placeholder="180000">
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <div>Notes (optionnel)</div>
+        <input id="fNotes" type="text" placeholder="Info libre...">
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+      <button class="btn" id="cancelBtn">Annuler</button>
+      <button class="btn btn-gold" id="saveBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
