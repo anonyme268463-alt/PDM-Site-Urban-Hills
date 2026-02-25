@@ -1,1 +1,178 @@
-<h1>stock</h1>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDM Admin - Stock & Réservations</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="app.css" />
+  <style>
+    :root{
+      --bg:#07080c;
+      --card:rgba(10,12,18,.62);
+      --text:rgba(255,255,255,.88);
+      --muted:rgba(255,255,255,.55);
+      --gold:#f6d26b;
+      --gold2:#d2a83a;
+      --ok:#47e6a6;
+      --danger:#ff5c6c;
+    }
+    body{
+      margin:0;
+      background:
+        radial-gradient(900px 500px at 20% 20%, rgba(246,210,107,.08), transparent 60%),
+        radial-gradient(700px 500px at 80% 30%, rgba(120,80,255,.08), transparent 60%),
+        linear-gradient(180deg, #05060a 0%, #07080c 100%);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sb-title">PDM ADMIN</div>
+
+    <nav class="sb-nav">
+      <a class="sb-link" href="dashboard.html">Dashboard</a>
+      <a class="sb-link" href="clients.html">Clients</a>
+      <a class="sb-link active" href="stock.html">Stock</a>
+      <a class="sb-link" href="ventes.html">Ventes</a>
+      <a class="sb-link" href="vehicles.html">Véhicules</a>
+      <a class="sb-link" href="partenariats.html">Partenaires</a>
+      <a class="sb-link" href="compta.html">Comptabilité</a>
+      <a class="sb-link" href="catalogue.html">Catalogue</a>
+      <a class="sb-link" href="gestion.html">Gestion</a>
+    </nav>
+
+    <button class="btn btn-gold" id="logoutBtn">Déconnexion</button>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Stock & Réservations</div>
+        <div class="page-subtitle">Source : Firebase Firestore</div>
+      </div>
+      <div class="topbar-actions">
+        <input class="input" id="search" placeholder="Rechercher (marque, modèle, client)..." />
+        <button class="btn" id="refreshBtn">Rafraîchir</button>
+        <button class="btn btn-gold" id="addStockBtn">+ Stock</button>
+        <button class="btn btn-gold" id="addResBtn">+ Réservation</button>
+      </div>
+    </div>
+
+    <section class="kpis">
+      <div class="kpi">
+        <div class="kpi-label">Stock (quantité)</div>
+        <div class="kpi-value" id="kpiStockQty">0</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Lignes stock</div>
+        <div class="kpi-value" id="kpiStockLines">0</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Réservations</div>
+        <div class="kpi-value" id="kpiResCount">0</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Stock</div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Marque</th>
+              <th>Modèle</th>
+              <th class="right">Qté</th>
+              <th class="right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="stockTable">
+            <tr><td colspan="4" class="muted">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Réservations</div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Marque</th>
+              <th>Modèle</th>
+              <th>Statut</th>
+              <th class="right">Qté</th>
+              <th class="right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="resTable">
+            <tr><td colspan="6" class="muted">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Modal (Ajout/Édition) -->
+<div class="modal-backdrop" id="itemModal" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Nouvel élément</div>
+      <button class="icon-btn" id="modalCloseBtn" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <input type="hidden" id="fType" value="stock" />
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Marque</label>
+          <input class="input" id="fBrand" placeholder="Pfister" />
+        </div>
+        <div class="form-field">
+          <label>Modèle</label>
+          <input class="input" id="fModel" placeholder="Comet S2" />
+        </div>
+        <div class="form-field">
+          <label>Quantité</label>
+          <input class="input" id="fQty" type="number" min="0" value="1" />
+        </div>
+
+        <div class="form-field" id="rowClient">
+          <label>Client</label>
+          <input class="input" id="fClient" placeholder="Nom du client" />
+        </div>
+
+        <div class="form-field" id="rowStatus">
+          <label>Statut</label>
+          <select class="input" id="fStatus">
+            <option value="reserved">Réservé</option>
+            <option value="cancelled">Annulé</option>
+            <option value="delivered">Livré</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="hint muted" style="margin-top:10px;">
+        Astuce : une réservation = client + statut. Le stock n'a pas de client.
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn" id="modalCancelBtn">Annuler</button>
+      <button class="btn btn-gold" id="modalSaveBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="stock.js"></script>
+</body>
+</html>
