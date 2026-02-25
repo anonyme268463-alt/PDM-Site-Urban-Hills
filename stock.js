@@ -1,288 +1,192 @@
-// Stock & Réservations (Firestore)
-// Collections utilisées :
-// - stock/{id}: { brand, model, qty, createdAt, updatedAt, createdBy }
-// - reservations/{id}: { clientName, brand, model, qty, status, createdAt, updatedAt, createdBy }
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDM Admin — Stock</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
 
-import { auth, db } from "./config.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import {
-  collection, query, orderBy, onSnapshot,
-  addDoc, updateDoc, deleteDoc, doc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+<body>
+  <div class="app">
+    <!-- Sidebar (même structure que les autres pages) -->
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__title">PDM ADMIN</div>
+        <div class="sidebar__subtitle">Urban Hills</div>
+      </div>
 
-const els = {
-  logoutBtn: document.getElementById("logoutBtn"),
-  refreshBtn: document.getElementById("refreshBtn"),
-  addStockBtn: document.getElementById("addStockBtn"),
-  addResBtn: document.getElementById("addResBtn"),
-  search: document.getElementById("search"),
+      <nav class="sidebar__nav">
+        <a class="nav__item" href="dashboard.html">Dashboard</a>
+        <a class="nav__item" href="clients.html">Clients</a>
+        <a class="nav__item nav__item--active" href="stock.html">Stock</a>
+        <a class="nav__item" href="ventes.html">Ventes</a>
+        <a class="nav__item" href="vehicles.html">Véhicules</a>
+        <a class="nav__item" href="partenariats.html">Partenaires</a>
+        <a class="nav__item" href="compta.html">Comptabilité</a>
+        <a class="nav__item nav__item--admin" href="catalogue.html">Catalogue</a>
+        <a class="nav__item nav__item--admin" href="gestion.html">Gestion</a>
+      </nav>
 
-  kpiStockQty: document.getElementById("kpiStockQty"),
-  kpiStockLines: document.getElementById("kpiStockLines"),
-  kpiResCount: document.getElementById("kpiResCount"),
+      <button class="btn btn--primary sidebar__logout" id="logoutBtn" type="button">Déconnexion</button>
+    </aside>
 
-  stockTable: document.getElementById("stockTable"),
-  resTable: document.getElementById("resTable"),
+    <!-- Main -->
+    <main class="main">
+      <header class="pageHeader">
+        <h1 class="pageHeader__title">Stock &amp; Réservations</h1>
+        <p class="pageHeader__subtitle">Sources : Firestore (<code>stock</code> / <code>reservations</code>)</p>
+      </header>
 
-  // modal
-  itemModal: document.getElementById("itemModal"),
-  modalTitle: document.getElementById("modalTitle"),
-  modalCloseBtn: document.getElementById("modalCloseBtn"),
-  modalCancelBtn: document.getElementById("modalCancelBtn"),
-  modalSaveBtn: document.getElementById("modalSaveBtn"),
+      <!-- Toolbar -->
+      <section class="card">
+        <div class="toolbar">
+          <input class="input" id="q" placeholder="Rechercher (marque, modèle, client)..." />
+          <div class="toolbar__actions">
+            <button class="btn" id="refreshBtn" type="button">Rafraîchir</button>
+            <button class="btn btn--primary" id="addStockBtn" type="button">+ Stock</button>
+            <button class="btn btn--primary" id="addResaBtn" type="button">+ Réservation</button>
+          </div>
+        </div>
 
-  fType: document.getElementById("fType"),
-  fBrand: document.getElementById("fBrand"),
-  fModel: document.getElementById("fModel"),
-  fQty: document.getElementById("fQty"),
-  fClient: document.getElementById("fClient"),
-  fStatus: document.getElementById("fStatus"),
-  rowClient: document.getElementById("rowClient"),
-  rowStatus: document.getElementById("rowStatus"),
-};
+        <div class="statsRow">
+          <div class="stat">
+            <div class="stat__label">Quantité stock</div>
+            <div class="stat__value" id="statStockQty">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Lignes stock</div>
+            <div class="stat__value" id="statStockLines">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Réservations actives</div>
+            <div class="stat__value" id="statResaActive">—</div>
+          </div>
+        </div>
+      </section>
 
-let currentUser = null;
-let editing = null; // { type: "stock"|"reservations", id: string }
-let stockRows = [];
-let resRows = [];
+      <!-- STOCK -->
+      <section class="card">
+        <div class="card__header">
+          <div>
+            <h2 class="card__title">STOCK</h2>
+            <div class="card__hint">Collection : <code>stock</code></div>
+          </div>
+        </div>
 
-function moneySafe(n){ return Number.isFinite(n) ? n : 0; }
+        <div class="tableWrap">
+          <table class="table" id="stockTable">
+            <thead>
+              <tr>
+                <th>Marque</th>
+                <th>Modèle</th>
+                <th>Qté</th>
+                <th>Créé</th>
+                <th class="t-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stockBody">
+              <tr><td colspan="5" class="muted">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-function showModal(open) {
-  els.itemModal.style.display = open ? "flex" : "none";
-  els.itemModal.setAttribute("aria-hidden", open ? "false" : "true");
-}
+      <!-- RESERVATIONS -->
+      <section class="card">
+        <div class="card__header">
+          <div>
+            <h2 class="card__title">RÉSERVATIONS</h2>
+            <div class="card__hint">Collection : <code>reservations</code></div>
+          </div>
+        </div>
 
-function setType(type) {
-  els.fType.value = type;
-  const isRes = type === "reservations";
-  els.rowClient.style.display = isRes ? "block" : "none";
-  els.rowStatus.style.display = isRes ? "block" : "none";
-}
+        <div class="tableWrap">
+          <table class="table" id="resaTable">
+            <thead>
+              <tr>
+                <th>Marque</th>
+                <th>Modèle</th>
+                <th>Client</th>
+                <th>Qté</th>
+                <th>Status</th>
+                <th>Créé</th>
+                <th class="t-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="resaBody">
+              <tr><td colspan="7" class="muted">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-function openCreate(type) {
-  editing = null;
-  setType(type);
-  els.modalTitle.textContent = (type === "stock") ? "Ajouter au stock" : "Nouvelle réservation";
-  els.fBrand.value = "";
-  els.fModel.value = "";
-  els.fQty.value = 1;
-  els.fClient.value = "";
-  els.fStatus.value = "reserved";
-  showModal(true);
-}
+      <!-- Modal commun (ajout / édition) -->
+      <div class="modal" id="modal" aria-hidden="true">
+        <div class="modal__backdrop" data-close="1"></div>
+        <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="modal__header">
+            <h3 class="modal__title" id="modalTitle">—</h3>
+            <button class="modal__close" type="button" data-close="1">✕</button>
+          </div>
 
-function openEdit(type, row) {
-  editing = { type, id: row.id };
-  setType(type);
-  els.modalTitle.textContent = (type === "stock") ? "Modifier stock" : "Modifier réservation";
-  els.fBrand.value = row.brand ?? "";
-  els.fModel.value = row.model ?? "";
-  els.fQty.value = row.qty ?? 0;
-  els.fClient.value = row.clientName ?? "";
-  els.fStatus.value = row.status ?? "reserved";
-  showModal(true);
-}
+          <div class="modal__body">
+            <div class="grid grid--2">
+              <label class="field">
+                <span class="field__label">Marque</span>
+                <input class="input" id="mBrand" placeholder="Pfister" />
+              </label>
+              <label class="field">
+                <span class="field__label">Modèle</span>
+                <input class="input" id="mModel" placeholder="Comet S2" />
+              </label>
 
-function getSearch() {
-  return (els.search.value || "").trim().toLowerCase();
-}
+              <label class="field">
+                <span class="field__label">Quantité</span>
+                <input class="input" id="mQty" type="number" min="0" value="1" />
+              </label>
 
-function render() {
-  const q = getSearch();
+              <label class="field" id="mClientWrap">
+                <span class="field__label">Client</span>
+                <input class="input" id="mClient" placeholder="Nom du client" />
+                <span class="field__help">Si rempli → Réservation, sinon → Stock</span>
+              </label>
 
-  const stockFiltered = stockRows.filter(r => {
-    const hay = `${r.brand||""} ${r.model||""}`.toLowerCase();
-    return !q || hay.includes(q);
-  });
+              <label class="field" id="mStatusWrap" style="display:none;">
+                <span class="field__label">Status</span>
+                <select class="input" id="mStatus">
+                  <option value="reserved">Réservé</option>
+                  <option value="pending">En attente</option>
+                  <option value="done">Terminé</option>
+                  <option value="canceled">Annulé</option>
+                </select>
+              </label>
+            </div>
 
-  const resFiltered = resRows.filter(r => {
-    const hay = `${r.clientName||""} ${r.brand||""} ${r.model||""} ${r.status||""}`.toLowerCase();
-    return !q || hay.includes(q);
-  });
+            <div class="alert alert--danger" id="modalErr" style="display:none;"></div>
+          </div>
 
-  // KPIs
-  const qtySum = stockRows.reduce((s, r) => s + (Number(r.qty) || 0), 0);
-  els.kpiStockQty.textContent = String(qtySum);
-  els.kpiStockLines.textContent = String(stockRows.length);
-  els.kpiResCount.textContent = String(resRows.length);
+          <div class="modal__footer">
+            <button class="btn" type="button" data-close="1">Annuler</button>
+            <button class="btn btn--primary" id="modalSave" type="button">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-  // Stock table
-  if (stockFiltered.length === 0) {
-    els.stockTable.innerHTML = `<tr><td colspan="4" class="muted">Aucun élément.</td></tr>`;
-  } else {
-    els.stockTable.innerHTML = stockFiltered.map(r => `
-      <tr>
-        <td>${escapeHtml(r.brand || "")}</td>
-        <td>${escapeHtml(r.model || "")}</td>
-        <td class="right">${Number(r.qty) || 0}</td>
-        <td class="right">
-          <button class="btn btn-sm" data-action="edit-stock" data-id="${r.id}">Modifier</button>
-          <button class="btn btn-sm btn-danger" data-action="del-stock" data-id="${r.id}">Supprimer</button>
-        </td>
-      </tr>
-    `).join("");
-  }
+  <!-- Scripts -->
+  <script type="module" src="config.js"></script>
+  <script type="module" src="guard.js"></script>
+  <script type="module" src="common.js"></script>
+  <script type="module" src="stock.js"></script>
 
-  // Reservations table
-  if (resFiltered.length === 0) {
-    els.resTable.innerHTML = `<tr><td colspan="6" class="muted">Aucune réservation.</td></tr>`;
-  } else {
-    els.resTable.innerHTML = resFiltered.map(r => `
-      <tr>
-        <td>${escapeHtml(r.clientName || "—")}</td>
-        <td>${escapeHtml(r.brand || "")}</td>
-        <td>${escapeHtml(r.model || "")}</td>
-        <td><span class="badge">${escapeHtml(labelStatus(r.status))}</span></td>
-        <td class="right">${Number(r.qty) || 0}</td>
-        <td class="right">
-          <button class="btn btn-sm" data-action="edit-res" data-id="${r.id}">Modifier</button>
-          <button class="btn btn-sm btn-danger" data-action="del-res" data-id="${r.id}">Supprimer</button>
-        </td>
-      </tr>
-    `).join("");
-  }
-}
-
-function labelStatus(s) {
-  if (s === "cancelled") return "Annulé";
-  if (s === "delivered") return "Livré";
-  return "Réservé";
-}
-
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, (m) => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-  }[m]));
-}
-
-async function saveModal() {
-  const type = els.fType.value; // "stock" or "reservations"
-  const brand = (els.fBrand.value || "").trim();
-  const model = (els.fModel.value || "").trim();
-  const qty = Math.max(0, Number(els.fQty.value || 0));
-
-  if (!brand || !model) {
-    alert("Marque et modèle sont obligatoires.");
-    return;
-  }
-
-  const base = {
-    brand,
-    model,
-    qty,
-    updatedAt: serverTimestamp(),
-  };
-
-  if (type === "reservations") {
-    const clientName = (els.fClient.value || "").trim();
-    const status = els.fStatus.value || "reserved";
-    if (!clientName) {
-      alert("Client obligatoire pour une réservation.");
-      return;
-    }
-    base.clientName = clientName;
-    base.status = status;
-  }
-
-  try {
-    if (!editing) {
-      await addDoc(collection(db, type), {
-        ...base,
-        createdAt: serverTimestamp(),
-        createdBy: currentUser?.uid || null,
-      });
-    } else {
-      await updateDoc(doc(db, editing.type, editing.id), base);
-    }
-    showModal(false);
-  } catch (e) {
-    console.error(e);
-    alert("Erreur Firestore (permissions ou config).");
-  }
-}
-
-async function removeRow(type, id) {
-  if (!confirm("Supprimer définitivement ?")) return;
-  try {
-    await deleteDoc(doc(db, type, id));
-  } catch (e) {
-    console.error(e);
-    alert("Suppression impossible (permissions).");
-  }
-}
-
-function bindTableClicks() {
-  document.addEventListener("click", (ev) => {
-    const btn = ev.target.closest("button[data-action]");
-    if (!btn) return;
-    const action = btn.dataset.action;
-    const id = btn.dataset.id;
-
-    if (action === "edit-stock") {
-      const row = stockRows.find(r => r.id === id);
-      if (row) openEdit("stock", row);
-    }
-    if (action === "del-stock") removeRow("stock", id);
-
-    if (action === "edit-res") {
-      const row = resRows.find(r => r.id === id);
-      if (row) openEdit("reservations", row);
-    }
-    if (action === "del-res") removeRow("reservations", id);
-  });
-}
-
-function bindUi() {
-  els.logoutBtn?.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "pdm-staff.html";
-  });
-
-  els.refreshBtn?.addEventListener("click", () => render());
-  els.search?.addEventListener("input", () => render());
-
-  els.addStockBtn?.addEventListener("click", () => openCreate("stock"));
-  els.addResBtn?.addEventListener("click", () => openCreate("reservations"));
-
-  els.modalCloseBtn?.addEventListener("click", () => showModal(false));
-  els.modalCancelBtn?.addEventListener("click", () => showModal(false));
-  els.itemModal?.addEventListener("click", (e) => {
-    if (e.target === els.itemModal) showModal(false);
-  });
-  els.modalSaveBtn?.addEventListener("click", saveModal);
-}
-
-function startSnapshots() {
-  const qStock = query(collection(db, "stock"), orderBy("updatedAt", "desc"));
-  const qRes = query(collection(db, "reservations"), orderBy("updatedAt", "desc"));
-
-  onSnapshot(qStock, (snap) => {
-    stockRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    render();
-  }, (err) => {
-    console.error("stock snapshot", err);
-    els.stockTable.innerHTML = `<tr><td colspan="4" class="muted">Erreur Firestore (permissions).</td></tr>`;
-  });
-
-  onSnapshot(qRes, (snap) => {
-    resRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    render();
-  }, (err) => {
-    console.error("reservations snapshot", err);
-    els.resTable.innerHTML = `<tr><td colspan="6" class="muted">Erreur Firestore (permissions).</td></tr>`;
-  });
-}
-
-bindUi();
-bindTableClicks();
-
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "pdm-staff.html";
-    return;
-  }
-  currentUser = user;
-  startSnapshots();
-});
+  <script>
+    // bouton logout via common.js (fallback)
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      if (typeof window.logout === 'function') window.logout();
+    });
+  </script>
+</body>
+</html>
