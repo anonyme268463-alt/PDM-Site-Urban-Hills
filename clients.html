@@ -1,1 +1,118 @@
-<h1>clients</h1>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin - Clients</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="app.css" />
+  <script type="module" src="clients.js"></script>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h2>PDM ADMIN</h2>
+
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a class="active" href="clients.html">👥 Clients</a>
+    <a href="stock.html">📦 Stock</a>
+    <a href="ventes.html">💰 Ventes</a>
+    <a href="vehicles.html">🚗 Véhicules</a>
+    <a href="partenariats.html">🤝 Partenaires</a>
+    <a href="compta.html">📒 Comptabilité</a>
+    <a href="catalogue.html">📚 Catalogue</a>
+    <a href="gestion.html">⚙️ Gestion</a>
+
+    <button id="logoutBtn">Déconnexion</button>
+  </aside>
+
+  <main class="content">
+    <h1>Gestion Clients</h1>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input id="search" type="text" placeholder="Rechercher par nom ou téléphone…" style="max-width:420px;">
+        <button class="btn btn-gold" id="refreshBtn">Rafraîchir</button>
+      </div>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Téléphone</th>
+          <th>Permis</th>
+          <th>Voiture</th>
+          <th>Moto</th>
+          <th>Camion</th>
+          <th>Achats</th>
+          <th>Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="clientsTable">
+        <tr><td colspan="9">Chargement…</td></tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+
+<!-- MODAL FICHE CLIENT -->
+<div id="clientModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="mTitle">Fiche client</div>
+        <div style="color:var(--muted); font-size:13px;" id="mSubtitle"></div>
+      </div>
+      <div class="close" id="closeModal">✕</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="cards" style="grid-template-columns: repeat(3, minmax(180px,1fr));">
+      <div class="card">
+        <div>Total dépensé</div>
+        <h2 id="mTotal">$0</h2>
+      </div>
+      <div class="card">
+        <div>Profit généré</div>
+        <h2 id="mProfit">$0</h2>
+      </div>
+      <div class="card">
+        <div>Nombre d’achats</div>
+        <h2 id="mCount">0</h2>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <h2 style="margin:0 0 10px 0;">Historique des achats</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Modèle</th>
+          <th>Achat</th>
+          <th>Vente</th>
+          <th>Profit</th>
+        </tr>
+      </thead>
+      <tbody id="mSales">
+        <tr><td colspan="5">Chargement…</td></tr>
+      </tbody>
+    </table>
+
+    <div class="hr"></div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+      <button class="btn" id="copyBtn">Copier résumé</button>
+      <button class="btn btn-gold" id="closeBtn">Fermer</button>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
