@@ -361,6 +361,37 @@ input, select {
   border: 1px solid rgba(212,175,55,0.4);
 }
 
+/* ===== GLOBAL LAYOUT FIX ===== */
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden; /* on bloque le scroll global */
+  background: #070912;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  height: 100vh;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Main content */
+.main {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto; /* scroll uniquement ici */
+  padding: 30px 40px;
+}
+
 /* Responsive */
 @media (max-width: 980px){
   .layout{flex-direction:column}
