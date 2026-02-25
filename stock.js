@@ -1,346 +1,288 @@
-// stock.js
+// Stock & Réservations (Firestore)
+// Collections utilisées :
+// - stock/{id}: { brand, model, qty, createdAt, updatedAt, createdBy }
+// - reservations/{id}: { clientName, brand, model, qty, status, createdAt, updatedAt, createdBy }
+
 import { auth, db } from "./config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  getDoc,
-  doc,
-  query,
-  orderBy,
-  serverTimestamp,
-  Timestamp,
-  updateDoc,
-  deleteDoc,
+  collection, query, orderBy, onSnapshot,
+  addDoc, updateDoc, deleteDoc, doc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-const $ = (id) => document.getElementById(id);
-
 const els = {
-  logoutBtn: $("logoutBtn"),
+  logoutBtn: document.getElementById("logoutBtn"),
+  refreshBtn: document.getElementById("refreshBtn"),
+  addStockBtn: document.getElementById("addStockBtn"),
+  addResBtn: document.getElementById("addResBtn"),
+  search: document.getElementById("search"),
 
-  kpiStockQty: $("kpiStockQty"),
-  kpiStockLines: $("kpiStockLines"),
-  kpiResCount: $("kpiResCount"),
+  kpiStockQty: document.getElementById("kpiStockQty"),
+  kpiStockLines: document.getElementById("kpiStockLines"),
+  kpiResCount: document.getElementById("kpiResCount"),
 
-  search: $("search"),
-  stockTable: $("stockTable"),
-  resTable: $("resTable"),
+  stockTable: document.getElementById("stockTable"),
+  resTable: document.getElementById("resTable"),
 
-  addStockBtn: $("addStockBtn"),
-  addResBtn: $("addResBtn"),
-  refreshBtn: $("refreshBtn"),
+  // modal
+  itemModal: document.getElementById("itemModal"),
+  modalTitle: document.getElementById("modalTitle"),
+  modalCloseBtn: document.getElementById("modalCloseBtn"),
+  modalCancelBtn: document.getElementById("modalCancelBtn"),
+  modalSaveBtn: document.getElementById("modalSaveBtn"),
 
-  // modal commun
-  modal: $("itemModal"),
-  closeModal: $("closeModal"),
-  cancelBtn: $("cancelBtn"),
-  saveBtn: $("saveBtn"),
-  mTitle: $("mTitle"),
-
-  // form
-  fType: $("fType"), // "stock" ou "reservations"
-  fBrand: $("fBrand"),
-  fModel: $("fModel"),
-  fQty: $("fQty"),
-  fStatus: $("fStatus"), // reserved / delivered / cancelled (reservations)
-  fClientName: $("fClientName"),
-  fNotes: $("fNotes"),
+  fType: document.getElementById("fType"),
+  fBrand: document.getElementById("fBrand"),
+  fModel: document.getElementById("fModel"),
+  fQty: document.getElementById("fQty"),
+  fClient: document.getElementById("fClient"),
+  fStatus: document.getElementById("fStatus"),
+  rowClient: document.getElementById("rowClient"),
+  rowStatus: document.getElementById("rowStatus"),
 };
 
 let currentUser = null;
-let currentRole = "staff";
-let stockCache = [];
-let resCache = [];
-let editing = { type: null, id: null };
+let editing = null; // { type: "stock"|"reservations", id: string }
+let stockRows = [];
+let resRows = [];
 
-function escapeHtml(s) {
-  return String(s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function toDateFr(ts) {
-  if (!ts) return "-";
-  if (ts instanceof Timestamp) return ts.toDate().toLocaleDateString("fr-FR");
-  if (typeof ts === "number") return new Date(ts).toLocaleDateString("fr-FR");
-  return "-";
-}
-
-async function loadRole(uid) {
-  try {
-    const snap = await getDoc(doc(db, "users", uid));
-    currentRole = snap.exists() ? (snap.data().role || "staff") : "staff";
-  } catch {
-    currentRole = "staff";
-  }
-}
-
-function isAdmin() {
-  return currentRole === "admin";
-}
+function moneySafe(n){ return Number.isFinite(n) ? n : 0; }
 
 function showModal(open) {
-  els.modal.classList.toggle("hidden", !open);
+  els.itemModal.style.display = open ? "flex" : "none";
+  els.itemModal.setAttribute("aria-hidden", open ? "false" : "true");
 }
 
-function resetForm(type) {
-  editing = { type: null, id: null };
-  els.mTitle.textContent = type === "reservations" ? "Ajouter reservation" : "Ajouter stock";
+function setType(type) {
   els.fType.value = type;
+  const isRes = type === "reservations";
+  els.rowClient.style.display = isRes ? "block" : "none";
+  els.rowStatus.style.display = isRes ? "block" : "none";
+}
 
+function openCreate(type) {
+  editing = null;
+  setType(type);
+  els.modalTitle.textContent = (type === "stock") ? "Ajouter au stock" : "Nouvelle réservation";
   els.fBrand.value = "";
   els.fModel.value = "";
   els.fQty.value = 1;
+  els.fClient.value = "";
   els.fStatus.value = "reserved";
-  els.fClientName.value = "";
-  els.fNotes.value = "";
-
-  // champs visibles selon type
-  updateFormVisibility();
-}
-
-function updateFormVisibility() {
-  const type = els.fType.value;
-  const isRes = type === "reservations";
-
-  // option simple : cacher client/status si stock
-  $("rowClient")?.classList.toggle("hidden", !isRes);
-  $("rowStatus")?.classList.toggle("hidden", !isRes);
-}
-
-function openAddStock() {
-  resetForm("stock");
   showModal(true);
 }
 
-function openAddRes() {
-  resetForm("reservations");
+function openEdit(type, row) {
+  editing = { type, id: row.id };
+  setType(type);
+  els.modalTitle.textContent = (type === "stock") ? "Modifier stock" : "Modifier réservation";
+  els.fBrand.value = row.brand ?? "";
+  els.fModel.value = row.model ?? "";
+  els.fQty.value = row.qty ?? 0;
+  els.fClient.value = row.clientName ?? "";
+  els.fStatus.value = row.status ?? "reserved";
   showModal(true);
 }
 
-function openEdit(type, item) {
-  editing = { type, id: item.id };
-  els.mTitle.textContent = type === "reservations" ? "Modifier reservation" : "Modifier stock";
-  els.fType.value = type;
-
-  els.fBrand.value = item.brand || "";
-  els.fModel.value = item.model || "";
-  els.fQty.value = Number(item.qty || 0);
-
-  els.fStatus.value = item.status || "reserved";
-  els.fClientName.value = item.clientName || "";
-  els.fNotes.value = item.notes || "";
-
-  updateFormVisibility();
-  showModal(true);
-}
-
-function computeKpis() {
-  const totalQty = stockCache.reduce((acc, x) => acc + Number(x.qty || 0), 0);
-  els.kpiStockQty.textContent = String(totalQty);
-  els.kpiStockLines.textContent = String(stockCache.length);
-
-  // reservations actives = status reserved
-  const activeRes = resCache.filter((x) => (x.status || "reserved") === "reserved").length;
-  els.kpiResCount.textContent = String(activeRes);
+function getSearch() {
+  return (els.search.value || "").trim().toLowerCase();
 }
 
 function render() {
-  const q = (els.search?.value || "").trim().toLowerCase();
+  const q = getSearch();
 
-  const stockList = !q
-    ? stockCache
-    : stockCache.filter((x) => (x.model || "").toLowerCase().includes(q) || (x.brand || "").toLowerCase().includes(q));
+  const stockFiltered = stockRows.filter(r => {
+    const hay = `${r.brand||""} ${r.model||""}`.toLowerCase();
+    return !q || hay.includes(q);
+  });
 
-  const resList = !q
-    ? resCache
-    : resCache.filter(
-        (x) =>
-          (x.model || "").toLowerCase().includes(q) ||
-          (x.brand || "").toLowerCase().includes(q) ||
-          (x.clientName || "").toLowerCase().includes(q)
-      );
+  const resFiltered = resRows.filter(r => {
+    const hay = `${r.clientName||""} ${r.brand||""} ${r.model||""} ${r.status||""}`.toLowerCase();
+    return !q || hay.includes(q);
+  });
 
-  // STOCK TABLE
-  els.stockTable.innerHTML = stockList.length
-    ? stockList
-        .map((x) => {
-          const canEdit = isAdmin() || x.createdBy === currentUser?.uid;
-          return `
-          <tr>
-            <td>${escapeHtml(x.brand || "-")}</td>
-            <td>${escapeHtml(x.model || "-")}</td>
-            <td>${escapeHtml(String(x.qty ?? 0))}</td>
-            <td>${escapeHtml(toDateFr(x.createdAt))}</td>
-            <td style="text-align:right; white-space:nowrap;">
-              <button class="btn btn-sm" data-act="edit" data-type="stock" data-id="${x.id}" ${canEdit ? "" : "disabled"}>Edit</button>
-              <button class="btn btn-sm btn-danger" data-act="del" data-type="stock" data-id="${x.id}" ${canEdit ? "" : "disabled"}>Del</button>
-            </td>
-          </tr>`;
-        })
-        .join("")
-    : `<tr><td colspan="5">Aucun stock</td></tr>`;
+  // KPIs
+  const qtySum = stockRows.reduce((s, r) => s + (Number(r.qty) || 0), 0);
+  els.kpiStockQty.textContent = String(qtySum);
+  els.kpiStockLines.textContent = String(stockRows.length);
+  els.kpiResCount.textContent = String(resRows.length);
 
-  // RESERVATIONS TABLE
-  els.resTable.innerHTML = resList.length
-    ? resList
-        .map((x) => {
-          const canEdit = isAdmin() || x.createdBy === currentUser?.uid;
-          const status = x.status || "reserved";
-          return `
-          <tr>
-            <td>${escapeHtml(x.brand || "-")}</td>
-            <td>${escapeHtml(x.model || "-")}</td>
-            <td>${escapeHtml(x.clientName || "-")}</td>
-            <td>${escapeHtml(String(x.qty ?? 0))}</td>
-            <td>${escapeHtml(status)}</td>
-            <td>${escapeHtml(toDateFr(x.createdAt))}</td>
-            <td style="text-align:right; white-space:nowrap;">
-              <button class="btn btn-sm" data-act="edit" data-type="reservations" data-id="${x.id}" ${canEdit ? "" : "disabled"}>Edit</button>
-              <button class="btn btn-sm btn-danger" data-act="del" data-type="reservations" data-id="${x.id}" ${canEdit ? "" : "disabled"}>Del</button>
-            </td>
-          </tr>`;
-        })
-        .join("")
-    : `<tr><td colspan="7">Aucune reservation</td></tr>`;
+  // Stock table
+  if (stockFiltered.length === 0) {
+    els.stockTable.innerHTML = `<tr><td colspan="4" class="muted">Aucun élément.</td></tr>`;
+  } else {
+    els.stockTable.innerHTML = stockFiltered.map(r => `
+      <tr>
+        <td>${escapeHtml(r.brand || "")}</td>
+        <td>${escapeHtml(r.model || "")}</td>
+        <td class="right">${Number(r.qty) || 0}</td>
+        <td class="right">
+          <button class="btn btn-sm" data-action="edit-stock" data-id="${r.id}">Modifier</button>
+          <button class="btn btn-sm btn-danger" data-action="del-stock" data-id="${r.id}">Supprimer</button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  // Reservations table
+  if (resFiltered.length === 0) {
+    els.resTable.innerHTML = `<tr><td colspan="6" class="muted">Aucune réservation.</td></tr>`;
+  } else {
+    els.resTable.innerHTML = resFiltered.map(r => `
+      <tr>
+        <td>${escapeHtml(r.clientName || "—")}</td>
+        <td>${escapeHtml(r.brand || "")}</td>
+        <td>${escapeHtml(r.model || "")}</td>
+        <td><span class="badge">${escapeHtml(labelStatus(r.status))}</span></td>
+        <td class="right">${Number(r.qty) || 0}</td>
+        <td class="right">
+          <button class="btn btn-sm" data-action="edit-res" data-id="${r.id}">Modifier</button>
+          <button class="btn btn-sm btn-danger" data-action="del-res" data-id="${r.id}">Supprimer</button>
+        </td>
+      </tr>
+    `).join("");
+  }
 }
 
-function normalizeDoc(d) {
-  const x = d.data();
-  return {
-    id: d.id,
-    brand: x.brand || "",
-    model: x.model || "",
-    qty: Number(x.qty || 0),
-    status: x.status || "",
-    clientName: x.clientName || "",
-    notes: x.notes || "",
-    createdAt: x.createdAt || null,
-    createdBy: x.createdBy || "",
-  };
+function labelStatus(s) {
+  if (s === "cancelled") return "Annulé";
+  if (s === "delivered") return "Livré";
+  return "Réservé";
 }
 
-async function loadAll() {
-  // stock
-  const stockSnap = await getDocs(query(collection(db, "stock"), orderBy("createdAt", "desc")));
-  stockCache = stockSnap.docs.map(normalizeDoc);
-
-  // reservations
-  const resSnap = await getDocs(query(collection(db, "reservations"), orderBy("createdAt", "desc")));
-  resCache = resSnap.docs.map(normalizeDoc);
-
-  computeKpis();
-  render();
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, (m) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[m]));
 }
 
-async function saveItem() {
-  const type = els.fType.value; // stock | reservations
+async function saveModal() {
+  const type = els.fType.value; // "stock" or "reservations"
   const brand = (els.fBrand.value || "").trim();
   const model = (els.fModel.value || "").trim();
-  const qty = Number(els.fQty.value || 0);
-
-  const status = (els.fStatus.value || "reserved").trim();
-  const clientName = (els.fClientName.value || "").trim();
-  const notes = (els.fNotes.value || "").trim();
+  const qty = Math.max(0, Number(els.fQty.value || 0));
 
   if (!brand || !model) {
-    alert("Brand et model obligatoires");
+    alert("Marque et modèle sont obligatoires.");
     return;
   }
 
-  const payload = {
+  const base = {
     brand,
     model,
-    qty: Number.isFinite(qty) ? qty : 0,
-    notes,
+    qty,
     updatedAt: serverTimestamp(),
   };
 
   if (type === "reservations") {
-    payload.status = status || "reserved";
-    payload.clientName = clientName || "";
+    const clientName = (els.fClient.value || "").trim();
+    const status = els.fStatus.value || "reserved";
+    if (!clientName) {
+      alert("Client obligatoire pour une réservation.");
+      return;
+    }
+    base.clientName = clientName;
+    base.status = status;
   }
 
-  if (!editing.id) {
-    payload.createdAt = serverTimestamp();
-    payload.createdBy = currentUser.uid;
-    await addDoc(collection(db, type), payload);
-  } else {
-    await updateDoc(doc(db, type, editing.id), payload);
+  try {
+    if (!editing) {
+      await addDoc(collection(db, type), {
+        ...base,
+        createdAt: serverTimestamp(),
+        createdBy: currentUser?.uid || null,
+      });
+    } else {
+      await updateDoc(doc(db, editing.type, editing.id), base);
+    }
+    showModal(false);
+  } catch (e) {
+    console.error(e);
+    alert("Erreur Firestore (permissions ou config).");
   }
-
-  showModal(false);
-  await loadAll();
 }
 
-async function deleteItem(type, id) {
-  const list = type === "stock" ? stockCache : resCache;
-  const item = list.find((x) => x.id === id);
-  if (!item) return;
-
-  const canEdit = isAdmin() || item.createdBy === currentUser?.uid;
-  if (!canEdit) return;
-
-  if (!confirm("Supprimer ?")) return;
-  await deleteDoc(doc(db, type, id));
-  await loadAll();
+async function removeRow(type, id) {
+  if (!confirm("Supprimer définitivement ?")) return;
+  try {
+    await deleteDoc(doc(db, type, id));
+  } catch (e) {
+    console.error(e);
+    alert("Suppression impossible (permissions).");
+  }
 }
 
-function bindEvents() {
-  els.logoutBtn?.addEventListener("click", async () => {
-    await signOut(auth);
-    location.href = "pdm-staff.html";
-  });
-
-  els.addStockBtn?.addEventListener("click", openAddStock);
-  els.addResBtn?.addEventListener("click", openAddRes);
-  els.refreshBtn?.addEventListener("click", loadAll);
-
-  els.search?.addEventListener("input", render);
-
-  els.fType?.addEventListener("change", updateFormVisibility);
-
-  els.closeModal?.addEventListener("click", () => showModal(false));
-  els.cancelBtn?.addEventListener("click", () => showModal(false));
-  els.modal?.addEventListener("click", (e) => {
-    if (e.target === els.modal) showModal(false);
-  });
-
-  els.saveBtn?.addEventListener("click", saveItem);
-
-  // delegation tables
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-act]");
+function bindTableClicks() {
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
     if (!btn) return;
-
-    const act = btn.dataset.act;
-    const type = btn.dataset.type;
+    const action = btn.dataset.action;
     const id = btn.dataset.id;
 
-    if (act === "del") return deleteItem(type, id);
-
-    if (act === "edit") {
-      const list = type === "stock" ? stockCache : resCache;
-      const item = list.find((x) => x.id === id);
-      if (item) openEdit(type, item);
+    if (action === "edit-stock") {
+      const row = stockRows.find(r => r.id === id);
+      if (row) openEdit("stock", row);
     }
+    if (action === "del-stock") removeRow("stock", id);
+
+    if (action === "edit-res") {
+      const row = resRows.find(r => r.id === id);
+      if (row) openEdit("reservations", row);
+    }
+    if (action === "del-res") removeRow("reservations", id);
   });
 }
 
-onAuthStateChanged(auth, async (user) => {
+function bindUi() {
+  els.logoutBtn?.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "pdm-staff.html";
+  });
+
+  els.refreshBtn?.addEventListener("click", () => render());
+  els.search?.addEventListener("input", () => render());
+
+  els.addStockBtn?.addEventListener("click", () => openCreate("stock"));
+  els.addResBtn?.addEventListener("click", () => openCreate("reservations"));
+
+  els.modalCloseBtn?.addEventListener("click", () => showModal(false));
+  els.modalCancelBtn?.addEventListener("click", () => showModal(false));
+  els.itemModal?.addEventListener("click", (e) => {
+    if (e.target === els.itemModal) showModal(false);
+  });
+  els.modalSaveBtn?.addEventListener("click", saveModal);
+}
+
+function startSnapshots() {
+  const qStock = query(collection(db, "stock"), orderBy("updatedAt", "desc"));
+  const qRes = query(collection(db, "reservations"), orderBy("updatedAt", "desc"));
+
+  onSnapshot(qStock, (snap) => {
+    stockRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, (err) => {
+    console.error("stock snapshot", err);
+    els.stockTable.innerHTML = `<tr><td colspan="4" class="muted">Erreur Firestore (permissions).</td></tr>`;
+  });
+
+  onSnapshot(qRes, (snap) => {
+    resRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, (err) => {
+    console.error("reservations snapshot", err);
+    els.resTable.innerHTML = `<tr><td colspan="6" class="muted">Erreur Firestore (permissions).</td></tr>`;
+  });
+}
+
+bindUi();
+bindTableClicks();
+
+onAuthStateChanged(auth, (user) => {
   if (!user) {
-    location.href = "pdm-staff.html";
+    window.location.href = "pdm-staff.html";
     return;
   }
   currentUser = user;
-
-  await loadRole(user.uid);
-  bindEvents();
-  updateFormVisibility();
-  await loadAll();
+  startSnapshots();
 });
