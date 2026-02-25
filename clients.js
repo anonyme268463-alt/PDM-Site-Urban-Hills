@@ -32,10 +32,10 @@ function render(list) {
     <tr>
       <td>${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.phone)}</td>
-      <td>${escapeHtml(c.permis)}</td>
-      <td>${escapeHtml(c.voiture)}</td>
-      <td>${escapeHtml(c.moto)}</td>
-      <td>${escapeHtml(c.camion)}</td>
+      <td>${escapeHtml(c.licence)}</td>
+      <td><input type="checkbox" disabled ${c.car ? "checked" : ""}></td>
+      <td><input type="checkbox" disabled ${c.moto ? "checked" : ""}></td>
+      <td><input type="checkbox" disabled ${c.truck ? "checked" : ""}></td>
       <td>
         <button class="btn" data-action="edit" data-id="${c.id}" style="padding:6px 12px;font-size:12px">✏️</button>
         <button class="btn" data-action="del" data-id="${c.id}" style="padding:6px 12px;font-size:12px;background:#ff4444">🗑️</button>
