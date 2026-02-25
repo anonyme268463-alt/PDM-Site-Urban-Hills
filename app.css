@@ -327,7 +327,7 @@ input:focus,select:focus{
 }
 /* SELECT PDM STYLE */
 select {
-  background: #0f1424;              /* bleu nuit */
+  background: linear-gradient(145deg, #0f1424, #121a2f);
   color: #f5f5f5;                   /* blanc doux */
   border: 1px solid rgba(212,175,55,0.4); /* doré subtil */
   padding: 10px 14px;
@@ -353,6 +353,12 @@ select:focus {
 select option {
   background: #0f1424;
   color: #ffffff;
+}
+
+input, select {
+  background: #0f1424;
+  color: #f5f5f5;
+  border: 1px solid rgba(212,175,55,0.4);
 }
 
 /* Responsive */
