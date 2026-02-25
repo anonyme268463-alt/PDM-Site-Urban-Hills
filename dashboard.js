@@ -34,7 +34,7 @@ function renderSalesTable(rows) {
       <td>${d.toLocaleDateString("fr-FR")}</td>
       <td>${r.client || ""}</td>
       <td>${r.vehicle || ""}</td>
-      <td>${formatMoney(r.amount || 0)}</td>
+      <td>${formatMoney(r.sellprice || r.price || 0)}</td>
     </tr>`;
   }).join("");
 }
@@ -47,7 +47,7 @@ async function refreshOnce() {
 
   txSnap.forEach(doc => {
     const d = doc.data();
-    const amt = Number(d.amount || 0);
+    const amt = Number(d.sellprice || d.price || 0);
     total += amt;
     const date = toDateAny(d.date || d.createdAt);
     if (date && date >= weekStart) week += amt;
