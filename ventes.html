@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PDM Admin - Ventes</title>
   <link rel="icon" href="favicon.png">
-  <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="app.css">
   <script type="module" src="ventes.js"></script>
 </head>
 <body>
@@ -59,8 +59,8 @@
           <th>Date</th>
           <th>Client</th>
           <th>Modele</th>
-          <th>Achat</th>
-          <th>Vente</th>
+          <th>Buy</th>
+          <th>Sell</th>
           <th>Profit</th>
           <th>Vendeur</th>
           <th></th>
@@ -73,7 +73,6 @@
   </main>
 </div>
 
-<!-- MODAL AJOUT / EDIT -->
 <div id="txModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header">
@@ -100,7 +99,7 @@
       </div>
 
       <div class="card">
-        <div>Detail (optionnel)</div>
+        <div>Detail</div>
         <input id="fDetail" type="text" placeholder="Ex: Vente directe">
       </div>
 
@@ -115,8 +114,8 @@
       </div>
 
       <div class="card" style="grid-column: 1 / -1;">
-        <div>Notes (optionnel)</div>
-        <input id="fNotes" type="text" placeholder="Info libre...">
+        <div>Notes</div>
+        <input id="fNotes" type="text" placeholder="...">
       </div>
     </div>
 
