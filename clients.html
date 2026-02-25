@@ -103,7 +103,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <a href="partenariats.html">🤝 Partenaires</a>
       <a href="compta.html">💼 Comptabilité</a>
     </nav>
-    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+    <button class="btn"  id="logoutBtn">🚪 Déconnexion</button>
   </div>
 
   <div class="main">
@@ -114,8 +114,8 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <div class="grid">
         <input class="input" id="searchClient" placeholder="🔍 Recherche nom/téléphone...">
         <input type="file" class="input" id="csvFile" accept=".csv" style="padding:12px">
-        <button class="btn" onclick="addClient()">➕ Ajouter</button>
-        <button class="btn" onclick="importCSV()">📥 Importer CSV</button>
+        <button class="btn" id="addClientBtn">➕ Ajouter</button>
+        <button class="btn" id="importCsvBtn">📥 Importer CSV</button>
       </div>
     </div>
 
@@ -146,121 +146,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 
 <div class="toast" id="toast"></div>
 
-<script>
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
-
-function updateClients() {
-  document.getElementById('clientCount').textContent = `${clients.length} clients`;
-
-  const tbody = document.getElementById('clientsTable');
-  tbody.innerHTML = clients.map((client, index) => `
-    <tr>
-      <td>${client.name}</td>
-      <td>${client.phone}</td>
-      <td>${client.permis}</td>
-      <td>${client.voiture}</td>
-      <td>${client.moto}</td>
-      <td>${client.camion}</td>
-      <td>
-        <button class="btn" onclick="editClient(${index})" style="padding:6px 12px;font-size:12px">✏️</button>
-        <button class="btn" onclick="deleteClient(${index})" style="padding:6px 12px;font-size:12px;background:#ff4444">🗑️</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function addClient() {
-  const name = prompt('Nom client :');
-  if (!name) return;
-  const phone = prompt('Téléphone :') || '';
-  clients.push({
-    name, phone,
-    permis: prompt('Permis :') || '',
-    voiture: prompt('Voiture (Oui/Non) :') || 'Non',
-    moto: prompt('Moto (Oui/Non) :') || 'Non',
-    camion: prompt('Camion (Oui/Non) :') || 'Non'
-  });
-  updateClients();
-  showToast('Client ajouté !');
-}
-
-function editClient(index) {
-  const client = clients[index];
-  client.name = prompt('Nom :', client.name) || client.name;
-  client.phone = prompt('Téléphone :', client.phone) || client.phone;
-  updateClients();
-  showToast('Client modifié !');
-}
-
-function deleteClient(index) {
-  if (confirm('Supprimer ce client ?')) {
-    clients.splice(index, 1);
-    updateClients();
-    showToast('Client supprimé !');
-  }
-}
-
-function importCSV() {
-  const file = document.getElementById('csvFile').files[0];
-  if (!file) return showToast('Choisis un fichier CSV');
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const rows = text.split('\n').map(row => row.split(','));
-    // Simple CSV parser (améliorable)
-    rows.slice(1).forEach(row => {
-      if (row[0]) clients.push({
-        name: row[0],
-        phone: row[1] || '',
-        permis: row[2] || '',
-        voiture: row[3] || 'Non',
-        moto: row[4] || 'Non',
-        camion: row[5] || 'Non'
-      });
-    });
-    updateClients();
-    showToast(`${rows.length-1} clients importés !`);
-  };
-  reader.readAsText(file);
-}
-
-function logout() {
-  showToast('Déconnexion...');
-}
-
-// Recherche
-document.getElementById('searchClient').addEventListener('input', function() {
-  const term = this.value.toLowerCase();
-  const filtered = clients.filter(c => 
-    c.name.toLowerCase().includes(term) || 
-    c.phone.includes(term)
-  );
-  // Temporaire : remplace clients pour simplicité
-  const tbody = document.getElementById('clientsTable');
-  tbody.innerHTML = filtered.map(client => `
-    <tr>
-      <td>${client.name}</td>
-      <td>${client.phone}</td>
-      <td>${client.permis}</td>
-      <td>${client.voiture}</td>
-      <td>${client.moto}</td>
-      <td>${client.camion}</td>
-      <td>
-        <button class="btn" onclick="editClient(clients.indexOf(${JSON.stringify(client)}))" style="padding:6px 12px;font-size:12px">✏️</button>
-      </td>
-    </tr>
-  `).join('');
-});
-
-showToast('PDM Clients chargé !');
-updateClients();
-</script>
+<script type="module" src="clients.js"></script>
 </body>
 </html>

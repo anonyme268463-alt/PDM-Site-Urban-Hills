@@ -96,7 +96,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <a href="partenariats.html">🤝 Partenaires</a>
       <a href="compta.html">💼 Comptabilité</a>
     </nav>
-    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+    <button class="btn"  id="logoutBtn">🚪 Déconnexion</button>
   </div>
 
   <div class="main">
@@ -135,50 +135,13 @@ tr:hover td { background: rgba(255,255,255,.05); }
           </tbody>
         </table>
       </div>
-      <button class="btn" onclick="refreshData()">🔄 Rafraîchir</button>
+      <button class="btn" id="refreshBtn">🔄 Rafraîchir</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script>
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
-
-function updateDashboard() {
-  document.getElementById('weekSales').textContent = '$247k';
-  document.getElementById('totalSales').textContent = '$1.2M';
-  document.getElementById('stockCount').textContent = '14';
-  document.getElementById('resaCount').textContent = '3';
-
-  const tbody = document.getElementById('salesTable');
-  tbody.innerHTML = salesData.map(sale => `
-    <tr>
-      <td>${sale.date}</td>
-      <td>${sale.client}</td>
-      <td>${sale.vehicle}</td>
-      <td>${sale.amount}</td>
-    </tr>
-  `).join('');
-}
-
-function refreshData() {
-  showToast('Données rafraîchies !');
-  updateDashboard();
-}
-
-function logout() {
-  showToast('Déconnexion...');
-}
-
-showToast('PDM Dashboard chargé !');
-updateDashboard();
-</script>
+<script type="module" src="dashboard.js"></script>
 </body>
 </html>

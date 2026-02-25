@@ -117,7 +117,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <a href="partenariats.html">🤝 Partenaires</a>
       <a href="compta.html">💼 Comptabilité</a>
     </nav>
-    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+    <button class="btn"  id="logoutBtn">🚪 Déconnexion</button>
   </div>
 
   <div class="main">
@@ -131,7 +131,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
         <input class="input" id="typeInput" placeholder="Type (Sport)">
         <input class="input" id="buyInput" type="number" placeholder="Prix achat $">
         <input class="input" id="sellInput" type="number" placeholder="Prix vente $">
-        <button class="btn" onclick="addVehicle()">➕ Ajouter</button>
+        <button class="btn" id="addVehicleBtn">➕ Ajouter</button>
       </div>
     </div>
 
@@ -154,90 +154,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 
 <div class="toast" id="toast"></div>
 
-<script>
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
-
-function formatMoney(n) {
-  return '$' + n.toLocaleString();
-}
-
-function updateVehicles() {
-  document.getElementById('vehicleCount').textContent = `${vehicles.length} véhicules`;
-
-  const tbody = document.getElementById('vehiclesTable');
-  tbody.innerHTML = vehicles.map((vehicle, index) => {
-    const name = `${vehicle.brand} ${vehicle.model}`;
-    const margin = vehicle.sell - vehicle.buy;
-    const marginPct = ((margin / vehicle.buy) * 100).toFixed(1);
-    return `
-      <tr>
-        <td><strong>${name}</strong></td>
-        <td>${vehicle.type || '—'}</td>
-        <td class="price">${formatMoney(vehicle.buy)}</td>
-        <td class="price">${formatMoney(vehicle.sell)}</td>
-        <td class="profit">+${formatMoney(margin)} (${marginPct}%)</td>
-        <td>
-          <button class="btn" onclick="editVehicle(${index})" style="padding:6px 12px;font-size:12px">✏️</button>
-          <button class="btn danger" onclick="deleteVehicle(${index})" style="padding:6px 12px;font-size:12px">🗑️</button>
-        </td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="6">Aucun véhicule</td></tr>';
-}
-
-function addVehicle() {
-  const brand = document.getElementById('brandInput').value.trim();
-  const model = document.getElementById('modelInput').value.trim();
-  const type = document.getElementById('typeInput').value.trim();
-  const buy = parseInt(document.getElementById('buyInput').value) || 0;
-  const sell = parseInt(document.getElementById('sellInput').value) || 0;
-
-  if (!brand || !model || buy <= 0 || sell <= 0) {
-    return showToast('Marque, modèle, prix achat ET vente requis !');
-  }
-
-  vehicles.push({brand, model, type, buy, sell});
-  updateVehicles();
-  showToast('Véhicule ajouté !');
-
-  // Reset
-  document.getElementById('brandInput').value = '';
-  document.getElementById('modelInput').value = '';
-  document.getElementById('typeInput').value = '';
-  document.getElementById('buyInput').value = '';
-  document.getElementById('sellInput').value = '';
-}
-
-function editVehicle(index) {
-  const vehicle = vehicles[index];
-  vehicle.brand = prompt('Marque :', vehicle.brand) || vehicle.brand;
-  vehicle.model = prompt('Modèle :', vehicle.model) || vehicle.model;
-  vehicle.type = prompt('Type :', vehicle.type) || vehicle.type;
-  vehicle.buy = parseInt(prompt('Prix achat $ :', vehicle.buy)) || vehicle.buy;
-  vehicle.sell = parseInt(prompt('Prix vente $ :', vehicle.sell)) || vehicle.sell;
-  updateVehicles();
-  showToast('Véhicule modifié !');
-}
-
-function deleteVehicle(index) {
-  if (confirm('Supprimer ce véhicule ?')) {
-    vehicles.splice(index, 1);
-    updateVehicles();
-    showToast('Véhicule supprimé !');
-  }
-}
-
-function logout() {
-  showToast('Déconnexion...');
-}
-
-showToast('PDM Véhicules chargé !');
-updateVehicles();
-</script>
+<script type="module" src="vehicles.js"></script>
 </body>
 </html>

@@ -127,7 +127,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <a href="partenariats.html">🤝 Partenaires</a>
       <a href="compta.html">💼 Comptabilité</a>
     </nav>
-    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+    <button class="btn"  id="logoutBtn">🚪 Déconnexion</button>
   </div>
 
   <div class="main">
@@ -140,7 +140,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
         <input class="input" id="modelInput" placeholder="Modèle (Comet S2)">
         <input class="input" id="qtyInput" type="number" value="1" placeholder="Quantité">
         <input class="input" id="clientInput" placeholder="Client (optionnel)">
-        <button class="btn" onclick="addItem()">➕ Ajouter</button>
+        <button class="btn" id="addItemBtn">➕ Ajouter</button>
       </div>
     </div>
 
@@ -178,119 +178,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 
 <div class="toast" id="toast"></div>
 
-<script>
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
-
-function updateLists() {
-  document.getElementById('stockCount').textContent = `${stock.length} items`;
-  document.getElementById('resaCount').textContent = `${reservations.length} rsa`;
-
-  document.getElementById('stockTable').innerHTML = stock.map(item => `
-    <tr>
-      <td>${item.brand}</td>
-      <td>${item.model}</td>
-      <td><span class="tag ${item.qty > 1 ? 'ok' : item.qty === 1 ? 'warn' : 'danger'}">${item.qty}</span></td>
-      <td>
-        <button class="btn" onclick="editStock(${stock.indexOf(item)})" style="padding:6px 12px;font-size:12px">✏️</button>
-        <button class="btn danger" onclick="deleteStock(${stock.indexOf(item)})" style="padding:6px 12px;font-size:12px">🗑️</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="4">Aucun stock</td></tr>';
-
-  document.getElementById('resaTable').innerHTML = reservations.map(item => `
-    <tr>
-      <td>${item.client}</td>
-      <td>${item.brand}</td>
-      <td>${item.model}</td>
-      <td><span class="tag warn">${item.qty}</span></td>
-      <td>
-        <button class="btn ok" onclick="sellReservation(${reservations.indexOf(item)})" style="padding:6px 12px;font-size:12px">💰 Vente</button>
-        <button class="btn" onclick="editResa(${reservations.indexOf(item)})" style="padding:6px 12px;font-size:12px">✏️</button>
-        <button class="btn danger" onclick="deleteResa(${reservations.indexOf(item)})" style="padding:6px 12px;font-size:12px">🗑️</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="5">Aucune réservation</td></tr>';
-}
-
-function addItem() {
-  const brand = document.getElementById('brandInput').value.trim();
-  const model = document.getElementById('modelInput').value.trim();
-  const qty = parseInt(document.getElementById('qtyInput').value) || 1;
-  const client = document.getElementById('clientInput').value.trim();
-
-  if (!brand || !model) return showToast('Marque + Modèle requis !');
-
-  if (client) {
-    reservations.push({client, brand, model, qty});
-    showToast('Réservation ajoutée !');
-  } else {
-    stock.push({brand, model, qty});
-    showToast('Stock ajouté !');
-  }
-
-  // Reset form
-  document.getElementById('brandInput').value = '';
-  document.getElementById('modelInput').value = '';
-  document.getElementById('qtyInput').value = '1';
-  document.getElementById('clientInput').value = '';
-
-  updateLists();
-}
-
-function editStock(index) {
-  const item = stock[index];
-  item.brand = prompt('Marque :', item.brand) || item.brand;
-  item.model = prompt('Modèle :', item.model) || item.model;
-  item.qty = parseInt(prompt('Qté :', item.qty)) || item.qty;
-  updateLists();
-  showToast('Stock modifié !');
-}
-
-function deleteStock(index) {
-  if (confirm('Supprimer du stock ?')) {
-    stock.splice(index, 1);
-    updateLists();
-    showToast('Stock supprimé !');
-  }
-}
-
-function sellReservation(index) {
-  if (confirm('Convertir en vente ?')) {
-    const item = reservations.splice(index, 1)[0];
-    showToast(`Vente ${item.model} ${item.client} !`);
-    updateLists();
-  }
-}
-
-function editResa(index) {
-  const item = reservations[index];
-  item.client = prompt('Client :', item.client) || item.client;
-  item.brand = prompt('Marque :', item.brand) || item.brand;
-  item.model = prompt('Modèle :', item.model) || item.model;
-  item.qty = parseInt(prompt('Qté :', item.qty)) || item.qty;
-  updateLists();
-  showToast('Réservation modifiée !');
-}
-
-function deleteResa(index) {
-  if (confirm('Annuler réservation ?')) {
-    reservations.splice(index, 1);
-    updateLists();
-    showToast('Réservation annulée !');
-  }
-}
-
-function logout() {
-  showToast('Déconnexion...');
-}
-
-showToast('PDM Stock chargé !');
-updateLists();
-</script>
+<script type="module" src="stock.js"></script>
 </body>
 </html>

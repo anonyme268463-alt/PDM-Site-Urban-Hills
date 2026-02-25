@@ -132,7 +132,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <a href="partenariats.html" class="active">🤝 Partenaires</a>
       <a href="compta.html">💼 Comptabilité</a>
     </nav>
-    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+    <button class="btn"  id="logoutBtn">🚪 Déconnexion</button>
   </div>
 
   <div class="main">
@@ -141,7 +141,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
         <h2>Entreprises Partenaires</h2>
         <div class="tools">
           <input class="input" id="partnerSearch" placeholder="Rechercher entreprise...">
-          <button class="btn small" onclick="refreshPartners()">🔄</button>
+          <button class="btn small" id="refreshPartnersBtn">🔄</button>
         </div>
         <div class="pill" id="partnerCount">0 entreprises</div>
         <div class="table">
@@ -156,7 +156,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
         </div>
         <div style="margin-top:16px">
           <input class="input" id="newPartner" placeholder="Nouvelle entreprise...">
-          <button class="btn" onclick="addPartner()">➕ Ajouter</button>
+          <button class="btn" id="addPartnerBtn">➕ Ajouter</button>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
         <div class="grid">
           <input class="input" id="newMemberName" placeholder="Nom client">
           <input class="input" id="newMemberRate" type="number" min="0" max="100" placeholder="Taux %">
-          <button class="btn" onclick="addMember()">➕ Ajouter</button>
+          <button class="btn" id="addMemberBtn">➕ Ajouter</button>
         </div>
         <div class="table">
           <table>
@@ -182,8 +182,8 @@ tr:hover td { background: rgba(255,255,255,.05); }
           </table>
         </div>
         <div class="tools">
-          <button class="btn" onclick="renamePartner()">✏️ Renommer</button>
-          <button class="btn danger" onclick="deletePartner()">🗑️ Supprimer</button>
+          <button class="btn" id="renamePartnerBtn">✏️ Renommer</button>
+          <button class="btn danger" id="deletePartnerBtn">🗑️ Supprimer</button>
         </div>
       </div>
     </div>
@@ -192,136 +192,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 
 <div class="toast" id="toast"></div>
 
-<script>
-function updatePartners() {
-  document.getElementById('partnerCount').textContent = `${partners.length} entreprises`;
-
-  const tbody = document.getElementById('partnersTable');
-  tbody.innerHTML = partners.map((partner, index) => `
-    <tr onclick="selectPartner(${index})" style="cursor:pointer">
-      <td><strong>${partner.name}</strong></td>
-      <td><span class="pill">${partner.members.length}</span></td>
-      <td>
-        <button class="btn small" onclick="event.stopPropagation(); editPartner(${index})">✏️</button>
-        <button class="btn danger small" onclick="event.stopPropagation(); deletePartner(${index})">🗑️</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="3">Aucune entreprise partenaire</td></tr>';
-}
-
-function selectPartner(index) {
-  selectedPartnerIndex = index;
-  const partner = partners[index];
-  document.getElementById('partnerName').textContent = partner.name;
-  document.getElementById('membersPanel').style.display = 'block';
-
-  const tbody = document.getElementById('membersTable');
-  tbody.innerHTML = partner.members.map((member, mIndex) => `
-    <tr>
-      <td>${member.name}</td>
-      <td><span class="tag ok">${member.rate}%</span></td>
-      <td>
-        <button class="btn small" onclick="editMember(${index}, ${mIndex})">✏️</button>
-        <button class="btn danger small" onclick="deleteMember(${index}, ${mIndex})">🗑️</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="3">Aucun client</td></tr>';
-
-  document.getElementById('memberCount').textContent = `${partner.members.length} clients`;
-}
-
-function addPartner() {
-  const name = document.getElementById('newPartner').value.trim();
-  if (!name) return showToast('Nom entreprise requis !');
-
-  partners.push({name, members: []});
-  document.getElementById('newPartner').value = '';
-  updatePartners();
-  showToast('Entreprise ajoutée !');
-}
-
-function editPartner(index) {
-  const name = prompt('Nom entreprise :', partners[index].name);
-  if (name) {
-    partners[index].name = name;
-    updatePartners();
-    showToast('Entreprise renommée !');
-  }
-}
-
-function deletePartner(index) {
-  if (confirm('Supprimer cette entreprise ET ses clients ?')) {
-    partners.splice(index, 1);
-    if (selectedPartnerIndex === index) {
-      document.getElementById('membersPanel').style.display = 'none';
-      selectedPartnerIndex = -1;
-    }
-    updatePartners();
-    showToast('Entreprise supprimée !');
-  }
-}
-
-function addMember() {
-  if (selectedPartnerIndex === -1) return showToast('Sélectionne une entreprise !');
-
-  const name = document.getElementById('newMemberName').value.trim();
-  const rate = parseInt(document.getElementById('newMemberRate').value) || 0;
-
-  if (!name) return showToast('Nom client requis !');
-  if (rate < 0 || rate > 100) return showToast('Taux 0-100% !');
-
-  partners[selectedPartnerIndex].members.push({name, rate});
-  document.getElementById('newMemberName').value = '';
-  document.getElementById('newMemberRate').value = '';
-
-  selectPartner(selectedPartnerIndex);
-  showToast('Client ajouté !');
-}
-
-function editMember(pIndex, mIndex) {
-  const member = partners[pIndex].members[mIndex];
-  const name = prompt('Nom client :', member.name);
-  const rate = parseInt(prompt('Taux % :', member.rate));
-
-  if (name !== null) member.name = name;
-  if (!isNaN(rate)) member.rate = Math.max(0, Math.min(100, rate));
-
-  selectPartner(pIndex);
-  showToast('Client modifié !');
-}
-
-function deleteMember(pIndex, mIndex) {
-  if (confirm('Supprimer ce client partenaire ?')) {
-    partners[pIndex].members.splice(mIndex, 1);
-    selectPartner(pIndex);
-    showToast('Client supprimé !');
-  }
-}
-
-function logout() {
-  showToast('Déconnexion...');
-}
-
-// Recherche partenaires
-document.getElementById('partnerSearch').addEventListener('input', function() {
-  const term = this.value.toLowerCase();
-  const filtered = partners.filter(p => p.name.toLowerCase().includes(term));
-
-  const tbody = document.getElementById('partnersTable');
-  tbody.innerHTML = filtered.map((partner, index) => `
-    <tr onclick="selectPartner(${partners.indexOf(partner)})" style="cursor:pointer">
-      <td><strong>${partner.name}</strong></td>
-      <td><span class="pill">${partner.members.length}</span></td>
-      <td>
-        <button class="btn small" onclick="event.stopPropagation(); editPartner(${partners.indexOf(partner)})">✏️</button>
-        <button class="btn danger small" onclick="event.stopPropagation(); deletePartner(${partners.indexOf(partner)})">🗑️</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="3">Aucune entreprise trouvée</td></tr>';
-});
-
-showToast('PDM Partenariats chargé !');
-updatePartners();
-</script>
+<script type="module" src="partenariats.js"></script>
 </body>
 </html>

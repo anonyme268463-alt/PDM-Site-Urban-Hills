@@ -126,7 +126,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
       <a href="partenariats.html">🤝 Partenaires</a>
       <a href="compta.html">💼 Comptabilité</a>
     </nav>
-    <button class="btn" onclick="logout()">🚪 Déconnexion</button>
+    <button class="btn"  id="logoutBtn">🚪 Déconnexion</button>
   </div>
 
   <div class="main">
@@ -140,7 +140,7 @@ tr:hover td { background: rgba(255,255,255,.05); }
         <input class="input" id="buyPrice" type="number" placeholder="Prix achat $">
         <input class="input" id="sellPrice" type="number" placeholder="Prix vente $">
         <input class="input" id="sellerName" placeholder="Vendeur">
-        <button class="btn" onclick="createSale()">💰 Enregistrer Vente</button>
+        <button class="btn" id="createSaleBtn">💰 Enregistrer Vente</button>
       </div>
       <div id="saleType" style="margin-top:10px;font-weight:600;padding:10px;border-radius:8px;background:rgba(255,255,255,.05)">Type détecté : —</div>
     </div>
@@ -164,92 +164,6 @@ tr:hover td { background: rgba(255,255,255,.05); }
 
 <div class="toast" id="toast"></div>
 
-<script>
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  toast.textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 3000);
-}
-
-function formatMoney(n) {
-  return '$' + n.toLocaleString();
-}
-
-function updateSales() {
-  document.getElementById('salesCount').textContent = `${sales.length} ventes`;
-
-  const tbody = document.getElementById('salesTable');
-  tbody.innerHTML = sales.map(sale => {
-    const profit = sale.sell - sale.buy;
-    return `
-      <tr>
-        <td>${sale.date}</td>
-        <td><span class="tag ${sale.type.includes('réservation') ? 'ok' : 'gold'}">${sale.type}</span></td>
-        <td>${sale.client}</td>
-        <td>${sale.vehicle}</td>
-        <td>${sale.qty}</td>
-        <td>${sale.seller}</td>
-        <td>${formatMoney(sale.buy)}</td>
-        <td>${formatMoney(sale.sell)}</td>
-        <td style="font-weight:600;color:${profit > 0 ? 'var(--ok)' : 'var(--danger)'}">${formatMoney(profit)}</td>
-      </tr>
-    `;
-  }).join('') || '<tr><td colspan="9">Aucune vente</td></tr>';
-}
-
-function detectSaleType() {
-  const client = document.getElementById('clientSell').value.toLowerCase();
-  const vehicle = document.getElementById('vehicleSell').value.toLowerCase();
-
-  if (client) return 'Vente depuis réservation';
-  return 'Vente directe';
-}
-
-function createSale() {
-  const client = document.getElementById('clientSell').value.trim() || 'Anonyme';
-  const vehicle = document.getElementById('vehicleSell').value.trim();
-  const buy = parseInt(document.getElementById('buyPrice').value) || 0;
-  const sell = parseInt(document.getElementById('sellPrice').value) || 0;
-  const seller = document.getElementById('sellerName').value.trim() || 'Inconnu';
-
-  if (!vehicle || sell <= 0) return showToast('Véhicule + prix vente requis !');
-
-  const sale = {
-    date: new Date().toLocaleString('fr-FR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}),
-    type: detectSaleType(),
-    client,
-    vehicle,
-    qty: 1,
-    seller,
-    buy,
-    sell
-  };
-
-  sales.unshift(sale); // Ajoute en haut
-  updateSales();
-  showToast(`Vente ${sale.vehicle} $${sale.sell.toLocaleString()} OK !`);
-
-  // Reset form
-  document.getElementById('clientSell').value = '';
-  document.getElementById('vehicleSell').value = '';
-  document.getElementById('buyPrice').value = '';
-  document.getElementById('sellPrice').value = '';
-  document.getElementById('sellerName').value = '';
-}
-
-function logout() {
-  showToast('Déconnexion...');
-}
-
-// Auto-detect type
-document.getElementById('clientSell').addEventListener('input', function() {
-  document.getElementById('saleType').textContent = `Type détecté : ${detectSaleType()}`;
-});
-
-showToast('PDM Ventes chargé !');
-updateSales();
-</script>
+<script type="module" src="ventes.js"></script>
 </body>
 </html>
