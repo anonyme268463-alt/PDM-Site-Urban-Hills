@@ -1,6 +1,6 @@
 // compta.js
-import { db } from "./config.js";
 import { requireAuth } from "./guard.js";
+import { db } from "./config.js";
 import { showToast, logout, formatMoney, parseMoney, isoDate, toDateAny } from "./common.js";
 
 import {
