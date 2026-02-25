@@ -34,8 +34,8 @@ function yesNoBadge(v) {
 function checkIcon(v) {
   const yes = v === true;
   return yes
-    ? `<span class="badge badge-yes">OK</span>`
-    : `<span class="badge badge-no">NO</span>`;
+    ? `<span class="badge badge-yes">✓</span>`
+    : `<span class="badge badge-no">✕</span>`;
 }
 
 function toDateSafe(ts) {
@@ -163,3 +163,4 @@ if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) clos
 if (search) search.addEventListener("input", render);
 
 load();
+
