@@ -63,7 +63,7 @@ function openModal({ mode, item }) {
 
   mBrand.value = item?.brand || "";
   mModel.value = item?.model || "";
-  mCategory.value = item?.category || "";
+  mCategory.value = item?.type || "";
   mPrice.value = String(item?.price ?? 0);
   mSellPrice.value = String(item?.sellPrice ?? 0);
 
@@ -202,3 +202,4 @@ if (saveBtn) saveBtn.addEventListener("click", save);
 
 // Start
 load();
+
