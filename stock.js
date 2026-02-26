@@ -1,393 +1,297 @@
-// stock.js
-import * as CFG from "./config.js";
-
+import { db, auth } from "./config.js";
 import {
-  collection, query, orderBy, onSnapshot,
-  addDoc, updateDoc, deleteDoc, doc,
-  serverTimestamp
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-import {
-  onAuthStateChanged, signOut
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+const stockTbody = document.getElementById("stockTable");
+const resTbody = document.getElementById("resTable");
+const search = document.getElementById("search");
 
-/* =========================
-   Helpers
-========================= */
-const $ = (id) => document.getElementById(id);
+const statStockQty = document.getElementById("statStockQty");
+const statStockLines = document.getElementById("statStockLines");
+const statResActive = document.getElementById("statResActive");
+
+const refreshBtn = document.getElementById("refreshBtn");
+const addStockBtn = document.getElementById("addStockBtn");
+const addResBtn = document.getElementById("addResBtn");
+
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "pdm-staff.html";
+  });
+}
+
+// Modal
+const modal = document.getElementById("editModal");
+const closeModalBtn = document.getElementById("closeModal");
+const cancelBtn = document.getElementById("cancelBtn");
+const saveBtn = document.getElementById("saveBtn");
+
+const mTitle = document.getElementById("mTitle");
+const mSub = document.getElementById("mSub");
+const mBrand = document.getElementById("mBrand");
+const mModel = document.getElementById("mModel");
+const mQty = document.getElementById("mQty");
+const mClient = document.getElementById("mClient");
+
+// State
+let CACHE = { stock: [], res: [] };
+let EDIT = { mode: "create", type: "stock", id: null }; // type: stock | reservation
+
+function toDateSafe(ts) {
+  try {
+    if (ts?.toDate) return ts.toDate();
+  } catch (e) {}
+  return null;
+}
 
 function fmtDate(ts) {
-  if (!ts) return "—";
-  try {
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString("fr-FR");
-  } catch {
-    return "—";
-  }
+  const d = toDateSafe(ts);
+  return d ? d.toLocaleDateString("fr-FR") : "-";
 }
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function badgeStatus(status) {
+  const s = (status || "").toString().toLowerCase();
+  if (s === "reserved" || s === "réservé" || s === "reserve") return `<span class="badge badge-warn">Réservé</span>`;
+  if (s === "done" || s === "vendu" || s === "sold") return `<span class="badge badge-yes">Vendu</span>`;
+  if (s === "cancel" || s === "annulé" || s === "annule") return `<span class="badge badge-no">Annulé</span>`;
+  return `<span class="badge">${status || "-"}</span>`;
 }
 
-function statusPill(status) {
-  const s = (status || "reserved").toLowerCase();
-  const label =
-    s === "reserved" ? "Réservé" :
-    s === "done" ? "Terminé" :
-    s === "cancelled" ? "Annulé" : s;
-
-  const cls =
-    s === "reserved" ? "pill pill--blue" :
-    s === "done" ? "pill pill--green" :
-    s === "cancelled" ? "pill pill--red" : "pill";
-
-  return `<span class="${cls}">${escapeHtml(label)}</span>`;
-}
-
-/* =========================
-   Firebase handles
-========================= */
-const db = CFG.db;
-const auth = CFG.auth;
-
-if (!db || !auth) {
-  console.error("[stock.js] config.js doit exporter db et auth.");
-}
-
-/* =========================
-   DOM
-========================= */
-const stockTbody = $("stockTbody");
-const resTbody = $("resTbody");
-
-const statStockQty = $("statStockQty");
-const statStockLines = $("statStockLines");
-const statResActive = $("statResActive");
-
-const searchInput = $("searchInput");
-
-const btnRefresh = $("btnRefresh");
-const btnAddStock = $("btnAddStock");
-const btnAddReservation = $("btnAddReservation");
-const btnLogout = $("btnLogout");
-
-/* Modal */
-const modalOverlay = $("modalOverlay");
-const modalClose = $("modalClose");
-const modalCancel = $("modalCancel");
-const modalForm = $("modalForm");
-const modalTitle = $("modalTitle");
-const modalSubtitle = $("modalSubtitle");
-const modalHint = $("modalHint");
-
-const fBrand = $("fBrand");
-const fModel = $("fModel");
-const fQty = $("fQty");
-const fClientName = $("fClientName");
-const fStatus = $("fStatus");
-
-const wrapClient = $("wrapClient");
-const wrapStatus = $("wrapStatus");
-
-/* =========================
-   State
-========================= */
-let stockRows = [];        // {id, brand, model, qty, createdAt}
-let reservationRows = [];  // {id, brand, model, qty, clientName, status, createdAt}
-
-let modalMode = "stock";   // "stock" | "reservation"
-let editingId = null;      // { mode, id }
-
-/* =========================
-   Render
-========================= */
-function applyFilter() {
-  const q = (searchInput.value || "").trim().toLowerCase();
-
-  const stockFiltered = !q
-    ? stockRows
-    : stockRows.filter(r =>
-        `${r.brand} ${r.model}`.toLowerCase().includes(q)
-      );
-
-  const resFiltered = !q
-    ? reservationRows
-    : reservationRows.filter(r =>
-        `${r.brand} ${r.model} ${r.clientName}`.toLowerCase().includes(q)
-      );
-
-  renderStock(stockFiltered);
-  renderReservations(resFiltered);
-  renderStats();
-}
-
-function renderStats() {
-  const totalQty = stockRows.reduce((sum, r) => sum + (Number(r.qty) || 0), 0);
-  statStockQty.textContent = String(totalQty);
-  statStockLines.textContent = String(stockRows.length);
-
-  const active = reservationRows.filter(r => (r.status || "reserved") === "reserved").length;
-  statResActive.textContent = String(active);
-}
-
-function renderStock(rows) {
-  if (!rows.length) {
-    stockTbody.innerHTML = `<tr><td colspan="5" class="muted">Aucune ligne de stock.</td></tr>`;
-    return;
-  }
-
-  stockTbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${escapeHtml(r.brand)}</td>
-      <td>${escapeHtml(r.model)}</td>
-      <td>${escapeHtml(r.qty)}</td>
-      <td>${escapeHtml(fmtDate(r.createdAt))}</td>
-      <td class="tr">
-        <button class="btn btn--sm" data-action="editStock" data-id="${r.id}">Modifier</button>
-        <button class="btn btn--sm btn--danger" data-action="delStock" data-id="${r.id}">Supprimer</button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-function renderReservations(rows) {
-  if (!rows.length) {
-    resTbody.innerHTML = `<tr><td colspan="7" class="muted">Aucune réservation.</td></tr>`;
-    return;
-  }
-
-  resTbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${escapeHtml(r.brand)}</td>
-      <td>${escapeHtml(r.model)}</td>
-      <td>${escapeHtml(r.clientName || "—")}</td>
-      <td>${escapeHtml(r.qty)}</td>
-      <td>${statusPill(r.status)}</td>
-      <td>${escapeHtml(fmtDate(r.createdAt))}</td>
-      <td class="tr">
-        <button class="btn btn--sm" data-action="editRes" data-id="${r.id}">Modifier</button>
-        <button class="btn btn--sm btn--danger" data-action="delRes" data-id="${r.id}">Supprimer</button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-/* =========================
-   Modal
-========================= */
-function openModal(mode, data = null) {
-  modalMode = mode;
-  editingId = data?.id || null;
+function openModal({ mode, type, item }) {
+  EDIT = { mode, type, id: item?.id || null };
 
   // Reset
-  modalForm.reset();
-  fQty.value = "1";
-  fStatus.value = "reserved";
-  fClientName.value = "";
+  mBrand.value = item?.brand || "";
+  mModel.value = item?.model || "";
+  mQty.value = String(item?.qty ?? 1);
+  mClient.value = item?.clientName || "";
 
-  if (mode === "stock") {
-    modalTitle.textContent = editingId ? "Modifier (Stock)" : "Ajouter (Stock)";
-    modalSubtitle.textContent = "Collection: stock";
-    wrapClient.classList.add("hidden");
-    wrapStatus.classList.add("hidden");
-    modalHint.textContent = "Ajoute / modifie une ligne de stock.";
+  if (mode === "create" && type === "stock") {
+    mTitle.textContent = "Ajouter";
+    mSub.textContent = "Stock";
+    mClient.value = "";
+  } else if (mode === "create" && type === "reservation") {
+    mTitle.textContent = "Ajouter";
+    mSub.textContent = "Réservation";
   } else {
-    modalTitle.textContent = editingId ? "Modifier (Réservation)" : "Ajouter (Réservation)";
-    modalSubtitle.textContent = "Collection: reservations";
-    wrapClient.classList.remove("hidden");
-    wrapStatus.classList.remove("hidden");
-    modalHint.textContent = "Réservation : client + statut.";
+    mTitle.textContent = "Modifier";
+    mSub.textContent = type === "reservation" ? "Réservation" : "Stock";
   }
 
-  if (data) {
-    fBrand.value = data.brand || "";
-    fModel.value = data.model || "";
-    fQty.value = String(data.qty ?? 1);
-    fClientName.value = data.clientName || "";
-    if (data.status) fStatus.value = data.status;
-  }
-
-  modalOverlay.classList.remove("hidden");
-  modalOverlay.setAttribute("aria-hidden", "false");
-  setTimeout(() => fBrand.focus(), 0);
+  modal.classList.remove("hidden");
 }
 
 function closeModal() {
-  modalOverlay.classList.add("hidden");
-  modalOverlay.setAttribute("aria-hidden", "true");
-  editingId = null;
+  modal.classList.add("hidden");
 }
 
-modalClose?.addEventListener("click", closeModal);
-modalCancel?.addEventListener("click", closeModal);
-modalOverlay?.addEventListener("click", (e) => {
-  if (e.target === modalOverlay) closeModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !modalOverlay.classList.contains("hidden")) closeModal();
-});
+if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
+if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-/* =========================
-   CRUD
-========================= */
-async function saveModal() {
-  const brand = (fBrand.value || "").trim();
-  const model = (fModel.value || "").trim();
-  const qty = Math.max(0, Number(fQty.value || 0));
-  const clientName = (fClientName.value || "").trim();
-  const status = (fStatus.value || "reserved").trim();
+async function load() {
+  stockTbody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
+  resTbody.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
 
-  if (!brand || !model) return;
+  const [stockSnap, resSnap] = await Promise.all([
+    getDocs(collection(db, "stock")),
+    getDocs(collection(db, "reservations")),
+  ]);
 
-  if (modalMode === "stock") {
-    const payload = {
-      brand,
-      model,
-      qty,
-      updatedAt: serverTimestamp(),
-      ...(editingId ? {} : { createdAt: serverTimestamp() }),
-    };
+  const stock = stockSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const res = resSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    if (editingId) {
-      await updateDoc(doc(db, "stock", editingId), payload);
-    } else {
-      await addDoc(collection(db, "stock"), payload);
-    }
+  CACHE = { stock, res };
+  render();
+}
+
+function render() {
+  const q = (search?.value || "").trim().toLowerCase();
+
+  const stockFiltered = CACHE.stock.filter((s) => {
+    const brand = (s.brand || "").toLowerCase();
+    const model = (s.model || "").toLowerCase();
+    return !q || brand.includes(q) || model.includes(q);
+  });
+
+  const resFiltered = CACHE.res.filter((r) => {
+    const brand = (r.brand || "").toLowerCase();
+    const model = (r.model || "").toLowerCase();
+    const client = (r.clientName || "").toLowerCase();
+    return !q || brand.includes(q) || model.includes(q) || client.includes(q);
+  });
+
+  // Stats
+  const qtyTotal = stockFiltered.reduce((sum, s) => sum + Number(s.qty || 0), 0);
+  statStockQty.textContent = String(qtyTotal);
+  statStockLines.textContent = String(stockFiltered.length);
+
+  const activeRes = resFiltered.filter((r) => {
+    const st = (r.status || "").toString().toLowerCase();
+    return st === "reserved" || st === "réservé" || st === "reserve" || st === "";
+  }).length;
+  statResActive.textContent = String(activeRes);
+
+  // STOCK TABLE
+  if (stockFiltered.length === 0) {
+    stockTbody.innerHTML = `<tr><td colspan="5">Aucune ligne stock</td></tr>`;
   } else {
-    const payload = {
-      brand,
-      model,
-      qty,
-      clientName,
-      status,
-      updatedAt: serverTimestamp(),
-      ...(editingId ? {} : { createdAt: serverTimestamp() }),
-    };
+    stockTbody.innerHTML = stockFiltered
+      .sort((a, b) => (toDateSafe(b.createdAt)?.getTime?.() || 0) - (toDateSafe(a.createdAt)?.getTime?.() || 0))
+      .map((s) => {
+        return `
+          <tr>
+            <td>${s.brand || "-"}</td>
+            <td>${s.model || "-"}</td>
+            <td>${Number(s.qty || 0)}</td>
+            <td>${fmtDate(s.createdAt)}</td>
+            <td style="text-align:right;">
+              <button class="btn" data-edit-stock="${s.id}">Modifier</button>
+              <button class="btn btn-danger" data-del-stock="${s.id}">Supprimer</button>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
 
-    if (editingId) {
-      await updateDoc(doc(db, "reservations", editingId), payload);
-    } else {
-      await addDoc(collection(db, "reservations"), payload);
-    }
-  }
-
-  closeModal();
-}
-
-async function deleteRow(mode, id) {
-  if (!confirm("Confirmer la suppression ?")) return;
-  const col = mode === "stock" ? "stock" : "reservations";
-  await deleteDoc(doc(db, col, id));
-}
-
-/* =========================
-   Events
-========================= */
-searchInput?.addEventListener("input", applyFilter);
-
-btnRefresh?.addEventListener("click", () => applyFilter());
-btnAddStock?.addEventListener("click", () => openModal("stock"));
-btnAddReservation?.addEventListener("click", () => openModal("reservation"));
-
-stockTbody?.addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-action]");
-  if (!btn) return;
-  const id = btn.dataset.id;
-
-  if (btn.dataset.action === "editStock") {
-    const row = stockRows.find(r => r.id === id);
-    openModal("stock", row);
-  }
-  if (btn.dataset.action === "delStock") {
-    deleteRow("stock", id);
-  }
-});
-
-resTbody?.addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-action]");
-  if (!btn) return;
-  const id = btn.dataset.id;
-
-  if (btn.dataset.action === "editRes") {
-    const row = reservationRows.find(r => r.id === id);
-    openModal("reservation", row);
-  }
-  if (btn.dataset.action === "delRes") {
-    deleteRow("reservation", id);
-  }
-});
-
-modalForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  try {
-    await saveModal();
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors de l’enregistrement (voir console).");
-  }
-});
-
-btnLogout?.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    window.location.href = "pdm-staff.html";
-  } catch (e) {
-    console.error(e);
-  }
-});
-
-/* =========================
-   Live listeners
-========================= */
-function attachListeners() {
-  // STOCK
-  const qStock = query(collection(db, "stock"), orderBy("createdAt", "desc"));
-  onSnapshot(qStock, (snap) => {
-    stockRows = snap.docs.map(d => {
-      const data = d.data() || {};
-      return {
-        id: d.id,
-        brand: data.brand ?? "",
-        model: data.model ?? "",
-        qty: data.qty ?? 0,
-        createdAt: data.createdAt,
-      };
+    stockTbody.querySelectorAll("[data-edit-stock]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-edit-stock");
+        const item = CACHE.stock.find((x) => x.id === id);
+        openModal({ mode: "edit", type: "stock", item });
+      });
     });
-    applyFilter();
-  }, (err) => console.error("[stock] snapshot error:", err));
-
-  // RESERVATIONS
-  const qRes = query(collection(db, "reservations"), orderBy("createdAt", "desc"));
-  onSnapshot(qRes, (snap) => {
-    reservationRows = snap.docs.map(d => {
-      const data = d.data() || {};
-      return {
-        id: d.id,
-        brand: data.brand ?? "",
-        model: data.model ?? "",
-        qty: data.qty ?? 0,
-        clientName: data.clientName ?? "",
-        status: data.status ?? "reserved",
-        createdAt: data.createdAt,
-      };
+    stockTbody.querySelectorAll("[data-del-stock]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const id = b.getAttribute("data-del-stock");
+        if (!confirm("Supprimer cette ligne stock ?")) return;
+        await deleteDoc(doc(db, "stock", id));
+        await load();
+      });
     });
-    applyFilter();
-  }, (err) => console.error("[reservations] snapshot error:", err));
+  }
+
+  // RES TABLE
+  if (resFiltered.length === 0) {
+    resTbody.innerHTML = `<tr><td colspan="7">Aucune réservation</td></tr>`;
+  } else {
+    resTbody.innerHTML = resFiltered
+      .sort((a, b) => (toDateSafe(b.createdAt)?.getTime?.() || 0) - (toDateSafe(a.createdAt)?.getTime?.() || 0))
+      .map((r) => {
+        return `
+          <tr>
+            <td>${r.brand || "-"}</td>
+            <td>${r.model || "-"}</td>
+            <td>${r.clientName || "-"}</td>
+            <td>${Number(r.qty || 0)}</td>
+            <td>${badgeStatus(r.status || "reserved")}</td>
+            <td>${fmtDate(r.createdAt)}</td>
+            <td style="text-align:right;">
+              <button class="btn" data-edit-res="${r.id}">Modifier</button>
+              <button class="btn btn-danger" data-del-res="${r.id}">Supprimer</button>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    resTbody.querySelectorAll("[data-edit-res]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-edit-res");
+        const item = CACHE.res.find((x) => x.id === id);
+        openModal({ mode: "edit", type: "reservation", item });
+      });
+    });
+    resTbody.querySelectorAll("[data-del-res]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const id = b.getAttribute("data-del-res");
+        if (!confirm("Supprimer cette réservation ?")) return;
+        await deleteDoc(doc(db, "reservations", id));
+        await load();
+      });
+    });
+  }
 }
 
-/* =========================
-   Boot
-========================= */
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "pdm-staff.html";
+async function save() {
+  const brand = (mBrand.value || "").trim();
+  const model = (mModel.value || "").trim();
+  const qty = Number(mQty.value || 0);
+  const clientName = (mClient.value || "").trim();
+
+  if (!brand || !model) {
+    alert("Marque et modèle sont obligatoires.");
     return;
   }
-  attachListeners();
-});
+  if (Number.isNaN(qty) || qty < 0) {
+    alert("Quantité invalide.");
+    return;
+  }
+
+  // règle demandée : si client rempli => reservation, sinon stock
+  const inferredType = clientName ? "reservation" : "stock";
+  const type = EDIT.mode === "edit" ? EDIT.type : inferredType;
+
+  saveBtn.disabled = true;
+  try {
+    if (type === "stock") {
+      const payload = {
+        brand,
+        model,
+        qty,
+        updatedAt: serverTimestamp(),
+      };
+
+      if (EDIT.mode === "create") {
+        payload.createdAt = serverTimestamp();
+        await addDoc(collection(db, "stock"), payload);
+      } else {
+        await updateDoc(doc(db, "stock", EDIT.id), payload);
+      }
+    } else {
+      const payload = {
+        brand,
+        model,
+        clientName: clientName || "-",
+        qty,
+        status: "reserved",
+        updatedAt: serverTimestamp(),
+      };
+
+      if (EDIT.mode === "create") {
+        payload.createdAt = serverTimestamp();
+        await addDoc(collection(db, "reservations"), payload);
+      } else {
+        await updateDoc(doc(db, "reservations", EDIT.id), payload);
+      }
+    }
+
+    closeModal();
+    await load();
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+// Events
+if (search) search.addEventListener("input", render);
+
+if (refreshBtn) refreshBtn.addEventListener("click", load);
+
+if (addStockBtn) addStockBtn.addEventListener("click", () => openModal({ mode: "create", type: "stock" }));
+if (addResBtn) addResBtn.addEventListener("click", () => openModal({ mode: "create", type: "reservation" }));
+
+if (saveBtn) saveBtn.addEventListener("click", save);
+
+// Start
+load();
