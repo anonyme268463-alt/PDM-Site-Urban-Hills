@@ -1,87 +1,109 @@
+<!-- stock.html -->
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDM Admin — Stock</title>
+
   <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="app.css" />
+
+  <!-- Guard + Firebase config (doivent déjà exister dans ton repo) -->
+  <script type="module" src="guard.js"></script>
 </head>
-<body>
+
+<body class="pdm">
   <div class="layout">
+    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="title">PDM ADMIN</div>
-        <div class="subtitle">Urban Hills</div>
+        <div class="brand__title">PDM ADMIN</div>
+        <div class="brand__subtitle">Urban Hills</div>
       </div>
+
       <nav class="nav">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="clients.html">Clients</a>
-        <a class="active" href="stock.html">Stock</a>
-        <a href="ventes.html">Ventes</a>
-        <a href="vehicles.html">Véhicules</a>
-        <a href="partenariats.html">Partenaires</a>
-        <a href="compta.html">Comptabilité</a>
-        <a href="catalogue.html">Catalogue</a>
-        <a href="gestion.html">Gestion</a>
+        <a class="nav__item" href="dashboard.html">Dashboard</a>
+        <a class="nav__item" href="clients.html">Clients</a>
+        <a class="nav__item active" href="stock.html">Stock</a>
+        <a class="nav__item" href="ventes.html">Ventes</a>
+        <a class="nav__item" href="vehicles.html">Véhicules</a>
+        <a class="nav__item" href="partenariats.html">Partenaires</a>
+        <a class="nav__item" href="compta.html">Comptabilité</a>
+        <a class="nav__item" href="catalogue.html">Catalogue</a>
+        <a class="nav__item" href="gestion.html">Gestion</a>
       </nav>
-      <button id="btnLogout" class="btn btn--gold logout">Déconnexion</button>
+
+      <button id="btnLogout" class="btn btn--gold w100">Déconnexion</button>
     </aside>
 
-    <main class="content">
-      <div class="section-head">
+    <!-- MAIN -->
+    <main class="main">
+      <header class="pageHeader">
         <div>
-          <h1>Stock & Réservations</h1>
-          <div class="small">Sources : Firestore (<b>stock</b> / <b>reservations</b>)</div>
+          <h1 class="h1">Stock & Réservations</h1>
+          <p class="muted">Sources : Firestore (stock / reservations)</p>
         </div>
-        <div class="row">
-          <input id="q" class="input" placeholder="Rechercher (marque, modèle, client)..." />
+      </header>
+
+      <section class="card">
+        <div class="row gap">
+          <input id="searchInput" class="input flex"
+                 placeholder="Rechercher (marque, modèle, client)..." />
+
           <button id="btnRefresh" class="btn">Rafraîchir</button>
           <button id="btnAddStock" class="btn btn--gold">+ Stock</button>
-          <button id="btnAddRes" class="btn btn--gold">+ Réservation</button>
+          <button id="btnAddReservation" class="btn btn--gold">+ Réservation</button>
         </div>
-      </div>
 
-      <div class="card pad">
-        <div class="small">
-          <div>Quantité stock : <b id="kQty">—</b></div>
-          <div>Lignes stock : <b id="kLines">—</b></div>
-          <div>Réservations actives : <b id="kRes">—</b></div>
-        </div>
-      </div>
-
-      <div class="card pad">
-        <div class="section-head">
-          <div>
-            <h2 style="margin:0;color:var(--gold);">STOCK</h2>
-            <div class="small">Collection : <b>stock</b></div>
+        <div class="statsRow">
+          <div class="stat">
+            <div class="stat__label">Quantité stock</div>
+            <div id="statStockQty" class="stat__value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Lignes stock</div>
+            <div id="statStockLines" class="stat__value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Réservations actives</div>
+            <div id="statResActive" class="stat__value">—</div>
           </div>
         </div>
-        <div class="table-wrap">
-          <table>
+      </section>
+
+      <section class="card">
+        <div class="sectionTitle">
+          <div class="sectionTitle__big">STOCK</div>
+          <div class="sectionTitle__small">Collection: stock</div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="table">
             <thead>
               <tr>
                 <th>Marque</th>
                 <th>Modèle</th>
                 <th>Qté</th>
                 <th>Créé</th>
-                <th style="text-align:right;">Actions</th>
+                <th class="tr">Actions</th>
               </tr>
             </thead>
-            <tbody id="stockTbody"><tr><td colspan="5" class="small">Chargement…</td></tr></tbody>
+            <tbody id="stockTbody">
+              <tr><td colspan="5" class="muted">Chargement…</td></tr>
+            </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <div class="card pad">
-        <div class="section-head">
-          <div>
-            <h2 style="margin:0;color:var(--gold);">RÉSERVATIONS</h2>
-            <div class="small">Collection : <b>reservations</b></div>
-          </div>
+      <section class="card">
+        <div class="sectionTitle">
+          <div class="sectionTitle__big">RÉSERVATIONS</div>
+          <div class="sectionTitle__small">Collection: reservations</div>
         </div>
-        <div class="table-wrap">
-          <table>
+
+        <div class="tableWrap">
+          <table class="table">
             <thead>
               <tr>
                 <th>Marque</th>
@@ -90,64 +112,74 @@
                 <th>Qté</th>
                 <th>Status</th>
                 <th>Créé</th>
-                <th style="text-align:right;">Actions</th>
+                <th class="tr">Actions</th>
               </tr>
             </thead>
-            <tbody id="resTbody"><tr><td colspan="7" class="small">Chargement…</td></tr></tbody>
+            <tbody id="resTbody">
+              <tr><td colspan="7" class="muted">Chargement…</td></tr>
+            </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </main>
   </div>
 
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal__head">
-        <div id="modalTitle" class="modal__title">Ajouter</div>
-        <button class="modal__close" type="button" data-close="1">✕</button>
-      </div>
-      <div class="modal__body">
-        <input id="mType" type="hidden" value="stock" />
-        <input id="mId" type="hidden" value="" />
-        <div class="form-grid">
-          <div class="field">
-            <label for="mBrand">Marque</label>
-            <input id="mBrand" class="input" placeholder="Pfister" />
-          </div>
-          <div class="field">
-            <label for="mModel">Modèle</label>
-            <input id="mModel" class="input" placeholder="Comet S2" />
-          </div>
-          <div class="field">
-            <label for="mQty">Quantité</label>
-            <input id="mQty" class="input" type="number" min="0" step="1" value="1" />
-          </div>
-          <div class="field" id="mClientField">
-            <label for="mClient">Client</label>
-            <input id="mClient" class="input" placeholder="Nom du client" />
-          </div>
-          <div class="field full" id="mStatusWrap" style="display:none;">
-            <label for="mStatus">Status</label>
-            <select id="mStatus" class="select">
-              <option value="reserved">Réservé</option>
-              <option value="pending">En attente</option>
-              <option value="done">Terminé</option>
-              <option value="canceled">Annulé</option>
-            </select>
-          </div>
+  <!-- MODAL -->
+  <div id="modalOverlay" class="modalOverlay hidden" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHeader">
+        <div>
+          <div id="modalTitle" class="modalTitle">Ajouter</div>
+          <div id="modalSubtitle" class="modalSubtitle muted">—</div>
         </div>
-        <div id="modalErr" class="modal__error"></div>
+        <button id="modalClose" class="iconBtn" title="Fermer">✕</button>
       </div>
-      <div class="modal__foot">
-        <button class="btn btn--ghost" type="button" data-close="1">Annuler</button>
-        <button id="modalSave" class="btn btn--gold" type="button">Enregistrer</button>
-      </div>
+
+      <form id="modalForm" class="modalBody">
+        <div class="grid2">
+          <label class="field">
+            <span class="field__label">Marque</span>
+            <input id="fBrand" class="input" placeholder="Pfister" autocomplete="off" required />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Modèle</span>
+            <input id="fModel" class="input" placeholder="Comet S2" autocomplete="off" required />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Quantité</span>
+            <input id="fQty" class="input" type="number" min="0" step="1" value="1" required />
+          </label>
+
+          <label id="wrapClient" class="field">
+            <span class="field__label">Client</span>
+            <input id="fClientName" class="input" placeholder="Nom du client" autocomplete="off" />
+          </label>
+
+          <label id="wrapStatus" class="field hidden">
+            <span class="field__label">Status</span>
+            <select id="fStatus" class="input">
+              <option value="reserved">Réservé</option>
+              <option value="done">Terminé</option>
+              <option value="cancelled">Annulé</option>
+            </select>
+          </label>
+        </div>
+
+        <p class="muted mt8" id="modalHint">Si rempli → Réservation, sinon → Stock</p>
+
+        <div class="modalFooter">
+          <button type="button" id="modalCancel" class="btn">Annuler</button>
+          <button type="submit" class="btn btn--gold">Enregistrer</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
-
-  <script type="module" src="guard.js"></script>
+  <!-- Firebase config + page script -->
+  <script type="module" src="config.js"></script>
+  <script type="module" src="common.js"></script>
   <script type="module" src="stock.js"></script>
 </body>
 </html>
