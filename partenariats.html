@@ -1,1 +1,187 @@
-<h1>partenaires</h1>
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin — Partenaires</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+
+<body>
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">PDM ADMIN</div>
+        <div class="brand-sub">Urban Hills</div>
+      </div>
+
+      <nav class="menu">
+        <a class="menu-btn" href="dashboard.html">Dashboard</a>
+        <a class="menu-btn" href="clients.html">Clients</a>
+        <a class="menu-btn" href="stock.html">Stock</a>
+        <a class="menu-btn" href="ventes.html">Ventes</a>
+        <a class="menu-btn" href="vehicles.html">Véhicules</a>
+        <a class="menu-btn active" href="partenariats.html">Partenaires</a>
+        <a class="menu-btn" href="compta.html">Comptabilité</a>
+        <a class="menu-btn" href="catalogue.html">Catalogue</a>
+        <a class="menu-btn" href="gestion.html">Gestion</a>
+      </nav>
+
+      <button id="logoutBtn" class="btn btn-gold" style="width:100%; margin-top:auto;">Déconnexion</button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div class="page-title">Partenaires</div>
+        <div class="page-subtitle">Collection : <b>partners</b> + sous-collection <b>members</b></div>
+
+        <div class="searchbar">
+          <input id="search" class="input" placeholder="Rechercher un partenaire..." />
+        </div>
+
+        <div class="btn-row">
+          <button id="refreshBtn" class="btn">Rafraîchir</button>
+          <button id="addPartnerBtn" class="btn btn-gold">+ Partenaire</button>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="label">Partenaires</div>
+            <div id="statPartners" class="value">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Membres (total)</div>
+            <div id="statMembers" class="value">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Actifs</div>
+            <div id="statActive" class="value">—</div>
+          </div>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="section-title">LISTE DES PARTENAIRES</div>
+        <div class="section-subtitle">Cliquer “Voir” pour gérer les membres & taux</div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>NOM</th>
+                <th>ACTIF</th>
+                <th>CLIENTS</th>
+                <th>CRÉÉ</th>
+                <th>MAJ</th>
+                <th style="text-align:right;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="partnersBody">
+              <tr><td colspan="6">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL PARTNER (edit + members) -->
+  <div id="partnerModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width: 980px;">
+      <div class="modal-head">
+        <div>
+          <div id="pmTitle" class="modal-title">Partenaire</div>
+          <div id="pmSub" class="modal-subtitle">Gestion</div>
+        </div>
+        <button id="pmClose" class="icon-btn" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="form-grid" style="grid-template-columns: 1.2fr 0.8fr;">
+        <div>
+          <label class="label">Nom du partenaire</label>
+          <input id="pmName" class="input" placeholder="Benny's" />
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:12px;">
+          <label class="label" style="display:flex; align-items:center; gap:10px;">
+            <input id="pmActive" type="checkbox" style="transform: scale(1.15);" />
+            Actif
+          </label>
+          <div style="margin-left:auto; display:flex; gap:10px;">
+            <button id="pmSave" class="btn btn-gold">Enregistrer</button>
+            <button id="pmDelete" class="btn btn-danger">Supprimer</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="section-title">CLIENTS & TAUX</div>
+        <div class="section-subtitle">Source : /partners/{partnerId}/members</div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button id="addMemberBtn" class="btn btn-gold">+ Ajouter un client</button>
+        </div>
+
+        <div class="table-wrap" style="margin-top:10px;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>CLIENT</th>
+                <th>CLIENT ID</th>
+                <th>TAUX</th>
+                <th>CRÉÉ</th>
+                <th>MAJ</th>
+                <th style="text-align:right;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="membersBody">
+              <tr><td colspan="6">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="pmCancel" class="btn">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MEMBER -->
+  <div id="memberModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div>
+          <div id="mmTitle" class="modal-title">Client partenaire</div>
+          <div class="modal-subtitle">Ajouter / Modifier</div>
+        </div>
+        <button id="mmClose" class="icon-btn" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label class="label">Nom affiché</label>
+          <input id="mmFullName" class="input" placeholder="John Dixon" />
+        </div>
+        <div>
+          <label class="label">ClientId (optionnel)</label>
+          <input id="mmClientId" class="input" placeholder="(id du doc clients)" />
+        </div>
+        <div>
+          <label class="label">Taux</label>
+          <input id="mmRate" class="input" type="number" min="0" step="1" value="0" />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="mmCancel" class="btn">Annuler</button>
+        <button id="mmSave" class="btn btn-gold">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="partenariats.js"></script>
+</body>
+</html>
