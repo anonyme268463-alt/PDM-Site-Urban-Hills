@@ -37,7 +37,7 @@ const saveBtn = document.getElementById("saveBtn");
 const mTitle = document.getElementById("mTitle");
 const mBrand = document.getElementById("mBrand");
 const mModel = document.getElementById("mModel");
-const mCategory = document.getElementById("mCategory");
+const mType = document.getElementById("mType");
 const mPrice = document.getElementById("mPrice");
 const mSellPrice = document.getElementById("mSellPrice");
 
@@ -63,7 +63,7 @@ function openModal({ mode, item }) {
 
   mBrand.value = item?.brand || "";
   mModel.value = item?.model || "";
-  mCategory.value = item?.type || "";
+  mType.value = item?.type || "";
   mPrice.value = String(item?.price ?? 0);
   mSellPrice.value = String(item?.sellPrice ?? 0);
 
@@ -92,14 +92,14 @@ function render() {
   const list = CACHE.filter((v) => {
     const brand = (v.brand || "").toLowerCase();
     const model = (v.model || "").toLowerCase();
-    const cat = (v.category || "").toLowerCase();
+    const cat = (v.type || "").toLowerCase();
     return !q || brand.includes(q) || model.includes(q) || cat.includes(q);
   });
 
   // Stats
   statTotal.textContent = String(list.length);
 
-  const cats = new Set(list.map((x) => (x.category || "").trim()).filter(Boolean));
+  const cats = new Set(list.map((x) => (x.type || "").trim()).filter(Boolean));
   statCats.textContent = String(cats.size);
 
   const now = new Date();
@@ -122,7 +122,7 @@ function render() {
     <tr>
       <td>${v.brand || "-"}</td>
       <td>${v.model || "-"}</td>
-      <td>${v.category || "-"}</td>
+      <td>${v.type || "-"}</td>
       <td>${money(v.price)}</td>
       <td>${money(v.sellPrice)}</td>
       <td>${fmtDate(v.createdAt)}</td>
@@ -154,7 +154,7 @@ function render() {
 async function save() {
   const brand = (mBrand.value || "").trim();
   const model = (mModel.value || "").trim();
-  const category = (mCategory.value || "").trim();
+  const type = (mType.value || "").trim();
   const price = Number(mPrice.value || 0);
   const sellPrice = Number(mSellPrice.value || 0);
 
@@ -172,7 +172,7 @@ async function save() {
     const payload = {
       brand,
       model,
-      category,
+      type,
       price,
       sellPrice,
       updatedAt: serverTimestamp(),
@@ -202,4 +202,5 @@ if (saveBtn) saveBtn.addEventListener("click", save);
 
 // Start
 load();
+
 
