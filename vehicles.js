@@ -62,7 +62,7 @@ addBtn?.addEventListener("click", () => {
   vmId.textContent = "-";
   vmBrand.value = "";
   vmModel.value = "";
-  vmType.value = "";
+  vmCategory.value = "";
   vmPrice.value = 0;
   vmSellPrice.value = 0;
   vmDelete.style.display = "none";
@@ -204,5 +204,6 @@ function openEdit(id){
 }
 
 loadVehicles();
+
 
 
