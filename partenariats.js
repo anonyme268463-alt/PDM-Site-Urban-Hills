@@ -1,63 +1,52 @@
 import { db, auth } from "./config.js";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDoc,
-  serverTimestamp,
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-function toDateSafe(ts) {
-  try { if (ts?.toDate) return ts.toDate(); } catch {}
-  return null;
-}
-function fmtDate(ts) {
-  const d = toDateSafe(ts);
-  return d ? d.toLocaleDateString("fr-FR") : "-";
-}
+const $ = (id) => document.getElementById(id);
+
+function toDateSafe(ts) { try { return ts?.toDate?.() || null; } catch { return null; } }
+function fmtDate(ts) { const d = toDateSafe(ts); return d ? d.toLocaleDateString("fr-FR") : "-"; }
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
 function openModal(el) { el.classList.remove("hidden"); }
 function closeModal(el) { el.classList.add("hidden"); }
 
-const partnersBody = document.getElementById("partnersBody");
-const membersBody = document.getElementById("membersBody");
-const search = document.getElementById("search");
+const partnersBody = $("partnersBody");
+const membersBody = $("membersBody");
+const search = $("search");
 
-const statPartners = document.getElementById("statPartners");
-const statMembers = document.getElementById("statMembers");
-const statActive = document.getElementById("statActive");
+const statPartners = $("statPartners");
+const statMembers = $("statMembers");
+const statActive = $("statActive");
 
-const refreshBtn = document.getElementById("refreshBtn");
-const addPartnerBtn = document.getElementById("addPartnerBtn");
-const logoutBtn = document.getElementById("logoutBtn");
+const refreshBtn = $("refreshBtn");
+const addPartnerBtn = $("addPartnerBtn");
+const logoutBtn = $("logoutBtn");
 
-const partnerModal = document.getElementById("partnerModal");
-const pmTitle = document.getElementById("pmTitle");
-const pmSub = document.getElementById("pmSub");
-const pmClose = document.getElementById("pmClose");
-const pmCancel = document.getElementById("pmCancel");
-const pmSave = document.getElementById("pmSave");
-const pmDelete = document.getElementById("pmDelete");
-const pmName = document.getElementById("pmName");
-const pmActive = document.getElementById("pmActive");
-const addMemberBtn = document.getElementById("addMemberBtn");
+const partnerModal = $("partnerModal");
+const pmTitle = $("pmTitle");
+const pmSub = $("pmSub");
+const pmClose = $("pmClose");
+const pmCancel = $("pmCancel");
+const pmSave = $("pmSave");
+const pmDelete = $("pmDelete");
+const pmName = $("pmName");
+const pmActive = $("pmActive");
+const addMemberBtn = $("addMemberBtn");
 
-const memberModal = document.getElementById("memberModal");
-const mmTitle = document.getElementById("mmTitle");
-const mmClose = document.getElementById("mmClose");
-const mmCancel = document.getElementById("mmCancel");
-const mmSave = document.getElementById("mmSave");
-const mmFullName = document.getElementById("mmFullName");
-const mmClientId = document.getElementById("mmClientId");
-const mmRate = document.getElementById("mmRate");
+const memberModal = $("memberModal");
+const mmTitle = $("mmTitle");
+const mmClose = $("mmClose");
+const mmCancel = $("mmCancel");
+const mmSave = $("mmSave");
+const mmFullName = $("mmFullName");
+const mmClientId = $("mmClientId");
+const mmRate = $("mmRate");
 
 let PARTNERS = [];
 let OPEN_PARTNER_ID = null;
@@ -77,7 +66,6 @@ memberModal?.addEventListener("click", (e) => { if (e.target === memberModal) cl
 
 async function loadPartners() {
   partnersBody.innerHTML = `<tr><td colspan="6">Chargement...</td></tr>`;
-
   const snap = await getDocs(collection(db, "partners"));
   const base = snap.docs.map((d) => ({ id: d.id, ...d.data(), membersCount: 0 }));
 
@@ -85,9 +73,7 @@ async function loadPartners() {
     try {
       const ms = await getDocs(collection(db, "partners", p.id, "members"));
       p.membersCount = ms.size;
-    } catch {
-      p.membersCount = 0;
-    }
+    } catch { p.membersCount = 0; }
   }
 
   PARTNERS = base;
@@ -103,13 +89,13 @@ function renderPartners() {
       const nk = (p.nameKey || "").toLowerCase();
       return !q || name.includes(q) || nk.includes(q);
     })
-    .sort((a, b) => (toDateSafe(b.createdAt)?.getTime?.() || 0) - (toDateSafe(a.createdAt)?.getTime?.() || 0));
+    .sort((a, b) => (toDateSafe(b.createdAt)?.getTime() || 0) - (toDateSafe(a.createdAt)?.getTime() || 0));
 
   statPartners.textContent = String(list.length);
-  statMembers.textContent = String(list.reduce((sum, p) => sum + (p.membersCount || 0), 0));
+  statMembers.textContent = String(list.reduce((s, p) => s + (p.membersCount || 0), 0));
   statActive.textContent = String(list.filter((p) => p.active === true).length);
 
-  if (list.length === 0) {
+  if (!list.length) {
     partnersBody.innerHTML = `<tr><td colspan="6">Aucun partenaire</td></tr>`;
     return;
   }
@@ -122,27 +108,23 @@ function renderPartners() {
       <td>${fmtDate(p.createdAt)}</td>
       <td>${fmtDate(p.updatedAt)}</td>
       <td style="text-align:right;">
-        <button class="btn btn-gold" data-view="${p.id}">Voir</button>
-        <button class="btn" data-edit="${p.id}">Modifier</button>
+        <button class="btn btn-gold" data-open="${p.id}">Voir</button>
+        <button class="btn" data-open="${p.id}">Modifier</button>
       </td>
     </tr>
   `).join("");
 
-  partnersBody.querySelectorAll("[data-view]").forEach((b) => {
-    b.addEventListener("click", async () => openPartner(b.getAttribute("data-view")));
-  });
-  partnersBody.querySelectorAll("[data-edit]").forEach((b) => {
-    b.addEventListener("click", async () => openPartner(b.getAttribute("data-edit")));
+  partnersBody.querySelectorAll("[data-open]").forEach((b) => {
+    b.addEventListener("click", () => openPartner(b.getAttribute("data-open")));
   });
 }
 
 async function openPartner(partnerId) {
   OPEN_PARTNER_ID = partnerId;
-  const p = PARTNERS.find((x) => x.id === partnerId);
 
+  const p = PARTNERS.find((x) => x.id === partnerId);
   pmTitle.textContent = p?.name ? `Partenaire — ${p.name}` : "Partenaire";
   pmSub.textContent = `ID : ${partnerId}`;
-
   pmName.value = p?.name || "";
   pmActive.checked = p?.active === true;
 
@@ -160,15 +142,12 @@ async function loadMembers(partnerId) {
     if (m.clientId) {
       try {
         const c = await getDoc(doc(db, "clients", m.clientId));
-        if (c.exists()) {
-          const cd = c.data();
-          if (cd?.name) m.displayName = cd.name;
-        }
+        if (c.exists() && c.data()?.name) m.displayName = c.data().name;
       } catch {}
     }
   }
 
-  OPEN_MEMBERS = members.sort((a, b) => (toDateSafe(b.createdAt)?.getTime?.() || 0) - (toDateSafe(a.createdAt)?.getTime?.() || 0));
+  OPEN_MEMBERS = members.sort((a, b) => (toDateSafe(b.createdAt)?.getTime() || 0) - (toDateSafe(a.createdAt)?.getTime() || 0));
   renderMembers();
 }
 
@@ -186,23 +165,23 @@ function renderMembers() {
       <td>${fmtDate(m.createdAt)}</td>
       <td>${fmtDate(m.updatedAt)}</td>
       <td style="text-align:right;">
-        <button class="btn" data-medit="${m.id}">Modifier</button>
-        <button class="btn btn-danger" data-mdel="${m.id}">Supprimer</button>
+        <button class="btn" data-edit="${m.id}">Modifier</button>
+        <button class="btn btn-danger" data-del="${m.id}">Supprimer</button>
       </td>
     </tr>
   `).join("");
 
-  membersBody.querySelectorAll("[data-medit]").forEach((b) => {
+  membersBody.querySelectorAll("[data-edit]").forEach((b) => {
     b.addEventListener("click", () => {
-      const id = b.getAttribute("data-medit");
+      const id = b.getAttribute("data-edit");
       const m = OPEN_MEMBERS.find((x) => x.id === id);
-      openMemberModal({ mode: "edit", member: m });
+      openMemberModal("edit", m);
     });
   });
 
-  membersBody.querySelectorAll("[data-mdel]").forEach((b) => {
+  membersBody.querySelectorAll("[data-del]").forEach((b) => {
     b.addEventListener("click", async () => {
-      const id = b.getAttribute("data-mdel");
+      const id = b.getAttribute("data-del");
       if (!confirm("Supprimer ce client de ce partenaire ?")) return;
       await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", id));
       await loadPartners();
@@ -212,10 +191,9 @@ function renderMembers() {
 }
 
 pmSave?.addEventListener("click", async () => {
-  const name = (pmName.value || "").trim();
-  const active = pmActive.checked;
-
   if (!OPEN_PARTNER_ID) return;
+
+  const name = (pmName.value || "").trim();
   if (!name) return alert("Nom obligatoire.");
 
   pmSave.disabled = true;
@@ -223,7 +201,7 @@ pmSave?.addEventListener("click", async () => {
     await updateDoc(doc(db, "partners", OPEN_PARTNER_ID), {
       name,
       nameKey: name.toLowerCase(),
-      active,
+      active: pmActive.checked,
       updatedAt: serverTimestamp(),
     });
     await loadPartners();
@@ -263,18 +241,16 @@ addPartnerBtn?.addEventListener("click", async () => {
   await loadPartners();
 });
 
-function openMemberModal({ mode, member }) {
+function openMemberModal(mode, member) {
   MEMBER_EDIT = { mode, id: member?.id || null };
   mmTitle.textContent = mode === "edit" ? "Modifier client partenaire" : "Ajouter client partenaire";
-
   mmFullName.value = member?.fullName || member?.displayName || "";
   mmClientId.value = member?.clientId || "";
   mmRate.value = String(member?.rate ?? 0);
-
   openModal(memberModal);
 }
 
-addMemberBtn?.addEventListener("click", () => openMemberModal({ mode: "create" }));
+addMemberBtn?.addEventListener("click", () => openMemberModal("create"));
 
 mmSave?.addEventListener("click", async () => {
   if (!OPEN_PARTNER_ID) return;
@@ -283,7 +259,7 @@ mmSave?.addEventListener("click", async () => {
   const clientId = (mmClientId.value || "").trim();
   const rate = Number(mmRate.value || 0);
 
-  if (!fullName && !clientId) return alert("Met au moins un nom affiché OU un clientId.");
+  if (!fullName && !clientId) return alert("Met un nom affiché OU un clientId.");
   if (Number.isNaN(rate) || rate < 0) return alert("Taux invalide.");
 
   mmSave.disabled = true;
