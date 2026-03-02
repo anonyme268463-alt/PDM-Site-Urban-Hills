@@ -1,130 +1,169 @@
 import { db, auth } from "./config.js";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-const tbody = document.getElementById("tableBody");
-const search = document.getElementById("search");
+const $ = (id) => document.getElementById(id);
 
-const statTotal = document.getElementById("statTotal");
-const statCats = document.getElementById("statCats");
-const statMonth = document.getElementById("statMonth");
+const rows = $("rows");
+const search = $("search");
+const refreshBtn = $("refreshBtn");
+const addBtn = $("addBtn");
+const logoutBtn = $("logoutBtn");
 
-const refreshBtn = document.getElementById("refreshBtn");
-const addBtn = document.getElementById("addBtn");
+const statTotal = $("statTotal");
+const statCats = $("statCats");
+const statMonth = $("statMonth");
 
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "pdm-staff.html";
-  });
+const vehModal = $("vehModal");
+const vmTitle = $("vmTitle");
+const vmClose = $("vmClose");
+const vmCancel = $("vmCancel");
+const vmSave = $("vmSave");
+const vmDelete = $("vmDelete");
+const vmId = $("vmId");
+
+const vmBrand = $("vmBrand");
+const vmModel = $("vmModel");
+const vmCategory = $("vmCategory");
+const vmPrice = $("vmPrice");
+const vmSellPrice = $("vmSellPrice");
+
+let VEHICLES = [];
+let OPEN_ID = null;
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, (c)=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
 }
-
-// Modal
-const modal = document.getElementById("editModal");
-const closeModalBtn = document.getElementById("closeModal");
-const cancelBtn = document.getElementById("cancelBtn");
-const saveBtn = document.getElementById("saveBtn");
-
-const mTitle = document.getElementById("mTitle");
-const mBrand = document.getElementById("mBrand");
-const mModel = document.getElementById("mModel");
-const mType = document.getElementById("mType");
-const mPrice = document.getElementById("mPrice");
-const mSellPrice = document.getElementById("mSellPrice");
-
-let CACHE = [];
-let EDIT = { mode: "create", id: null };
-
-function toDateSafe(ts) {
-  try { if (ts?.toDate) return ts.toDate(); } catch {}
-  return null;
+function fmtDate(ts){
+  try { return ts?.toDate?.().toLocaleDateString("fr-FR") || "-"; } catch { return "-"; }
 }
-function fmtDate(ts) {
-  const d = toDateSafe(ts);
-  return d ? d.toLocaleDateString("fr-FR") : "-";
-}
-function money(n) {
-  const v = Number(n || 0);
-  return isNaN(v) ? "$0" : `$${v.toLocaleString("en-US")}`;
-}
+function openModal(){ vehModal.classList.remove("hidden"); }
+function closeModal(){ vehModal.classList.add("hidden"); }
 
-function openModal({ mode, item }) {
-  EDIT = { mode, id: item?.id || null };
-  mTitle.textContent = mode === "edit" ? "Modifier" : "Ajouter";
+logoutBtn?.addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "pdm-staff.html";
+});
 
-  mBrand.value = item?.brand || "";
-  mModel.value = item?.model || "";
-  mType.value = item?.type || "";
-  mPrice.value = String(item?.price ?? 0);
-  mSellPrice.value = String(item?.sellPrice ?? 0);
+vmClose?.addEventListener("click", closeModal);
+vmCancel?.addEventListener("click", closeModal);
+vehModal?.addEventListener("click", (e)=>{ if(e.target === vehModal) closeModal(); });
 
-  modal.classList.remove("hidden");
-}
+refreshBtn?.addEventListener("click", loadVehicles);
+search?.addEventListener("input", render);
 
-function closeModal() {
-  modal.classList.add("hidden");
-}
+addBtn?.addEventListener("click", () => {
+  OPEN_ID = null;
+  vmTitle.textContent = "Ajouter un véhicule";
+  vmId.textContent = "-";
+  vmBrand.value = "";
+  vmModel.value = "";
+  vmCategory.value = "";
+  vmPrice.value = 0;
+  vmSellPrice.value = 0;
+  vmDelete.style.display = "none";
+  openModal();
+});
 
-if (closeModalBtn) closeModalBtn.addEventListener("click", closeModal);
-if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
-if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+vmSave?.addEventListener("click", async () => {
+  const brand = (vmBrand.value || "").trim();
+  const model = (vmModel.value || "").trim();
+  const category = (vmCategory.value || "").trim();
 
-async function load() {
-  tbody.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
+  const price = Number(vmPrice.value || 0);
+  const sellPrice = Number(vmSellPrice.value || 0);
+
+  if(!brand || !model) return alert("Marque et modèle obligatoires.");
+  if(Number.isNaN(price) || price < 0) return alert("Price invalide.");
+  if(Number.isNaN(sellPrice) || sellPrice < 0) return alert("Sell price invalide.");
+
+  const payload = {
+    brand,
+    model,
+    category,
+    price,
+    sellPrice,
+    brandKey: brand.toLowerCase(),
+    modelKey: model.toLowerCase(),
+    categoryKey: category.toLowerCase(),
+    updatedAt: serverTimestamp(),
+  };
+
+  if(!OPEN_ID){
+    payload.createdAt = serverTimestamp();
+    await addDoc(collection(db, "vehicles"), payload);
+  } else {
+    await updateDoc(doc(db, "vehicles", OPEN_ID), payload);
+  }
+
+  closeModal();
+  await loadVehicles();
+});
+
+vmDelete?.addEventListener("click", async () => {
+  if(!OPEN_ID) return;
+  if(!confirm("Supprimer ce véhicule ?")) return;
+  await deleteDoc(doc(db, "vehicles", OPEN_ID));
+  closeModal();
+  await loadVehicles();
+});
+
+async function loadVehicles(){
+  rows.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
 
   const snap = await getDocs(collection(db, "vehicles"));
-  CACHE = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  VEHICLES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
   render();
 }
 
-function render() {
-  const q = (search?.value || "").trim().toLowerCase();
+function render(){
+  const q = (search.value || "").trim().toLowerCase();
 
-  const list = CACHE.filter((v) => {
-    const brand = (v.brand || "").toLowerCase();
-    const model = (v.model || "").toLowerCase();
-    const cat = (v.type || "").toLowerCase();
-    return !q || brand.includes(q) || model.includes(q) || cat.includes(q);
-  });
+  const list = VEHICLES
+    .filter(v => {
+      if(!q) return true;
+      const a = (v.brand || "").toLowerCase();
+      const b = (v.model || "").toLowerCase();
+      const c = (v.category || "").toLowerCase();
+      return a.includes(q) || b.includes(q) || c.includes(q);
+    })
+    .sort((a,b)=>{
+      const da = a.createdAt?.toDate?.()?.getTime?.() || 0;
+      const dbb = b.createdAt?.toDate?.()?.getTime?.() || 0;
+      return dbb - da;
+    });
 
-  // Stats
   statTotal.textContent = String(list.length);
 
-  const cats = new Set(list.map((x) => (x.type || "").trim()).filter(Boolean));
-  statCats.textContent = String(cats.size);
+  const catSet = new Set(list.map(v => (v.category || "").trim()).filter(Boolean));
+  statCats.textContent = String(catSet.size);
 
   const now = new Date();
   const month = now.getMonth();
   const year = now.getFullYear();
-  const monthCount = list.filter((x) => {
-    const d = toDateSafe(x.createdAt);
+  const monthCount = list.filter(v => {
+    const d = v.createdAt?.toDate?.();
     return d && d.getMonth() === month && d.getFullYear() === year;
   }).length;
   statMonth.textContent = String(monthCount);
 
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7">Aucun véhicule</td></tr>`;
+  if(!list.length){
+    rows.innerHTML = `<tr><td colspan="7">Aucun véhicule</td></tr>`;
     return;
   }
 
-  const sorted = list.sort((a, b) => (toDateSafe(b.createdAt)?.getTime?.() || 0) - (toDateSafe(a.createdAt)?.getTime?.() || 0));
-
-  tbody.innerHTML = sorted.map((v) => `
+  rows.innerHTML = list.map(v => `
     <tr>
-      <td>${v.brand || "-"}</td>
-      <td>${v.model || "-"}</td>
-      <td>${v.type || "-"}</td>
-      <td>${money(v.price)}</td>
-      <td>${money(v.sellPrice)}</td>
+      <td>${esc(v.brand || "-")}</td>
+      <td>${esc(v.model || "-")}</td>
+      <td>${esc(v.category || "-")}</td>
+      <td>$${Number(v.price || 0).toLocaleString("en-US")}</td>
+      <td>$${Number(v.sellPrice || 0).toLocaleString("en-US")}</td>
       <td>${fmtDate(v.createdAt)}</td>
       <td style="text-align:right;">
         <button class="btn" data-edit="${v.id}">Modifier</button>
@@ -133,74 +172,35 @@ function render() {
     </tr>
   `).join("");
 
-  tbody.querySelectorAll("[data-edit]").forEach((b) => {
-    b.addEventListener("click", () => {
-      const id = b.getAttribute("data-edit");
-      const item = CACHE.find((x) => x.id === id);
-      openModal({ mode: "edit", item });
-    });
+  rows.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=> openEdit(btn.getAttribute("data-edit")));
   });
-
-  tbody.querySelectorAll("[data-del]").forEach((b) => {
-    b.addEventListener("click", async () => {
-      const id = b.getAttribute("data-del");
-      if (!confirm("Supprimer ce véhicule ?")) return;
+  rows.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", async ()=> {
+      const id = btn.getAttribute("data-del");
+      if(!confirm("Supprimer ce véhicule ?")) return;
       await deleteDoc(doc(db, "vehicles", id));
-      await load();
+      await loadVehicles();
     });
   });
 }
 
-async function save() {
-  const brand = (mBrand.value || "").trim();
-  const model = (mModel.value || "").trim();
-  const type = (mType.value || "").trim();
-  const price = Number(mPrice.value || 0);
-  const sellPrice = Number(mSellPrice.value || 0);
+function openEdit(id){
+  const v = VEHICLES.find(x => x.id === id);
+  if(!v) return;
 
-  if (!brand || !model) {
-    alert("Marque et modèle sont obligatoires.");
-    return;
-  }
-  if (Number.isNaN(price) || price < 0 || Number.isNaN(sellPrice) || sellPrice < 0) {
-    alert("Price / Sell price invalides.");
-    return;
-  }
+  OPEN_ID = id;
+  vmTitle.textContent = "Modifier un véhicule";
+  vmId.textContent = id;
 
-  saveBtn.disabled = true;
-  try {
-    const payload = {
-      brand,
-      model,
-      type,
-      price,
-      sellPrice,
-      updatedAt: serverTimestamp(),
-    };
+  vmBrand.value = v.brand || "";
+  vmModel.value = v.model || "";
+  vmCategory.value = v.category || "";
+  vmPrice.value = Number(v.price || 0);
+  vmSellPrice.value = Number(v.sellPrice || 0);
 
-    if (EDIT.mode === "create") {
-      payload.createdAt = serverTimestamp();
-      await addDoc(collection(db, "vehicles"), payload);
-    } else {
-      await updateDoc(doc(db, "vehicles", EDIT.id), payload);
-    }
-
-    closeModal();
-    await load();
-  } finally {
-    saveBtn.disabled = false;
-  }
+  vmDelete.style.display = "";
+  openModal();
 }
 
-// Events
-if (search) search.addEventListener("input", render);
-if (refreshBtn) refreshBtn.addEventListener("click", load);
-
-if (addBtn) addBtn.addEventListener("click", () => openModal({ mode: "create" }));
-
-if (saveBtn) saveBtn.addEventListener("click", save);
-
-// Start
-load();
-
-
+loadVehicles();
