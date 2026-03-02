@@ -26,7 +26,7 @@ const vmId = $("vmId");
 
 const vmBrand = $("vmBrand");
 const vmModel = $("vmModel");
-const vmCategory = $("vmCategory");
+const vmType = $("vmtype");
 const vmPrice = $("vmPrice");
 const vmSellPrice = $("vmSellPrice");
 
@@ -62,7 +62,7 @@ addBtn?.addEventListener("click", () => {
   vmId.textContent = "-";
   vmBrand.value = "";
   vmModel.value = "";
-  vmCategory.value = "";
+  vmtype.value = "";
   vmPrice.value = 0;
   vmSellPrice.value = 0;
   vmDelete.style.display = "none";
@@ -72,7 +72,7 @@ addBtn?.addEventListener("click", () => {
 vmSave?.addEventListener("click", async () => {
   const brand = (vmBrand.value || "").trim();
   const model = (vmModel.value || "").trim();
-  const category = (vmCategory.value || "").trim();
+  const type = (vmtype.value || "").trim();
 
   const price = Number(vmPrice.value || 0);
   const sellPrice = Number(vmSellPrice.value || 0);
@@ -84,12 +84,12 @@ vmSave?.addEventListener("click", async () => {
   const payload = {
     brand,
     model,
-    category,
+    type,
     price,
     sellPrice,
     brandKey: brand.toLowerCase(),
     modelKey: model.toLowerCase(),
-    categoryKey: category.toLowerCase(),
+    typeKey: type.toLowerCase(),
     updatedAt: serverTimestamp(),
   };
 
@@ -129,7 +129,7 @@ function render(){
       if(!q) return true;
       const a = (v.brand || "").toLowerCase();
       const b = (v.model || "").toLowerCase();
-      const c = (v.category || "").toLowerCase();
+      const c = (v.type || "").toLowerCase();
       return a.includes(q) || b.includes(q) || c.includes(q);
     })
     .sort((a,b)=>{
@@ -140,7 +140,7 @@ function render(){
 
   statTotal.textContent = String(list.length);
 
-  const catSet = new Set(list.map(v => (v.category || "").trim()).filter(Boolean));
+  const catSet = new Set(list.map(v => (v.type || "").trim()).filter(Boolean));
   statCats.textContent = String(catSet.size);
 
   const now = new Date();
@@ -161,7 +161,7 @@ function render(){
     <tr>
       <td>${esc(v.brand || "-")}</td>
       <td>${esc(v.model || "-")}</td>
-      <td>${esc(v.category || "-")}</td>
+      <td>${esc(v.type || "-")}</td>
       <td>$${Number(v.price || 0).toLocaleString("en-US")}</td>
       <td>$${Number(v.sellPrice || 0).toLocaleString("en-US")}</td>
       <td>${fmtDate(v.createdAt)}</td>
@@ -195,7 +195,7 @@ function openEdit(id){
 
   vmBrand.value = v.brand || "";
   vmModel.value = v.model || "";
-  vmCategory.value = v.category || "";
+  vmType.value = v.type || "";
   vmPrice.value = Number(v.price || 0);
   vmSellPrice.value = Number(v.sellPrice || 0);
 
@@ -204,3 +204,4 @@ function openEdit(id){
 }
 
 loadVehicles();
+
