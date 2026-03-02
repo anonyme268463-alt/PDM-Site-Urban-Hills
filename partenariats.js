@@ -1,23 +1,13 @@
 import { db, auth } from "./config.js";
 import {
-  collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, serverTimestamp
+  collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
 const $ = (id) => document.getElementById(id);
 
-function toDateSafe(ts) { try { return ts?.toDate?.() || null; } catch { return null; } }
-function fmtDate(ts) { const d = toDateSafe(ts); return d ? d.toLocaleDateString("fr-FR") : "-"; }
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
-function openModal(el) { el.classList.remove("hidden"); }
-function closeModal(el) { el.classList.add("hidden"); }
-
-const partnersBody = $("partnersBody");
-const membersBody = $("membersBody");
+const partnersTable = $("partnersTable");
+const membersTable = $("membersTable");
 const search = $("search");
 
 const statPartners = $("statPartners");
@@ -30,134 +20,148 @@ const logoutBtn = $("logoutBtn");
 
 const partnerModal = $("partnerModal");
 const pmTitle = $("pmTitle");
-const pmSub = $("pmSub");
 const pmClose = $("pmClose");
 const pmCancel = $("pmCancel");
 const pmSave = $("pmSave");
 const pmDelete = $("pmDelete");
 const pmName = $("pmName");
 const pmActive = $("pmActive");
+const pmId = $("pmId");
 const addMemberBtn = $("addMemberBtn");
 
-const memberModal = $("memberModal");
-const mmTitle = $("mmTitle");
-const mmClose = $("mmClose");
-const mmCancel = $("mmCancel");
-const mmSave = $("mmSave");
-const mmFullName = $("mmFullName");
-const mmClientId = $("mmClientId");
-const mmRate = $("mmRate");
+let PARTNERS = [];          // {id, name, active, createdAt, updatedAt, membersCount}
+let OPEN_PARTNER_ID = null; // partnerId ouvert dans le modal
+let OPEN_MEMBERS = [];      // members du partner ouvert
 
-let PARTNERS = [];
-let OPEN_PARTNER_ID = null;
-let OPEN_MEMBERS = [];
-let MEMBER_EDIT = { mode: "create", id: null };
+function fmtDate(ts){
+  try { return ts?.toDate?.().toLocaleDateString("fr-FR") || "-"; } catch { return "-"; }
+}
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, (c)=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function openModal(){ partnerModal.classList.remove("hidden"); }
+function closeModal(){ partnerModal.classList.add("hidden"); }
 
 logoutBtn?.addEventListener("click", async () => {
   await signOut(auth);
   window.location.href = "pdm-staff.html";
 });
 
-[pmClose, pmCancel].forEach((b) => b?.addEventListener("click", () => closeModal(partnerModal)));
-partnerModal?.addEventListener("click", (e) => { if (e.target === partnerModal) closeModal(partnerModal); });
+pmClose?.addEventListener("click", closeModal);
+pmCancel?.addEventListener("click", closeModal);
+partnerModal?.addEventListener("click", (e)=>{ if(e.target === partnerModal) closeModal(); });
 
-[mmClose, mmCancel].forEach((b) => b?.addEventListener("click", () => closeModal(memberModal)));
-memberModal?.addEventListener("click", (e) => { if (e.target === memberModal) closeModal(memberModal); });
+async function loadPartners(){
+  partnersTable.innerHTML = `<tr><td colspan="6">Chargement...</td></tr>`;
 
-async function loadPartners() {
-  partnersBody.innerHTML = `<tr><td colspan="6">Chargement...</td></tr>`;
   const snap = await getDocs(collection(db, "partners"));
-  const base = snap.docs.map((d) => ({ id: d.id, ...d.data(), membersCount: 0 }));
+  const base = snap.docs.map(d => ({ id: d.id, ...d.data(), membersCount: 0 }));
 
-  for (const p of base) {
+  // ✅ Fix compteur clients: on compte la sous-collection /members
+  for (const p of base){
     try {
       const ms = await getDocs(collection(db, "partners", p.id, "members"));
       p.membersCount = ms.size;
-    } catch { p.membersCount = 0; }
+    } catch {
+      p.membersCount = 0;
+    }
   }
 
   PARTNERS = base;
   renderPartners();
 }
 
-function renderPartners() {
+function renderPartners(){
   const q = (search?.value || "").trim().toLowerCase();
 
   const list = PARTNERS
-    .filter((p) => {
-      const name = (p.name || "").toLowerCase();
-      const nk = (p.nameKey || "").toLowerCase();
-      return !q || name.includes(q) || nk.includes(q);
-    })
-    .sort((a, b) => (toDateSafe(b.createdAt)?.getTime() || 0) - (toDateSafe(a.createdAt)?.getTime() || 0));
+    .filter(p => !q || (p.name || "").toLowerCase().includes(q))
+    .sort((a,b)=>{
+      const da = a.createdAt?.toDate?.()?.getTime?.() || 0;
+      const dbb = b.createdAt?.toDate?.()?.getTime?.() || 0;
+      return dbb - da;
+    });
 
   statPartners.textContent = String(list.length);
-  statMembers.textContent = String(list.reduce((s, p) => s + (p.membersCount || 0), 0));
-  statActive.textContent = String(list.filter((p) => p.active === true).length);
+  statMembers.textContent = String(list.reduce((s,p)=>s + (p.membersCount||0), 0));
+  statActive.textContent = String(list.filter(p=>p.active===true).length);
 
-  if (!list.length) {
-    partnersBody.innerHTML = `<tr><td colspan="6">Aucun partenaire</td></tr>`;
+  if(!list.length){
+    partnersTable.innerHTML = `<tr><td colspan="6">Aucun partenaire</td></tr>`;
     return;
   }
 
-  partnersBody.innerHTML = list.map((p) => `
+  partnersTable.innerHTML = list.map(p => `
     <tr>
       <td>${esc(p.name || "-")}</td>
-      <td>${p.active ? `<span class="pill pill-ok">Oui</span>` : `<span class="pill pill-no">Non</span>`}</td>
-      <td>${p.membersCount ?? 0}</td>
+      <td>${p.active ? "Oui" : "Non"}</td>
+      <td>${p.membersCount || 0}</td>
       <td>${fmtDate(p.createdAt)}</td>
       <td>${fmtDate(p.updatedAt)}</td>
       <td style="text-align:right;">
         <button class="btn btn-gold" data-open="${p.id}">Voir</button>
-        <button class="btn" data-open="${p.id}">Modifier</button>
       </td>
     </tr>
   `).join("");
 
-  partnersBody.querySelectorAll("[data-open]").forEach((b) => {
-    b.addEventListener("click", () => openPartner(b.getAttribute("data-open")));
+  partnersTable.querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click", ()=> openPartner(btn.getAttribute("data-open")));
   });
 }
 
-async function openPartner(partnerId) {
+async function openPartner(partnerId){
   OPEN_PARTNER_ID = partnerId;
+  const p = PARTNERS.find(x => x.id === partnerId);
 
-  const p = PARTNERS.find((x) => x.id === partnerId);
-  pmTitle.textContent = p?.name ? `Partenaire — ${p.name}` : "Partenaire";
-  pmSub.textContent = `ID : ${partnerId}`;
+  pmTitle.textContent = p?.name ? `Partenaire : ${p.name}` : "Partenaire";
+  pmId.textContent = partnerId;
   pmName.value = p?.name || "";
   pmActive.checked = p?.active === true;
 
   await loadMembers(partnerId);
-  openModal(partnerModal);
+  openModal();
 }
 
-async function loadMembers(partnerId) {
-  membersBody.innerHTML = `<tr><td colspan="6">Chargement...</td></tr>`;
+async function loadMembers(partnerId){
+  membersTable.innerHTML = `<tr><td colspan="6">Chargement...</td></tr>`;
   const snap = await getDocs(collection(db, "partners", partnerId, "members"));
-  const members = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  for (const m of members) {
-    m.displayName = m.fullName || "-";
-    if (m.clientId) {
+  // ✅ Fix “nom client ne s’affiche pas”:
+  // - si member.clientId existe: on lit clients/{clientId} et on prend name/fullName si dispo
+  // - sinon: on affiche member.fullName
+  for (const m of members){
+    let displayName = m.fullName || "-";
+    if (m.clientId){
       try {
         const c = await getDoc(doc(db, "clients", m.clientId));
-        if (c.exists() && c.data()?.name) m.displayName = c.data().name;
+        if (c.exists()){
+          const cd = c.data();
+          displayName = cd.name || cd.fullName || displayName;
+        }
       } catch {}
     }
+    m.displayName = displayName;
   }
 
-  OPEN_MEMBERS = members.sort((a, b) => (toDateSafe(b.createdAt)?.getTime() || 0) - (toDateSafe(a.createdAt)?.getTime() || 0));
+  OPEN_MEMBERS = members.sort((a,b)=>{
+    const da = a.createdAt?.toDate?.()?.getTime?.() || 0;
+    const dbb = b.createdAt?.toDate?.()?.getTime?.() || 0;
+    return dbb - da;
+  });
+
   renderMembers();
 }
 
-function renderMembers() {
-  if (!OPEN_MEMBERS.length) {
-    membersBody.innerHTML = `<tr><td colspan="6">Aucun client partenaire</td></tr>`;
+function renderMembers(){
+  if(!OPEN_MEMBERS.length){
+    membersTable.innerHTML = `<tr><td colspan="6">Aucun client partenaire</td></tr>`;
     return;
   }
 
-  membersBody.innerHTML = OPEN_MEMBERS.map((m) => `
+  membersTable.innerHTML = OPEN_MEMBERS.map(m => `
     <tr>
       <td>${esc(m.displayName || "-")}</td>
       <td>${esc(m.clientId || "-")}</td>
@@ -171,68 +175,76 @@ function renderMembers() {
     </tr>
   `).join("");
 
-  membersBody.querySelectorAll("[data-edit]").forEach((b) => {
-    b.addEventListener("click", () => {
-      const id = b.getAttribute("data-edit");
-      const m = OPEN_MEMBERS.find((x) => x.id === id);
-      openMemberModal("edit", m);
-    });
+  membersTable.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=> editMember(btn.getAttribute("data-edit")));
   });
-
-  membersBody.querySelectorAll("[data-del]").forEach((b) => {
-    b.addEventListener("click", async () => {
-      const id = b.getAttribute("data-del");
-      if (!confirm("Supprimer ce client de ce partenaire ?")) return;
-      await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", id));
-      await loadPartners();
-      await loadMembers(OPEN_PARTNER_ID);
-    });
+  membersTable.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=> deleteMember(btn.getAttribute("data-del")));
   });
 }
 
-pmSave?.addEventListener("click", async () => {
-  if (!OPEN_PARTNER_ID) return;
+async function editMember(memberId){
+  const m = OPEN_MEMBERS.find(x => x.id === memberId);
+  if(!m) return;
 
+  const fullName = prompt("Nom affiché :", m.fullName || m.displayName || "") ?? "";
+  const clientId = prompt("ClientId (optionnel) :", m.clientId || "") ?? "";
+  const rateStr = prompt("Taux :", String(m.rate ?? 0)) ?? "0";
+  const rate = Number(rateStr);
+
+  if (!fullName.trim() && !clientId.trim()) return alert("Met au moins un nom OU un clientId.");
+  if (Number.isNaN(rate) || rate < 0) return alert("Taux invalide.");
+
+  await updateDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", memberId), {
+    fullName: fullName.trim(),
+    clientId: clientId.trim() || null,
+    rate,
+    updatedAt: serverTimestamp(),
+  });
+
+  await loadPartners(); // refresh count
+  await loadMembers(OPEN_PARTNER_ID);
+}
+
+async function deleteMember(memberId){
+  if(!confirm("Supprimer ce client du partenaire ?")) return;
+  await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", memberId));
+  await loadPartners();
+  await loadMembers(OPEN_PARTNER_ID);
+}
+
+pmSave?.addEventListener("click", async ()=>{
+  if(!OPEN_PARTNER_ID) return;
   const name = (pmName.value || "").trim();
-  if (!name) return alert("Nom obligatoire.");
+  if(!name) return alert("Nom obligatoire.");
 
-  pmSave.disabled = true;
-  try {
-    await updateDoc(doc(db, "partners", OPEN_PARTNER_ID), {
-      name,
-      nameKey: name.toLowerCase(),
-      active: pmActive.checked,
-      updatedAt: serverTimestamp(),
-    });
-    await loadPartners();
-    const p = PARTNERS.find((x) => x.id === OPEN_PARTNER_ID);
-    pmTitle.textContent = p?.name ? `Partenaire — ${p.name}` : "Partenaire";
-  } finally {
-    pmSave.disabled = false;
-  }
+  await updateDoc(doc(db, "partners", OPEN_PARTNER_ID), {
+    name,
+    nameKey: name.toLowerCase(),
+    active: pmActive.checked,
+    updatedAt: serverTimestamp(),
+  });
+
+  await loadPartners();
+  const p = PARTNERS.find(x => x.id === OPEN_PARTNER_ID);
+  pmTitle.textContent = p?.name ? `Partenaire : ${p.name}` : "Partenaire";
 });
 
-pmDelete?.addEventListener("click", async () => {
-  if (!OPEN_PARTNER_ID) return;
-  if (!confirm("Supprimer ce partenaire ?")) return;
-
-  pmDelete.disabled = true;
-  try {
-    await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID));
-    closeModal(partnerModal);
-    await loadPartners();
-  } finally {
-    pmDelete.disabled = false;
-  }
+pmDelete?.addEventListener("click", async ()=>{
+  if(!OPEN_PARTNER_ID) return;
+  if(!confirm("Supprimer ce partenaire ?")) return;
+  await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID));
+  closeModal();
+  await loadPartners();
 });
 
-addPartnerBtn?.addEventListener("click", async () => {
-  const name = prompt("Nom du partenaire ?");
-  if (!name) return;
+addPartnerBtn?.addEventListener("click", async ()=>{
+  const name = prompt("Nom du partenaire ?")?.trim();
+  if(!name) return;
 
   await addDoc(collection(db, "partners"), {
-    name: name.trim(),
-    nameKey: name.trim().toLowerCase(),
+    name,
+    nameKey: name.toLowerCase(),
     active: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -241,50 +253,27 @@ addPartnerBtn?.addEventListener("click", async () => {
   await loadPartners();
 });
 
-function openMemberModal(mode, member) {
-  MEMBER_EDIT = { mode, id: member?.id || null };
-  mmTitle.textContent = mode === "edit" ? "Modifier client partenaire" : "Ajouter client partenaire";
-  mmFullName.value = member?.fullName || member?.displayName || "";
-  mmClientId.value = member?.clientId || "";
-  mmRate.value = String(member?.rate ?? 0);
-  openModal(memberModal);
-}
+addMemberBtn?.addEventListener("click", async ()=>{
+  if(!OPEN_PARTNER_ID) return;
 
-addMemberBtn?.addEventListener("click", () => openMemberModal("create"));
+  const fullName = prompt("Nom affiché (obligatoire si pas clientId) :", "") ?? "";
+  const clientId = prompt("ClientId (optionnel) :", "") ?? "";
+  const rateStr = prompt("Taux :", "0") ?? "0";
+  const rate = Number(rateStr);
 
-mmSave?.addEventListener("click", async () => {
-  if (!OPEN_PARTNER_ID) return;
-
-  const fullName = (mmFullName.value || "").trim();
-  const clientId = (mmClientId.value || "").trim();
-  const rate = Number(mmRate.value || 0);
-
-  if (!fullName && !clientId) return alert("Met un nom affiché OU un clientId.");
+  if (!fullName.trim() && !clientId.trim()) return alert("Met au moins un nom OU un clientId.");
   if (Number.isNaN(rate) || rate < 0) return alert("Taux invalide.");
 
-  mmSave.disabled = true;
-  try {
-    const payload = {
-      fullName: fullName || "",
-      nameKey: (fullName || "").toLowerCase(),
-      clientId: clientId || null,
-      rate,
-      updatedAt: serverTimestamp(),
-    };
+  await addDoc(collection(db, "partners", OPEN_PARTNER_ID, "members"), {
+    fullName: fullName.trim(),
+    clientId: clientId.trim() || null,
+    rate,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 
-    if (MEMBER_EDIT.mode === "create") {
-      payload.createdAt = serverTimestamp();
-      await addDoc(collection(db, "partners", OPEN_PARTNER_ID, "members"), payload);
-    } else {
-      await updateDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", MEMBER_EDIT.id), payload);
-    }
-
-    closeModal(memberModal);
-    await loadPartners();
-    await loadMembers(OPEN_PARTNER_ID);
-  } finally {
-    mmSave.disabled = false;
-  }
+  await loadPartners();
+  await loadMembers(OPEN_PARTNER_ID);
 });
 
 search?.addEventListener("input", renderPartners);
