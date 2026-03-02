@@ -1,185 +1,140 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDM Admin — Partenaires</title>
-  <link rel="icon" href="favicon.png" />
-  <link rel="stylesheet" href="app.css" />
+  <meta charset="UTF-8">
+  <title>PDM Admin - Partenaires</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="app.css">
+  <script type="module" src="partenariats.js"></script>
 </head>
 <body>
 
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-title">PDM ADMIN</div>
-        <div class="brand-sub">Urban Hills</div>
+<div class="layout">
+
+  <aside class="sidebar">
+    <h2>PDM ADMIN</h2>
+
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clients.html">Clients</a>
+    <a href="stock.html">Stock</a>
+    <a href="ventes.html">Ventes</a>
+    <a href="vehicles.html">Vehicules</a>
+    <a class="active" href="partenariats.html">Partenaires</a>
+    <a href="compta.html">Comptabilite</a>
+    <a href="catalogue.html">Catalogue</a>
+    <a href="gestion.html">Gestion</a>
+
+    <button id="logoutBtn">Deconnexion</button>
+  </aside>
+
+  <main class="content">
+    <h1>Gestion Partenaires</h1>
+
+    <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center;">
+      <input id="search" type="text" placeholder="Rechercher un partenaire (nom)">
+      <button id="refreshBtn" class="btn">Rafraichir</button>
+      <button id="addPartnerBtn" class="btn btn-gold">+ Partenaire</button>
+    </div>
+
+    <div class="cards" style="margin-bottom:14px;">
+      <div class="card">
+        <div>Partenaires</div>
+        <h2 id="statPartners">0</h2>
       </div>
-
-      <nav class="menu">
-        <a class="menu-btn" href="dashboard.html">Dashboard</a>
-        <a class="menu-btn" href="clients.html">Clients</a>
-        <a class="menu-btn" href="stock.html">Stock</a>
-        <a class="menu-btn" href="ventes.html">Ventes</a>
-        <a class="menu-btn" href="vehicles.html">Véhicules</a>
-        <a class="menu-btn active" href="partenariats.html">Partenaires</a>
-        <a class="menu-btn" href="compta.html">Comptabilité</a>
-        <a class="menu-btn" href="catalogue.html">Catalogue</a>
-        <a class="menu-btn" href="gestion.html">Gestion</a>
-      </nav>
-
-      <button id="logoutBtn" class="btn btn-gold" style="width:100%; margin-top:auto;">Déconnexion</button>
-    </aside>
-
-    <main class="main">
-      <div class="topbar">
-        <div class="page-title">Partenaires</div>
-        <div class="page-subtitle">Collection : <b>partners</b></div>
-
-        <div class="searchbar">
-          <input id="search" class="input" placeholder="Rechercher un partenaire..." />
-        </div>
-
-        <div class="btn-row">
-          <button id="refreshBtn" class="btn">Rafraîchir</button>
-          <button id="addPartnerBtn" class="btn btn-gold">+ Partenaire</button>
-        </div>
-
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="label">Partenaires</div>
-            <div id="statPartners" class="value">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Membres (total)</div>
-            <div id="statMembers" class="value">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Actifs</div>
-            <div id="statActive" class="value">—</div>
-          </div>
-        </div>
+      <div class="card">
+        <div>Membres (total)</div>
+        <h2 id="statMembers">0</h2>
       </div>
-
-      <section class="card">
-        <div class="section-title">LISTE DES PARTENAIRES</div>
-        <div class="section-subtitle">Bouton “Voir” = gestion des clients partenaires</div>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>NOM</th>
-                <th>ACTIF</th>
-                <th>CLIENTS</th>
-                <th>CRÉÉ</th>
-                <th>MAJ</th>
-                <th style="text-align:right;">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody id="partnersBody">
-              <tr><td colspan="6">Chargement...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Modal partenaire -->
-  <div id="partnerModal" class="modal hidden">
-    <div class="modal-box" style="max-width:980px;">
-      <div class="modal-head">
-        <div>
-          <div id="pmTitle" class="modal-title">Partenaire</div>
-          <div id="pmSub" class="modal-subtitle">Gestion</div>
-        </div>
-        <button id="pmClose" class="icon-btn">✕</button>
+      <div class="card">
+        <div>Actifs</div>
+        <h2 id="statActive">0</h2>
       </div>
+    </div>
 
-      <div class="form-grid" style="grid-template-columns: 1.2fr 0.8fr;">
-        <div>
-          <label class="label">Nom</label>
-          <input id="pmName" class="input" placeholder="Benny's" />
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Actif</th>
+          <th>Clients</th>
+          <th>Cree</th>
+          <th>Maj</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="partnersTable">
+        <tr><td colspan="6">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+</div>
+
+<!-- MODAL PARTNER -->
+<div id="partnerModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="pmTitle">Partenaire</div>
+      <div class="close" id="pmClose">X</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Nom</div>
+          <input id="pmName" type="text" placeholder="Benny's">
         </div>
-        <div style="display:flex; align-items:flex-end; gap:12px;">
-          <label class="label" style="display:flex; align-items:center; gap:10px;">
-            <input id="pmActive" type="checkbox" style="transform: scale(1.15);" />
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <label style="display:flex; gap:8px; align-items:center;">
+            <input id="pmActive" type="checkbox">
             Actif
           </label>
-          <div style="margin-left:auto; display:flex; gap:10px;">
-            <button id="pmSave" class="btn btn-gold">Enregistrer</button>
-            <button id="pmDelete" class="btn btn-danger">Supprimer</button>
-          </div>
+        </div>
+
+        <div style="margin-left:auto; display:flex; gap:10px;">
+          <button id="pmSave" class="btn btn-gold">Enregistrer</button>
+          <button id="pmDelete" class="btn btn-danger">Supprimer</button>
         </div>
       </div>
-
-      <div class="card" style="margin-top:14px;">
-        <div class="section-title">CLIENTS PARTENAIRES</div>
-        <div class="section-subtitle">/partners/{partnerId}/members</div>
-
-        <div class="btn-row" style="margin-top:10px;">
-          <button id="addMemberBtn" class="btn btn-gold">+ Ajouter un client</button>
-        </div>
-
-        <div class="table-wrap" style="margin-top:10px;">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>CLIENT</th>
-                <th>CLIENT ID</th>
-                <th>TAUX</th>
-                <th>CRÉÉ</th>
-                <th>MAJ</th>
-                <th style="text-align:right;">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody id="membersBody">
-              <tr><td colspan="6">—</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button id="pmCancel" class="btn">Fermer</button>
+      <div style="margin-top:8px; font-size:12px; opacity:.75;">
+        ID: <span id="pmId">-</span>
       </div>
     </div>
-  </div>
 
-  <!-- Modal member -->
-  <div id="memberModal" class="modal hidden">
-    <div class="modal-box">
-      <div class="modal-head">
-        <div>
-          <div id="mmTitle" class="modal-title">Client partenaire</div>
-          <div class="modal-subtitle">Ajouter / Modifier</div>
-        </div>
-        <button id="mmClose" class="icon-btn">✕</button>
-      </div>
+    <div class="hr"></div>
 
-      <div class="form-grid">
-        <div>
-          <label class="label">Nom affiché</label>
-          <input id="mmFullName" class="input" placeholder="John Dixon" />
-        </div>
-        <div>
-          <label class="label">ClientId (optionnel)</label>
-          <input id="mmClientId" class="input" placeholder="id du doc clients" />
-        </div>
-        <div>
-          <label class="label">Taux</label>
-          <input id="mmRate" class="input" type="number" min="0" step="1" value="0" />
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button id="mmCancel" class="btn">Annuler</button>
-        <button id="mmSave" class="btn btn-gold">Enregistrer</button>
-      </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <h2 style="margin:0;">Clients & taux</h2>
+      <button id="addMemberBtn" class="btn btn-gold">+ Ajouter</button>
     </div>
-  </div>
 
-  <script type="module" src="partenariats.js"></script>
+    <table class="table" style="margin-top:10px;">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>ClientId</th>
+          <th>Taux</th>
+          <th>Cree</th>
+          <th>Maj</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="membersTable">
+        <tr><td colspan="6">Chargement...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="hr"></div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button id="pmCancel" class="btn">Fermer</button>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
