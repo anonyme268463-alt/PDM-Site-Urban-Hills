@@ -1,135 +1,130 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDM Admin — Véhicules</title>
-  <link rel="icon" href="favicon.png" />
-  <link rel="stylesheet" href="app.css" />
+  <meta charset="UTF-8" />
+  <title>PDM Admin - Véhicules</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="app.css">
+  <script type="module" src="vehicles.js"></script>
 </head>
-
 <body>
-  <div class="layout">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-title">PDM ADMIN</div>
-        <div class="brand-sub">Urban Hills</div>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <h2>PDM ADMIN</h2>
+
+    <a href="dashboard.html">Dashboard</a>
+    <a href="clients.html">Clients</a>
+    <a href="stock.html">Stock</a>
+    <a href="ventes.html">Ventes</a>
+    <a class="active" href="vehicles.html">Véhicules</a>
+    <a href="partenariats.html">Partenaires</a>
+    <a href="compta.html">Comptabilité</a>
+    <a href="catalogue.html">Catalogue</a>
+    <a href="gestion.html">Gestion</a>
+
+    <button id="logoutBtn">Déconnexion</button>
+  </aside>
+
+  <main class="content">
+    <h1>Véhicules</h1>
+    <p style="opacity:.8;margin-top:-6px;">Collection : <b>vehicles</b> (référentiel interne)</p>
+
+    <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center;">
+      <input id="search" type="text" placeholder="Rechercher (marque, modèle, catégorie)..." />
+      <button id="refreshBtn" class="btn">Rafraîchir</button>
+      <button id="addBtn" class="btn btn-gold">+ Véhicule</button>
+    </div>
+
+    <div class="cards" style="margin-bottom:14px;">
+      <div class="card">
+        <div>Total véhicules</div>
+        <h2 id="statTotal">0</h2>
       </div>
-
-      <nav class="menu">
-        <a class="menu-btn" href="dashboard.html">Dashboard</a>
-        <a class="menu-btn" href="clients.html">Clients</a>
-        <a class="menu-btn" href="stock.html">Stock</a>
-        <a class="menu-btn" href="ventes.html">Ventes</a>
-        <a class="menu-btn active" href="vehicles.html">Véhicules</a>
-        <a class="menu-btn" href="partenaires.html">Partenaires</a>
-        <a class="menu-btn" href="compta.html">Comptabilité</a>
-        <a class="menu-btn" href="catalogue.html">Catalogue</a>
-        <a class="menu-btn" href="gestion.html">Gestion</a>
-      </nav>
-
-      <button id="logoutBtn" class="btn btn-gold" style="width:100%; margin-top:auto;">Déconnexion</button>
-    </aside>
-
-    <!-- MAIN -->
-    <main class="main">
-      <div class="topbar">
-        <div class="page-title">Véhicules</div>
-        <div class="page-subtitle">Collection : <b>vehicles</b> (référentiel interne)</div>
-
-        <div class="searchbar">
-          <input id="search" class="input" placeholder="Rechercher (marque, modèle, catégorie)..." />
-        </div>
-
-        <div class="btn-row">
-          <button id="refreshBtn" class="btn">Rafraîchir</button>
-          <button id="addBtn" class="btn btn-gold">+ Véhicule</button>
-        </div>
-
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="label">Total véhicules</div>
-            <div id="statTotal" class="value">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Catégories</div>
-            <div id="statCats" class="value">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Ajoutés ce mois</div>
-            <div id="statMonth" class="value">—</div>
-          </div>
-        </div>
+      <div class="card">
+        <div>Catégories</div>
+        <h2 id="statCats">0</h2>
       </div>
-
-      <section class="card">
-        <div class="section-title">LISTE</div>
-        <div class="section-subtitle">Tri : récent → ancien</div>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>MARQUE</th>
-                <th>MODÈLE</th>
-                <th>CATÉGORIE</th>
-                <th>PRICE</th>
-                <th>SELL PRICE</th>
-                <th>CRÉÉ</th>
-                <th style="text-align:right;">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody">
-              <tr><td colspan="7">Chargement...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- MODAL -->
-  <div id="editModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
-      <div class="modal-head">
-        <div>
-          <div id="mTitle" class="modal-title">Ajouter</div>
-          <div class="modal-subtitle">Véhicule interne (pas encore le catalogue client)</div>
-        </div>
-        <button id="closeModal" class="icon-btn" aria-label="Fermer">✕</button>
-      </div>
-
-      <div class="form-grid">
-        <div>
-          <label class="label">Marque</label>
-          <input id="mBrand" class="input" placeholder="Pfister" />
-        </div>
-        <div>
-          <label class="label">Modèle</label>
-          <input id="mModel" class="input" placeholder="Comet S2" />
-        </div>
-        <div>
-          <label class="label">Catégorie</label>
-          <input id="mCategory" class="input" placeholder="Sport / Super / SUV..." />
-        </div>
-        <div>
-          <label class="label">Price</label>
-          <input id="mPrice" class="input" type="number" min="0" step="1" value="0" />
-        </div>
-        <div>
-          <label class="label">Sell price</label>
-          <input id="mSellPrice" class="input" type="number" min="0" step="1" value="0" />
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button id="cancelBtn" class="btn">Annuler</button>
-        <button id="saveBtn" class="btn btn-gold">Enregistrer</button>
+      <div class="card">
+        <div>Ajoutés ce mois</div>
+        <h2 id="statMonth">0</h2>
       </div>
     </div>
-  </div>
 
-  <script type="module" src="vehicles.js"></script>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Marque</th>
+          <th>Modèle</th>
+          <th>Catégorie</th>
+          <th>Price</th>
+          <th>Sell price</th>
+          <th>Créé</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="7">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+</div>
+
+<!-- MODAL -->
+<div id="vehModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="vmTitle">Véhicule</div>
+      <div class="close" id="vmClose">X</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Marque</div>
+          <input id="vmBrand" type="text" placeholder="Pfister">
+        </div>
+
+        <div style="flex:1; min-width:220px;">
+          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Modèle</div>
+          <input id="vmModel" type="text" placeholder="Comet S2">
+        </div>
+
+        <div style="flex:1; min-width:220px;">
+          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Catégorie</div>
+          <input id="vmCategory" type="text" placeholder="Sport">
+        </div>
+
+        <div style="flex:1; min-width:220px;">
+          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Price</div>
+          <input id="vmPrice" type="number" min="0" step="1" placeholder="0">
+        </div>
+
+        <div style="flex:1; min-width:220px;">
+          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Sell price</div>
+          <input id="vmSellPrice" type="number" min="0" step="1" placeholder="0">
+        </div>
+      </div>
+
+      <div style="margin-top:10px; font-size:12px; opacity:.75;">
+        ID: <span id="vmId">-</span>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button id="vmCancel" class="btn">Annuler</button>
+      <button id="vmDelete" class="btn btn-danger">Supprimer</button>
+      <button id="vmSave" class="btn btn-gold">Enregistrer</button>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
