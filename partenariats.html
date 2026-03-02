@@ -7,8 +7,8 @@
   <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="app.css" />
 </head>
-
 <body>
+
   <div class="layout">
     <aside class="sidebar">
       <div class="brand">
@@ -34,7 +34,7 @@
     <main class="main">
       <div class="topbar">
         <div class="page-title">Partenaires</div>
-        <div class="page-subtitle">Collection : <b>partners</b> + sous-collection <b>members</b></div>
+        <div class="page-subtitle">Collection : <b>partners</b></div>
 
         <div class="searchbar">
           <input id="search" class="input" placeholder="Rechercher un partenaire..." />
@@ -63,7 +63,7 @@
 
       <section class="card">
         <div class="section-title">LISTE DES PARTENAIRES</div>
-        <div class="section-subtitle">Cliquer “Voir” pour gérer les membres & taux</div>
+        <div class="section-subtitle">Bouton “Voir” = gestion des clients partenaires</div>
 
         <div class="table-wrap">
           <table class="table">
@@ -86,20 +86,20 @@
     </main>
   </div>
 
-  <!-- MODAL PARTNER -->
-  <div id="partnerModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box" style="max-width: 980px;">
+  <!-- Modal partenaire -->
+  <div id="partnerModal" class="modal hidden">
+    <div class="modal-box" style="max-width:980px;">
       <div class="modal-head">
         <div>
           <div id="pmTitle" class="modal-title">Partenaire</div>
           <div id="pmSub" class="modal-subtitle">Gestion</div>
         </div>
-        <button id="pmClose" class="icon-btn" aria-label="Fermer">✕</button>
+        <button id="pmClose" class="icon-btn">✕</button>
       </div>
 
       <div class="form-grid" style="grid-template-columns: 1.2fr 0.8fr;">
         <div>
-          <label class="label">Nom du partenaire</label>
+          <label class="label">Nom</label>
           <input id="pmName" class="input" placeholder="Benny's" />
         </div>
         <div style="display:flex; align-items:flex-end; gap:12px;">
@@ -115,8 +115,8 @@
       </div>
 
       <div class="card" style="margin-top:14px;">
-        <div class="section-title">CLIENTS & TAUX</div>
-        <div class="section-subtitle">Source : /partners/{partnerId}/members</div>
+        <div class="section-title">CLIENTS PARTENAIRES</div>
+        <div class="section-subtitle">/partners/{partnerId}/members</div>
 
         <div class="btn-row" style="margin-top:10px;">
           <button id="addMemberBtn" class="btn btn-gold">+ Ajouter un client</button>
@@ -147,15 +147,15 @@
     </div>
   </div>
 
-  <!-- MODAL MEMBER -->
-  <div id="memberModal" class="modal hidden" role="dialog" aria-modal="true">
+  <!-- Modal member -->
+  <div id="memberModal" class="modal hidden">
     <div class="modal-box">
       <div class="modal-head">
         <div>
           <div id="mmTitle" class="modal-title">Client partenaire</div>
           <div class="modal-subtitle">Ajouter / Modifier</div>
         </div>
-        <button id="mmClose" class="icon-btn" aria-label="Fermer">✕</button>
+        <button id="mmClose" class="icon-btn">✕</button>
       </div>
 
       <div class="form-grid">
@@ -165,7 +165,7 @@
         </div>
         <div>
           <label class="label">ClientId (optionnel)</label>
-          <input id="mmClientId" class="input" placeholder="(id du doc clients)" />
+          <input id="mmClientId" class="input" placeholder="id du doc clients" />
         </div>
         <div>
           <label class="label">Taux</label>
