@@ -1,316 +1,313 @@
+/* gestion.js — PDM Admin (Firestore: users)
+   Compatible avec ton gestion.html (ids: usersTbody, searchInput, refreshBtn, createBtn, createDialog, etc.)
+*/
+
 import { auth, db } from "./config.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  collection, doc, getDoc, getDocs, query,
-  setDoc, updateDoc, deleteDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  doc,
+  updateDoc,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const $ = (sel) => document.querySelector(sel);
+// Optionnel: si tu as déjà guard/common dans ton repo, on les utilise sans casser si absent.
+let requireAdmin = null;
+let setActiveNav = null;
 
-const els = {
-  search: $("#searchInput"),
-  btnRefresh: $("#btnRefresh"),
-  btnNew: $("#btnNew"),
-  btnLogout: $("#btnLogout"),
+try {
+  const guard = await import("./guard.js");
+  if (typeof guard.requireAdmin === "function") requireAdmin = guard.requireAdmin;
+} catch (_) {}
 
-  statTotal: $("#statTotal"),
-  statAdmins: $("#statAdmins"),
-  statStaff: $("#statStaff"),
+try {
+  const common = await import("./common.js");
+  if (typeof common.setActiveNav === "function") setActiveNav = common.setActiveNav;
+} catch (_) {}
 
-  tbody: $("#tbodyUsers"),
+/* ------------------ DOM ------------------ */
+const el = (id) => document.getElementById(id);
 
-  dlg: $("#dlgUser"),
-  dlgTitle: $("#dlgTitle"),
-  dlgClose: $("#dlgClose"),
-  form: $("#userForm"),
-  fUid: $("#fUid"),
-  fEmail: $("#fEmail"),
-  fName: $("#fName"),
-  fRole: $("#fRole"),
-  fActive: $("#fActive"),
-  fNote: $("#fNote"),
-  btnSave: $("#btnSave"),
-  btnCancel: $("#btnCancel"),
-  btnDelete: $("#btnDelete"),
-};
+const usersTbody = el("usersTbody");
+const searchInput = el("searchInput");
+const refreshBtn = el("refreshBtn");
+const logoutBtn = el("logoutBtn");
 
-let currentUser = null;
-let isAdmin = false;
+const statTotal = el("statTotal");
+const statAdmins = el("statAdmins");
+const statStaff = el("statStaff");
+const statusPill = el("statusPill");
 
-let allUsers = [];     // liste brute
-let filtered = [];     // liste filtrée (recherche)
-let editingUid = null; // null => création
+const createBtn = el("createBtn");
+const createDialog = el("createDialog");
+const dClose = el("dClose");
+const dCancel = el("dCancel");
+const dCreate = el("dCreate");
+const dEmail = el("dEmail");
+const dName = el("dName");
+const dPassword = el("dPassword");
+const dRole = el("dRole");
 
-function deny() {
-  alert("Accès refusé (admin uniquement).");
-  window.location.href = "dashboard.html";
+/* ------------------ State ------------------ */
+let allUsers = []; // { id, email, name, role, active, updatedAt }
+
+/* ------------------ Utils ------------------ */
+function safeText(v) {
+  return (v ?? "").toString();
+}
+function norm(s) {
+  return safeText(s).trim().toLowerCase();
+}
+function roleLabel(role) {
+  const r = norm(role);
+  if (r === "admin") return "ADMIN";
+  return "STAFF";
+}
+function pill(status) {
+  // statusPill dans ton HTML est juste un indicateur global
+  if (!statusPill) return;
+  statusPill.textContent = status;
 }
 
-async function requireAdmin(user) {
-  const snap = await getDoc(doc(db, "users", user.uid));
-  const role = snap.exists() ? String(snap.data().role || "staff").toLowerCase() : "staff";
-  return role === "admin";
+function renderStats(list) {
+  const total = list.length;
+  const admins = list.filter((u) => norm(u.role) === "admin").length;
+  const staff = total - admins;
+
+  if (statTotal) statTotal.textContent = String(total);
+  if (statAdmins) statAdmins.textContent = String(admins);
+  if (statStaff) statStaff.textContent = String(staff);
 }
 
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+function rowHTML(u) {
+  const email = u.email ? safeText(u.email) : "—";
+  const name = u.name ? safeText(u.name) : "—";
+  const role = roleLabel(u.role);
+  const active = u.active !== false; // default true
+  const status = active ? "● ACTIF" : "● INACTIF";
+
+  return `
+    <tr>
+      <td>${escapeHtml(email)}</td>
+      <td>${escapeHtml(name)}</td>
+      <td><span class="badge">${escapeHtml(role)}</span></td>
+      <td>
+        <span class="pill ${active ? "ok" : "ko"}">${escapeHtml(status)}</span>
+      </td>
+      <td class="mono">${escapeHtml(u.id)}</td>
+      <td class="actions">
+        <button class="btn small" data-action="toggle" data-id="${escapeHtml(u.id)}">
+          ${active ? "Désactiver" : "Activer"}
+        </button>
+        <button class="btn small primary" data-action="edit" data-id="${escapeHtml(u.id)}">
+          Modifier
+        </button>
+      </td>
+    </tr>
+  `;
 }
 
-function badgeActive(active) {
-  if (active) return `<span class="pill pill-ok">● actif</span>`;
-  return `<span class="pill pill-off">● inactif</span>`;
+function escapeHtml(str) {
+  return safeText(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-function normalize(str) {
-  return String(str ?? "").toLowerCase().trim();
+/* ------------------ Firestore ------------------ */
+async function fetchUsers() {
+  pill("Chargement…");
+  if (usersTbody) usersTbody.innerHTML = `<tr><td colspan="6">Chargement…</td></tr>`;
+
+  const q = query(collection(db, "users"), orderBy("updatedAt", "desc"));
+  const snap = await getDocs(q);
+
+  const list = [];
+  snap.forEach((d) => {
+    const data = d.data() || {};
+    list.push({
+      id: d.id,
+      email: data.email ?? null,
+      name: data.name ?? null,
+      role: data.role ?? "staff",
+      active: data.active !== false,
+      updatedAt: data.updatedAt ?? null,
+    });
+  });
+
+  allUsers = list;
+  pill("OK");
+  applyFilterAndRender();
 }
 
-function render() {
-  const q = normalize(els.search.value);
-  filtered = !q
-    ? allUsers.slice()
-    : allUsers.filter(u => {
-        const hay = [
-          u.uid, u.email, u.name, u.role, String(u.active)
-        ].map(normalize).join(" ");
-        return hay.includes(q);
-      });
+function applyFilterAndRender() {
+  const q = norm(searchInput?.value);
+  let list = allUsers;
 
-  // Stats
-  const total = filtered.length;
-  const admins = filtered.filter(u => String(u.role).toLowerCase() === "admin").length;
-  const staff = filtered.filter(u => String(u.role).toLowerCase() !== "admin").length;
+  if (q) {
+    list = allUsers.filter((u) => {
+      const hay = [
+        u.id,
+        u.email,
+        u.name,
+        u.role,
+        u.active ? "actif" : "inactif",
+      ]
+        .map(norm)
+        .join(" | ");
+      return hay.includes(q);
+    });
+  }
 
-  els.statTotal.textContent = total;
-  els.statAdmins.textContent = admins;
-  els.statStaff.textContent = staff;
+  renderStats(list);
 
-  // Table
-  if (!filtered.length) {
-    els.tbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">Aucun utilisateur.</td></tr>`;
+  if (!usersTbody) return;
+  if (list.length === 0) {
+    usersTbody.innerHTML = `<tr><td colspan="6">Aucun utilisateur.</td></tr>`;
     return;
   }
 
-  els.tbody.innerHTML = filtered.map(u => {
-    const role = String(u.role || "staff").toLowerCase();
-    const active = !!u.active;
-
-    return `
-      <tr>
-        <td>${esc(u.email || "—")}</td>
-        <td>${esc(u.name || "—")}</td>
-        <td><b>${esc(role)}</b></td>
-        <td>${badgeActive(active)}</td>
-        <td style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:12px;">
-          ${esc(u.uid)}
-        </td>
-        <td style="text-align:right;">
-          <div class="table-actions">
-            <button class="btn btn-xs" data-act="toggle" data-uid="${esc(u.uid)}">${active ? "Désactiver" : "Activer"}</button>
-            <button class="btn btn-xs" data-act="edit" data-uid="${esc(u.uid)}">Modifier</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-async function loadUsers() {
-  try {
-    els.tbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">Chargement…</td></tr>`;
-
-    // Simple: on lit la collection "users"
-    const snap = await getDocs(query(collection(db, "users")));
-    const arr = [];
-    snap.forEach(d => {
-      const data = d.data() || {};
-      arr.push({
-        uid: d.id,
-        email: data.email || "",
-        name: data.name || "",
-        role: data.role || "staff",
-        active: data.active !== false, // true par défaut
-        note: data.note || "",
-      });
-    });
-
-    // Tri: admin d'abord, puis actif, puis nom
-    arr.sort((a,b) => {
-      const ra = String(a.role).toLowerCase() === "admin" ? 0 : 1;
-      const rb = String(b.role).toLowerCase() === "admin" ? 0 : 1;
-      if (ra !== rb) return ra - rb;
-
-      const aa = a.active ? 0 : 1;
-      const ab = b.active ? 0 : 1;
-      if (aa !== ab) return aa - ab;
-
-      return normalize(a.name).localeCompare(normalize(b.name));
-    });
-
-    allUsers = arr;
-    render();
-  } catch (e) {
-    console.error(e);
-    els.tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="color:#ffb4b4;">
-          Erreur de lecture Firestore. Ouvre la console (F12) pour voir le détail.
-          (Probable: règles Firestore qui empêchent le "list" sur users)
-        </td>
-      </tr>
-    `;
-    els.statTotal.textContent = "—";
-    els.statAdmins.textContent = "—";
-    els.statStaff.textContent = "—";
-  }
-}
-
-function openModal(user = null) {
-  if (user) {
-    editingUid = user.uid;
-    els.dlgTitle.textContent = "Modifier utilisateur";
-    els.fUid.value = user.uid;
-    els.fUid.disabled = true;
-
-    els.fEmail.value = user.email || "";
-    els.fName.value = user.name || "";
-    els.fRole.value = String(user.role || "staff").toLowerCase() === "admin" ? "admin" : "staff";
-    els.fActive.value = user.active ? "true" : "false";
-    els.fNote.value = user.note || "";
-
-    els.btnDelete.style.display = "inline-block";
-  } else {
-    editingUid = null;
-    els.dlgTitle.textContent = "Créer fiche utilisateur";
-    els.fUid.disabled = false;
-
-    els.fUid.value = "";
-    els.fEmail.value = "";
-    els.fName.value = "";
-    els.fRole.value = "staff";
-    els.fActive.value = "true";
-    els.fNote.value = "";
-
-    els.btnDelete.style.display = "none";
-  }
-
-  els.dlg.showModal();
-}
-
-function closeModal() {
-  els.dlg.close();
-}
-
-async function saveUser() {
-  const uid = els.fUid.value.trim();
-  if (!uid) return alert("UID obligatoire.");
-
-  const payload = {
-    email: els.fEmail.value.trim() || "",
-    name: els.fName.value.trim() || "",
-    role: (els.fRole.value || "staff").trim(),
-    active: els.fActive.value === "true",
-    note: els.fNote.value.trim() || "",
-    updatedAt: serverTimestamp(),
-  };
-
-  try {
-    const ref = doc(db, "users", uid);
-
-    // Si création, on pose createdAt une fois
-    if (!editingUid) {
-      await setDoc(ref, { ...payload, createdAt: serverTimestamp() }, { merge: true });
-    } else {
-      await setDoc(ref, payload, { merge: true });
-    }
-
-    closeModal();
-    await loadUsers();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur enregistrement (voir console).");
-  }
+  usersTbody.innerHTML = list.map(rowHTML).join("");
 }
 
 async function toggleActive(uid) {
-  try {
-    const ref = doc(db, "users", uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return;
+  const u = allUsers.find((x) => x.id === uid);
+  if (!u) return;
 
-    const current = snap.data().active !== false;
-    await updateDoc(ref, { active: !current, updatedAt: serverTimestamp() });
-    await loadUsers();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur toggle (voir console).");
-  }
+  const next = !(u.active !== false);
+  await updateDoc(doc(db, "users", uid), {
+    active: next,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Optimistic update
+  u.active = next;
+  applyFilterAndRender();
 }
 
-async function deleteUserDoc() {
-  const uid = editingUid;
-  if (!uid) return;
+async function editUser(uid) {
+  const u = allUsers.find((x) => x.id === uid);
+  if (!u) return;
 
-  const ok = confirm("Supprimer la fiche Firestore (users/" + uid + ") ?\n⚠️ Ça ne supprime PAS le compte dans Firebase Auth.");
-  if (!ok) return;
+  const nextName = prompt("Nom (ex: PDG - Hundo) :", u.name ?? "");
+  if (nextName === null) return;
 
-  try {
-    await deleteDoc(doc(db, "users", uid));
-    closeModal();
-    await loadUsers();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur suppression (voir console).");
-  }
+  const nextRoleRaw = prompt('Rôle ("admin" ou "staff") :', u.role ?? "staff");
+  if (nextRoleRaw === null) return;
+
+  const nextRole = norm(nextRoleRaw) === "admin" ? "admin" : "staff";
+
+  await updateDoc(doc(db, "users", uid), {
+    name: nextName.trim(),
+    role: nextRole,
+    updatedAt: serverTimestamp(),
+  });
+
+  u.name = nextName.trim();
+  u.role = nextRole;
+  applyFilterAndRender();
 }
 
-/* Events */
-els.search.addEventListener("input", render);
-
-els.btnRefresh.addEventListener("click", loadUsers);
-els.btnNew.addEventListener("click", () => openModal(null));
-
-els.dlgClose.addEventListener("click", closeModal);
-els.btnCancel.addEventListener("click", closeModal);
-els.btnSave.addEventListener("click", saveUser);
-els.btnDelete.addEventListener("click", deleteUserDoc);
-
-els.tbody.addEventListener("click", async (e) => {
-  const btn = e.target.closest("button[data-act]");
-  if (!btn) return;
-
-  const act = btn.dataset.act;
-  const uid = btn.dataset.uid;
-
-  if (act === "edit") {
-    const u = allUsers.find(x => x.uid === uid);
-    if (!u) return;
-    openModal(u);
-  } else if (act === "toggle") {
-    await toggleActive(uid);
-  }
-});
-
-els.btnLogout.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "pdm-staff.html";
-});
-
-/* Auth guard */
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "pdm-staff.html";
+/* ------------------ Create user (info only) ------------------ */
+function openCreateDialog() {
+  if (!createDialog) {
+    alert(
+      "Créer un utilisateur: fais-le dans Firebase Console > Auth, puis ajoute/édite sa fiche dans Firestore (collection users/{uid})."
+    );
     return;
   }
-  currentUser = user;
+  // reset
+  if (dEmail) dEmail.value = "";
+  if (dName) dName.value = "";
+  if (dPassword) dPassword.value = "";
+  if (dRole) dRole.value = "staff";
+  createDialog.showModal();
+}
 
+function closeCreateDialog() {
   try {
-    isAdmin = await requireAdmin(user);
-    if (!isAdmin) return deny();
-    await loadUsers();
-  } catch (e) {
-    console.error(e);
-    deny();
-  }
-});
+    createDialog?.close();
+  } catch (_) {}
+}
+
+function explainCreateLimitation() {
+  alert(
+    "⚠️ Création d'un compte Auth depuis le site : impossible sans Cloud Functions déployées.\n\n" +
+      "✅ Fais plutôt :\n" +
+      "1) Firebase Console → Authentication → Ajouter un utilisateur\n" +
+      "2) Récupère son UID\n" +
+      "3) Firestore → collection users → doc {UID} avec :\n" +
+      "   { active:true, name:'...', role:'staff' }\n\n" +
+      "Ensuite tu reviens ici et tu peux Modifier / Activer / Désactiver."
+  );
+}
+
+/* ------------------ Events ------------------ */
+function bindEvents() {
+  refreshBtn?.addEventListener("click", fetchUsers);
+  searchInput?.addEventListener("input", applyFilterAndRender);
+
+  logoutBtn?.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "./index.html";
+  });
+
+  createBtn?.addEventListener("click", openCreateDialog);
+  dClose?.addEventListener("click", closeCreateDialog);
+  dCancel?.addEventListener("click", closeCreateDialog);
+  dCreate?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeCreateDialog();
+    explainCreateLimitation();
+  });
+
+  // Delegation actions table
+  usersTbody?.addEventListener("click", async (e) => {
+    const btn = e.target?.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.getAttribute("data-action");
+    const id = btn.getAttribute("data-id");
+    if (!id) return;
+
+    try {
+      if (action === "toggle") await toggleActive(id);
+      if (action === "edit") await editUser(id);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur: " + (err?.message || err));
+    }
+  });
+}
+
+/* ------------------ Init ------------------ */
+async function init() {
+  setActiveNav?.("gestion"); // si tu l'as dans common.js
+
+  // Auth / Guard
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "./index.html";
+      return;
+    }
+
+    try {
+      // Si tu as un guard admin, on l'utilise.
+      if (requireAdmin) await requireAdmin();
+      await fetchUsers();
+    } catch (err) {
+      console.error(err);
+      alert("Accès refusé (admin requis).");
+      window.location.href = "./dashboard.html";
+    }
+  });
+
+  bindEvents();
+}
+
+init();
