@@ -1,3 +1,4 @@
+<!-- stock.html -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -8,149 +9,164 @@
   <link rel="stylesheet" href="app.css" />
 </head>
 
-<body>
+<body class="pdm">
   <div class="layout">
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-title">PDM ADMIN</div>
-        <div class="brand-sub">Urban Hills</div>
+      <div class="sb-brand">
+        <div class="sb-title">PDM ADMIN</div>
+        <div class="sb-sub">Urban Hills</div>
       </div>
 
-      <nav class="menu">
-        <a class="menu-btn" href="dashboard.html">Dashboard</a>
-        <a class="menu-btn" href="clients.html">Clients</a>
-        <a class="menu-btn active" href="stock.html">Stock</a>
-        <a class="menu-btn" href="ventes.html">Ventes</a>
-        <a class="menu-btn" href="vehicles.html">Véhicules</a>
-        <a class="menu-btn" href="partenaires.html">Partenaires</a>
-        <a class="menu-btn" href="compta.html">Comptabilité</a>
-        <a class="menu-btn" href="catalogue.html">Catalogue</a>
-        <a class="menu-btn" href="gestion.html">Gestion</a>
+      <nav class="sb-nav">
+        <a class="sb-link" href="dashboard.html">Dashboard</a>
+        <a class="sb-link" href="clients.html">Clients</a>
+        <a class="sb-link active" href="stock.html">Stock</a>
+        <a class="sb-link" href="ventes.html">Ventes</a>
+        <a class="sb-link" href="vehicles.html">Véhicules</a>
+        <a class="sb-link" href="partenariats.html">Partenaires</a>
+        <a class="sb-link" href="compta.html">Comptabilité</a>
+        <a class="sb-link" href="catalogue.html">Catalogue</a>
+        <a class="sb-link" href="gestion.html">Gestion</a>
       </nav>
 
-      <button id="logoutBtn" class="btn btn-gold" style="width:100%; margin-top:auto;">Déconnexion</button>
+      <button class="btn btn-gold sb-logout" id="logoutBtn" type="button">Déconnexion</button>
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
       <div class="topbar">
-        <div class="page-title">Stock & Réservations</div>
-        <div class="page-subtitle">Sources : Firestore (stock / reservations)</div>
-
-        <div class="searchbar">
-          <input id="search" class="input" placeholder="Rechercher (marque, modèle, client)..." />
-        </div>
-
-        <div class="btn-row">
-          <button id="refreshBtn" class="btn">Rafraîchir</button>
-          <button id="addStockBtn" class="btn btn-gold">+ Stock</button>
-          <button id="addResBtn" class="btn btn-gold">+ Réservation</button>
-        </div>
-
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="label">Quantité stock</div>
-            <div id="statStockQty" class="value">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Lignes stock</div>
-            <div id="statStockLines" class="value">—</div>
-          </div>
-          <div class="stat">
-            <div class="label">Réservations actives</div>
-            <div id="statResActive" class="value">—</div>
-          </div>
+        <div>
+          <div class="topbar-title">Stock & Réservations</div>
+          <div class="topbar-sub">Sources : Firestore (stock / reservations)</div>
         </div>
       </div>
 
-      <!-- STOCK -->
-      <section class="card">
-        <div class="section-title">STOCK</div>
-        <div class="section-subtitle">COLLECTION : STOCK</div>
+      <section class="page">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="search">
+              <input id="searchInput" class="input" type="search" placeholder="Rechercher (marque, modèle, client)..." autocomplete="off" />
+            </div>
 
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>MARQUE</th>
-                <th>MODÈLE</th>
-                <th>QTÉ</th>
-                <th>CRÉÉ</th>
-                <th style="text-align:right;">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody id="stockTable">
-              <tr><td colspan="5">Chargement...</td></tr>
-            </tbody>
-          </table>
+            <div class="toolbar-actions">
+              <button id="refreshBtn" class="btn" type="button">Rafraîchir</button>
+              <button id="addStockBtn" class="btn btn-gold" type="button">+ Stock</button>
+              <button id="addResBtn" class="btn btn-gold" type="button">+ Réservation</button>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Quantité stock</div>
+              <div class="stat-value" id="statStockQty">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Lignes stock</div>
+              <div class="stat-value" id="statStockLines">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Réservations actives</div>
+              <div class="stat-value" id="statResActive">—</div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <!-- RESERVATIONS -->
-      <section class="card">
-        <div class="section-title">RÉSERVATIONS</div>
-        <div class="section-subtitle">COLLECTION : RESERVATIONS</div>
+        <div class="grid-1">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Stock</div>
+                <div class="card-sub">Collection : stock</div>
+              </div>
+            </div>
 
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>MARQUE</th>
-                <th>MODÈLE</th>
-                <th>CLIENT</th>
-                <th>QTÉ</th>
-                <th>STATUS</th>
-                <th>CRÉÉ</th>
-                <th style="text-align:right;">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody id="resTable">
-              <tr><td colspan="7">Chargement...</td></tr>
-            </tbody>
-          </table>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Marque</th>
+                    <th>Modèle</th>
+                    <th>Qté</th>
+                    <th>Créé</th>
+                    <th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="stockTable">
+                  <tr><td colspan="5" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Réservations</div>
+                <div class="card-sub">Collection : reservations</div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Marque</th>
+                    <th>Modèle</th>
+                    <th>Client</th>
+                    <th>Qté</th>
+                    <th>Status</th>
+                    <th>Créé</th>
+                    <th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="resTable">
+                  <tr><td colspan="7" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- MODAL ADD/EDIT -->
-  <div id="editModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-box">
+  <!-- Modal -->
+  <div class="modal-backdrop" id="editModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
       <div class="modal-head">
         <div>
-          <div id="mTitle" class="modal-title">Ajouter</div>
-          <div id="mSub" class="modal-subtitle">—</div>
+          <div class="modal-title" id="mTitle">Ajouter</div>
+          <div class="modal-sub" id="mSub">—</div>
         </div>
-        <button id="closeModal" class="icon-btn" aria-label="Fermer">✕</button>
+        <button class="icon-btn" id="closeModal" type="button" aria-label="Fermer">✕</button>
       </div>
 
-      <div class="form-grid">
-        <div>
-          <label class="label">Marque</label>
-          <input id="mBrand" class="input" placeholder="Pfister" />
-        </div>
-        <div>
-          <label class="label">Modèle</label>
-          <input id="mModel" class="input" placeholder="Comet S2" />
-        </div>
-        <div>
-          <label class="label">Quantité</label>
-          <input id="mQty" class="input" type="number" min="0" step="1" value="1" />
-        </div>
-        <div>
-          <label class="label">Client (réservation)</label>
-          <input id="mClient" class="input" placeholder="Nom du client" />
+      <div class="modal-body">
+        <div class="form-grid">
+          <label class="field">
+            <span>Marque</span>
+            <input id="mBrand" class="input" type="text" placeholder="Pfister" />
+          </label>
+
+          <label class="field">
+            <span>Modèle</span>
+            <input id="mModel" class="input" type="text" placeholder="Comet S2" />
+          </label>
+
+          <label class="field">
+            <span>Quantité</span>
+            <input id="mQty" class="input" type="number" min="0" step="1" />
+          </label>
+
+          <label class="field">
+            <span>Client</span>
+            <input id="mClient" class="input" type="text" placeholder="Nom du client" />
+          </label>
         </div>
       </div>
 
-      <div style="margin-top:10px; color: var(--muted); font-size:12px;">
-        Si “Client” est rempli → Réservation, sinon → Stock
-      </div>
-
-      <div class="modal-actions">
-        <button id="cancelBtn" class="btn">Annuler</button>
-        <button id="saveBtn" class="btn btn-gold">Enregistrer</button>
+      <div class="modal-foot">
+        <button class="btn" id="cancelBtn" type="button">Annuler</button>
+        <button class="btn btn-gold" id="saveBtn" type="button">Enregistrer</button>
       </div>
     </div>
   </div>
