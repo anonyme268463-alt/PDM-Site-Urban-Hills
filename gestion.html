@@ -1,1 +1,64 @@
-<h1>gestion</h1>
+<!-- gestion.html (admin-only) -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin — Gestion</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+
+<body class="pdm">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-title">PDM ADMIN</div>
+        <div class="sb-sub">Urban Hills</div>
+      </div>
+
+      <nav class="sb-nav">
+        <a class="sb-link" href="dashboard.html">Dashboard</a>
+        <a class="sb-link" href="clients.html">Clients</a>
+        <a class="sb-link" href="stock.html">Stock</a>
+        <a class="sb-link" href="ventes.html">Ventes</a>
+        <a class="sb-link" href="vehicles.html">Véhicules</a>
+        <a class="sb-link" href="partenariats.html">Partenaires</a>
+        <a class="sb-link" href="compta.html">Comptabilité</a>
+        <a class="sb-link" href="catalogue.html">Catalogue</a>
+        <a class="sb-link active" href="gestion.html">Gestion</a>
+      </nav>
+
+      <button class="btn btn-gold sb-logout" id="logoutBtn" type="button">Déconnexion</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Gestion</div>
+          <div class="topbar-sub">Admin-only — paramètres & users (on branche après)</div>
+        </div>
+      </div>
+
+      <section class="page" id="pageRoot">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Espace Admin</div>
+              <div class="card-sub">Création/gestion d’utilisateurs + paramètres importants (plus tard).</div>
+            </div>
+          </div>
+          <div style="padding:18px" class="muted">
+            Page prête + protégée. Quand tu veux, on mettra :
+            <br>• formulaire création user
+            <br>• gestion rôles (admin/staff)
+            <br>• logs / paramètres
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="gestion.js"></script>
+</body>
+</html>
