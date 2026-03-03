@@ -4,169 +4,236 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDM Admin — Gestion</title>
+
   <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="app.css" />
+
   <style>
-    dialog.pdm-dialog{border:0;padding:0;border-radius:16px;max-width:min(900px,92vw);width:900px;background:#0b0d13;color:#e9eefc;box-shadow:0 30px 90px rgba(0,0,0,.55)}
-    dialog.pdm-dialog::backdrop{background:rgba(0,0,0,.55)}
-    .d-head{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
-    .d-title{font-size:18px;font-weight:900}
-    .d-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
-    .d-body{padding:14px 16px 16px}
-    .d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .d-grid .full{grid-column:1/-1}
-    .d-field span{display:block;font-size:12px;opacity:.85;margin:0 0 6px 2px}
-    .d-field input,.d-field select{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(18,24,38,.75);color:#fff;outline:none}
-    .d-field input::placeholder{color:rgba(255,255,255,.45)}
-    .d-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 16px 16px}
-    .d-btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
-    .d-btn.gold{border-color:rgba(224,183,77,.35);background:linear-gradient(180deg,#f2d37a,#d6a83a);color:#111;font-weight:900}
-
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-size:12px}
-    .pill.ok{border-color:rgba(66,200,120,.25);background:rgba(66,200,120,.12)}
-    .pill.bad{border-color:rgba(220,80,80,.25);background:rgba(220,80,80,.12)}
-
-    .mini-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-    .btn-sm{padding:8px 10px;border-radius:12px;font-size:12px}
-    .btn-danger{border-color:rgba(220,80,80,.35);background:rgba(220,80,80,.14)}
-    .btn-ghost{background:rgba(255,255,255,.06)}
+    /* Petits styles UI pour la modal (sans casser le CSS global) */
+    dialog.pdm-dialog{
+      width:min(720px, 92vw);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:0;
+      background: rgba(10,12,18,.92);
+      color:#fff;
+      box-shadow: 0 24px 80px rgba(0,0,0,.60);
+      backdrop-filter: blur(10px);
+    }
+    dialog.pdm-dialog::backdrop{
+      background: rgba(0,0,0,.60);
+      backdrop-filter: blur(6px);
+    }
+    .dlg-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 16px 10px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .dlg-title{ font-size:18px; font-weight:800; letter-spacing:.3px; }
+    .dlg-close{
+      width:34px; height:34px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#fff; cursor:pointer;
+    }
+    .dlg-body{ padding:14px 16px 16px 16px; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:700px){ .grid-2{ grid-template-columns:1fr; } }
+    .field label{ display:block; font-size:12px; opacity:.75; margin:0 0 6px; }
+    .field input, .field select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.55);
+      color:#fff;
+      outline:none;
+    }
+    .field input::placeholder{ color: rgba(255,255,255,.35); }
+    .dlg-actions{
+      display:flex; gap:10px; justify-content:flex-end;
+      padding:12px 16px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+    .btn{
+      padding:10px 14px; border-radius:12px; cursor:pointer;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:700;
+    }
+    .btn-primary{
+      background: linear-gradient(180deg, rgba(255,215,120,.95), rgba(225,175,70,.95));
+      border-color: rgba(255,215,120,.45);
+      color:#111;
+    }
+    .btn-danger{
+      background: rgba(170,40,55,.18);
+      border-color: rgba(170,40,55,.45);
+      color:#fff;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      font-size:12px;
+    }
+    .pill-ok{ border-color: rgba(35,180,120,.30); background: rgba(35,180,120,.12); }
+    .pill-off{ border-color: rgba(200,60,70,.30); background: rgba(200,60,70,.12); }
+    .hint{
+      font-size:12px; opacity:.75; margin-top:10px;
+    }
+    .hint code{
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      padding:2px 6px; border-radius:8px;
+    }
+    .table-actions{ display:flex; gap:8px; justify-content:flex-end; }
+    .btn-xs{ padding:8px 10px; border-radius:10px; font-size:12px; }
   </style>
 </head>
 
 <body class="pdm">
-  <div class="layout">
+  <div class="app">
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="sb-brand">
-        <div class="sb-title">PDM ADMIN</div>
-        <div class="sb-sub">Urban Hills</div>
+      <div class="brand">
+        <div class="brand-title">PDM ADMIN</div>
+        <div class="brand-sub">Urban Hills</div>
+        <div class="brand-divider"></div>
       </div>
 
-      <nav class="sb-nav">
-        <a class="sb-link" href="dashboard.html">Dashboard</a>
-        <a class="sb-link" href="clients.html">Clients</a>
-        <a class="sb-link" href="stock.html">Stock</a>
-        <a class="sb-link" href="ventes.html">Ventes</a>
-        <a class="sb-link" href="vehicles.html">Véhicules</a>
-        <a class="sb-link" href="partenariats.html">Partenaires</a>
-        <a class="sb-link" href="compta.html">Comptabilité</a>
-        <a class="sb-link" href="catalogue.html">Catalogue</a>
-        <a class="sb-link active" href="gestion.html">Gestion</a>
+      <nav class="nav">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="clients.html">Clients</a>
+        <a class="nav-link" href="stock.html">Stock</a>
+        <a class="nav-link" href="ventes.html">Ventes</a>
+        <a class="nav-link" href="vehicles.html">Véhicules</a>
+        <a class="nav-link" href="partenariats.html">Partenaires</a>
+        <a class="nav-link" href="compta.html">Comptabilité</a>
+        <a class="nav-link" href="catalogue.html">Catalogue</a>
+        <a class="nav-link active" href="gestion.html">Gestion</a>
       </nav>
 
-      <button class="btn btn-gold sb-logout" id="logoutBtn" type="button">Déconnexion</button>
+      <div class="sidebar-bottom">
+        <button id="btnLogout" class="sb-btn sb-btn-primary">Déconnexion</button>
+      </div>
     </aside>
 
+    <!-- MAIN -->
     <main class="main">
-      <div class="topbar">
+      <header class="page-head">
         <div>
-          <div class="topbar-title">Gestion</div>
-          <div class="topbar-sub">Admin-only — utilisateurs & paramètres</div>
+          <div class="page-title">Gestion</div>
+          <div class="page-sub">Admin-only — utilisateurs & paramètres</div>
         </div>
-      </div>
+      </header>
 
-      <section class="page" id="pageRoot">
-        <div class="panel">
-          <div class="toolbar">
-            <div class="search">
-              <input id="searchInput" class="input" type="search" placeholder="Rechercher (email, nom, uid)..." autocomplete="off" />
-            </div>
-            <div class="toolbar-actions">
-              <span class="pill" id="statusPill">Chargement…</span>
-              <button id="refreshBtn" class="btn" type="button">Rafraîchir</button>
-              <button id="createBtn" class="btn btn-gold" type="button">+ Créer un utilisateur</button>
-            </div>
+      <section class="panel">
+        <div class="panel-row">
+          <input id="searchInput" class="input" placeholder="Rechercher (email, nom, uid)..." />
+          <button id="btnRefresh" class="btn">Rafraîchir</button>
+          <button id="btnNew" class="btn btn-primary">+ Créer une fiche utilisateur</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Total users</div>
+            <div id="statTotal" class="stat-value">—</div>
           </div>
-
-          <div class="stats">
-            <div class="stat">
-              <div class="stat-label">Total users</div>
-              <div class="stat-value" id="statTotal">—</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Admins</div>
-              <div class="stat-value" id="statAdmins">—</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Staff</div>
-              <div class="stat-value" id="statStaff">—</div>
-            </div>
+          <div class="stat">
+            <div class="stat-label">Admins</div>
+            <div id="statAdmins" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Staff</div>
+            <div id="statStaff" class="stat-value">—</div>
           </div>
         </div>
 
-        <div class="grid-1">
-          <div class="card">
-            <div class="card-head">
-              <div>
-                <div class="card-title">Utilisateurs</div>
-                <div class="card-sub">Collection Firestore : <b>users</b></div>
-              </div>
-            </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Utilisateurs</div>
+            <div class="card-sub">Collection Firestore : <b>users</b></div>
+          </div>
 
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Nom</th>
-                    <th>Rôle</th>
-                    <th>Statut</th>
-                    <th>UID</th>
-                    <th class="th-actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="usersTbody">
-                  <tr><td colspan="6" class="muted">Chargement…</td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Nom</th>
+                  <th>Rôle</th>
+                  <th>Statut</th>
+                  <th>UID</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyUsers">
+                <tr><td colspan="6" style="opacity:.7;">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
 
+          <div class="hint">
+            ⚠️ Cette page ne crée pas les comptes Auth (Firebase ne permet pas “lister/créer” des users Auth côté client).
+            Tu crées le compte dans <b>Firebase Console → Auth</b>, puis tu mets/édites sa fiche dans <code>users/{uid}</code>.
           </div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Dialog création -->
-  <dialog id="createDialog" class="pdm-dialog">
-    <div class="d-head">
-      <div class="d-title">Créer un utilisateur</div>
-      <button class="d-close" id="dClose" type="button">✕</button>
+  <!-- MODAL -->
+  <dialog id="dlgUser" class="pdm-dialog">
+    <div class="dlg-head">
+      <div class="dlg-title" id="dlgTitle">Utilisateur</div>
+      <button class="dlg-close" id="dlgClose" aria-label="Fermer">✕</button>
     </div>
 
-    <div class="d-body">
-      <div class="d-grid">
-        <label class="d-field">
-          <span>Email</span>
-          <input id="dEmail" type="email" placeholder="ex: staff@pdm.local" />
-        </label>
+    <form id="userForm" class="dlg-body" method="dialog">
+      <div class="grid-2">
+        <div class="field">
+          <label>UID (ID utilisateur Firebase Auth) *</label>
+          <input id="fUid" placeholder="ex: 48IAqVDRdVV7jz3d9PS0kZm543n2" required />
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input id="fEmail" type="email" placeholder="pdm-staff@pdm.local" />
+        </div>
 
-        <label class="d-field">
-          <span>Mot de passe</span>
-          <input id="dPassword" type="password" placeholder="Min 6 caractères" />
-        </label>
-
-        <label class="d-field">
-          <span>Nom / Label (optionnel)</span>
-          <input id="dName" type="text" placeholder="Ex: Vendeur #1" />
-        </label>
-
-        <label class="d-field">
-          <span>Rôle</span>
-          <select id="dRole">
+        <div class="field">
+          <label>Nom affiché</label>
+          <input id="fName" placeholder="PDG - Hundo" />
+        </div>
+        <div class="field">
+          <label>Rôle *</label>
+          <select id="fRole" required>
             <option value="staff">staff</option>
             <option value="admin">admin</option>
           </select>
-        </label>
+        </div>
 
-        <div class="full muted" style="padding:2px 2px 0">
-          ⚠️ La création (email+mdp) passe par une Cloud Function (sinon impossible depuis GitHub Pages).
+        <div class="field">
+          <label>Actif</label>
+          <select id="fActive">
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Info</label>
+          <input id="fNote" placeholder="Optionnel (ex: responsable showroom)" />
         </div>
       </div>
-    </div>
+    </form>
 
-    <div class="d-foot">
-      <button class="d-btn" id="dCancel" type="button">Annuler</button>
-      <button class="d-btn gold" id="dCreate" type="button">Créer</button>
+    <div class="dlg-actions">
+      <button id="btnDelete" class="btn btn-danger btn-xs" type="button">Supprimer fiche</button>
+      <button id="btnCancel" class="btn btn-xs" type="button">Annuler</button>
+      <button id="btnSave" class="btn btn-primary btn-xs" type="button">Enregistrer</button>
     </div>
   </dialog>
 
