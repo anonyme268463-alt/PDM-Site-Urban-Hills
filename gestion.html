@@ -1,4 +1,3 @@
-<!-- gestion.html (admin-only) -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -7,6 +6,31 @@
   <title>PDM Admin — Gestion</title>
   <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="app.css" />
+  <style>
+    dialog.pdm-dialog{border:0;padding:0;border-radius:16px;max-width:min(900px,92vw);width:900px;background:#0b0d13;color:#e9eefc;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+    dialog.pdm-dialog::backdrop{background:rgba(0,0,0,.55)}
+    .d-head{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .d-title{font-size:18px;font-weight:900}
+    .d-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .d-body{padding:14px 16px 16px}
+    .d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .d-grid .full{grid-column:1/-1}
+    .d-field span{display:block;font-size:12px;opacity:.85;margin:0 0 6px 2px}
+    .d-field input,.d-field select{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(18,24,38,.75);color:#fff;outline:none}
+    .d-field input::placeholder{color:rgba(255,255,255,.45)}
+    .d-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 16px 16px}
+    .d-btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .d-btn.gold{border-color:rgba(224,183,77,.35);background:linear-gradient(180deg,#f2d37a,#d6a83a);color:#111;font-weight:900}
+
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-size:12px}
+    .pill.ok{border-color:rgba(66,200,120,.25);background:rgba(66,200,120,.12)}
+    .pill.bad{border-color:rgba(220,80,80,.25);background:rgba(220,80,80,.12)}
+
+    .mini-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+    .btn-sm{padding:8px 10px;border-radius:12px;font-size:12px}
+    .btn-danger{border-color:rgba(220,80,80,.35);background:rgba(220,80,80,.14)}
+    .btn-ghost{background:rgba(255,255,255,.06)}
+  </style>
 </head>
 
 <body class="pdm">
@@ -36,28 +60,115 @@
       <div class="topbar">
         <div>
           <div class="topbar-title">Gestion</div>
-          <div class="topbar-sub">Admin-only — paramètres & users (on branche après)</div>
+          <div class="topbar-sub">Admin-only — utilisateurs & paramètres</div>
         </div>
       </div>
 
       <section class="page" id="pageRoot">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Espace Admin</div>
-              <div class="card-sub">Création/gestion d’utilisateurs + paramètres importants (plus tard).</div>
+        <div class="panel">
+          <div class="toolbar">
+            <div class="search">
+              <input id="searchInput" class="input" type="search" placeholder="Rechercher (email, nom, uid)..." autocomplete="off" />
+            </div>
+            <div class="toolbar-actions">
+              <span class="pill" id="statusPill">Chargement…</span>
+              <button id="refreshBtn" class="btn" type="button">Rafraîchir</button>
+              <button id="createBtn" class="btn btn-gold" type="button">+ Créer un utilisateur</button>
             </div>
           </div>
-          <div style="padding:18px" class="muted">
-            Page prête + protégée. Quand tu veux, on mettra :
-            <br>• formulaire création user
-            <br>• gestion rôles (admin/staff)
-            <br>• logs / paramètres
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">Total users</div>
+              <div class="stat-value" id="statTotal">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Admins</div>
+              <div class="stat-value" id="statAdmins">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Staff</div>
+              <div class="stat-value" id="statStaff">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-1">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Utilisateurs</div>
+                <div class="card-sub">Collection Firestore : <b>users</b></div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Nom</th>
+                    <th>Rôle</th>
+                    <th>Statut</th>
+                    <th>UID</th>
+                    <th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTbody">
+                  <tr><td colspan="6" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
           </div>
         </div>
       </section>
     </main>
   </div>
+
+  <!-- Dialog création -->
+  <dialog id="createDialog" class="pdm-dialog">
+    <div class="d-head">
+      <div class="d-title">Créer un utilisateur</div>
+      <button class="d-close" id="dClose" type="button">✕</button>
+    </div>
+
+    <div class="d-body">
+      <div class="d-grid">
+        <label class="d-field">
+          <span>Email</span>
+          <input id="dEmail" type="email" placeholder="ex: staff@pdm.local" />
+        </label>
+
+        <label class="d-field">
+          <span>Mot de passe</span>
+          <input id="dPassword" type="password" placeholder="Min 6 caractères" />
+        </label>
+
+        <label class="d-field">
+          <span>Nom / Label (optionnel)</span>
+          <input id="dName" type="text" placeholder="Ex: Vendeur #1" />
+        </label>
+
+        <label class="d-field">
+          <span>Rôle</span>
+          <select id="dRole">
+            <option value="staff">staff</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+
+        <div class="full muted" style="padding:2px 2px 0">
+          ⚠️ La création (email+mdp) passe par une Cloud Function (sinon impossible depuis GitHub Pages).
+        </div>
+      </div>
+    </div>
+
+    <div class="d-foot">
+      <button class="d-btn" id="dCancel" type="button">Annuler</button>
+      <button class="d-btn gold" id="dCreate" type="button">Créer</button>
+    </div>
+  </dialog>
 
   <script type="module" src="gestion.js"></script>
 </body>
