@@ -1,11 +1,11 @@
-// gestion.js (module)
 import { auth, db } from "./config.js";
-import { $, escapeHtml, badge } from "./common.js";
+import { requireRole } from "./guard.js";
+import { $, escapeHtml, normRole, toBool } from "./common.js";
 
 import {
   onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
   collection,
@@ -14,270 +14,278 @@ import {
   getDocs,
   query,
   orderBy,
-  serverTimestamp,
+  limit,
   setDoc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+  updateDoc,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const els = {
-  currentUserEmail: $("#currentUserEmail"),
-  btnLogout: $("#btnLogout"),
-  btnRefresh: $("#btnRefresh"),
-  btnOpenCreate: $("#btnOpenCreate"),
-  statTotal: $("#statTotal"),
-  statAdmins: $("#statAdmins"),
-  statStaff: $("#statStaff"),
-  tbodyUsers: $("#tbodyUsers"),
-  search: $("#search"),
+/* ---------------------------
+   DOM
+--------------------------- */
+const searchInput = $("#searchInput");
+const refreshBtn = $("#refreshBtn");
+const openCreateBtn = $("#openCreateBtn");
+const logoutBtn = $("#logoutBtn");
 
-  // modal
-  modalBackdrop: $("#modalBackdrop"),
-  modalTitle: $("#modalTitle"),
-  modalClose: $("#modalClose"),
-  modalCancel: $("#modalCancel"),
-  modalSave: $("#modalSave"),
-  mUid: $("#mUid"),
-  mEmail: $("#mEmail"),
-  mName: $("#mName"),
-  mRole: $("#mRole"),
-  mActive: $("#mActive"),
-};
+const statTotal = $("#statTotal");
+const statAdmins = $("#statAdmins");
+const statStaff = $("#statStaff");
 
-let me = null;
-let allUsers = [];
-let modalMode = "create"; // "create" | "edit"
-let modalEditingUid = null;
+const usersTbody = $("#usersTbody");
 
-function openModal(mode, user = null) {
-  modalMode = mode;
-  modalEditingUid = user?.uid || null;
+// modal
+const backdrop = $("#userModalBackdrop");
+const modalTitle = $("#modalTitle");
+const closeModalBtn = $("#closeModalBtn");
+const cancelBtn = $("#cancelBtn");
+const saveBtn = $("#saveBtn");
 
-  els.modalTitle.textContent = mode === "create" ? "Créer / lier un utilisateur" : "Modifier l’utilisateur";
-  els.modalBackdrop.classList.add("open");
-  els.modalBackdrop.setAttribute("aria-hidden", "false");
+const f_uid = $("#f_uid");
+const f_email = $("#f_email");
+const f_name = $("#f_name");
+const f_role = $("#f_role");
+const f_active = $("#f_active");
 
-  els.mUid.value = user?.uid || "";
-  els.mEmail.value = user?.email || "";
-  els.mName.value = user?.name || "";
-  els.mRole.value = (user?.role || "staff").toLowerCase() === "admin" ? "admin" : "staff";
-  els.mActive.checked = user?.active !== false; // default true
+/* ---------------------------
+   State
+--------------------------- */
+let allUsers = []; // cached list
+let editingUid = null;
 
-  // uid readonly en edit (pour éviter de casser la clé doc)
-  els.mUid.readOnly = mode === "edit";
+/* ---------------------------
+   Helpers
+--------------------------- */
+function showModal() {
+  backdrop.classList.add("show");
+}
+function hideModal() {
+  backdrop.classList.remove("show");
+}
+function setLoadingRow(msg = "CHARGEMENT...") {
+  usersTbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">${escapeHtml(msg)}</td></tr>`;
 }
 
-function closeModal() {
-  els.modalBackdrop.classList.remove("open");
-  els.modalBackdrop.setAttribute("aria-hidden", "true");
-  els.mUid.readOnly = false;
-  modalEditingUid = null;
-}
-
-function normalizeRole(role) {
-  const r = String(role || "").toLowerCase().trim();
-  return r === "admin" ? "admin" : "staff";
-}
-
-async function requireAdmin(uid) {
-  const snap = await getDoc(doc(db, "users", uid));
-  const role = snap.exists() ? normalizeRole(snap.data()?.role) : "staff";
-  return role === "admin";
-}
-
-function renderStats(list) {
+function computeStats(list) {
   const total = list.length;
-  const admins = list.filter(u => normalizeRole(u.role) === "admin").length;
+  const admins = list.filter(u => normRole(u.role) === "admin").length;
   const staff = total - admins;
 
-  els.statTotal.textContent = String(total);
-  els.statAdmins.textContent = String(admins);
-  els.statStaff.textContent = String(staff);
+  statTotal.textContent = String(total);
+  statAdmins.textContent = String(admins);
+  statStaff.textContent = String(staff);
 }
 
-function rowHtml(u) {
-  const role = normalizeRole(u.role);
-  const isActive = u.active !== false;
+function render(list) {
+  computeStats(list);
 
-  const roleBadge = badge(role.toUpperCase(), role === "admin" ? "ok" : "neutral");
-  const statusBadge = badge(isActive ? "• ACTIF" : "• INACTIF", isActive ? "ok" : "danger");
-
-  return `
-    <tr>
-      <td>${escapeHtml(u.email || "—")}</td>
-      <td>${escapeHtml(u.name || "—")}</td>
-      <td>${roleBadge}</td>
-      <td>${statusBadge}</td>
-      <td class="mono">${escapeHtml(u.uid || "—")}</td>
-      <td class="right">
-        <button class="btn btn-sm" data-action="toggle" data-uid="${escapeHtml(u.uid)}">
-          ${isActive ? "Désactiver" : "Activer"}
-        </button>
-        <button class="btn btn-sm" data-action="edit" data-uid="${escapeHtml(u.uid)}">Modifier</button>
-      </td>
-    </tr>
-  `;
-}
-
-function renderTable(list) {
   if (!list.length) {
-    els.tbodyUsers.innerHTML = `<tr><td colspan="6" class="muted">AUCUN UTILISATEUR.</td></tr>`;
-    renderStats(list);
+    usersTbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">AUCUN UTILISATEUR.</td></tr>`;
     return;
   }
-  els.tbodyUsers.innerHTML = list.map(rowHtml).join("");
-  renderStats(list);
+
+  usersTbody.innerHTML = list.map(u => {
+    const active = toBool(u.active, true);
+    const badge = active
+      ? `<span class="badge green">● ACTIF</span>`
+      : `<span class="badge red">● INACTIF</span>`;
+
+    const role = normRole(u.role).toUpperCase();
+    return `
+      <tr data-uid="${escapeHtml(u.uid)}">
+        <td>${escapeHtml(u.email || "—")}</td>
+        <td>${escapeHtml(u.name || "—")}</td>
+        <td>${escapeHtml(role)}</td>
+        <td>${badge}</td>
+        <td style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; opacity:.9;">
+          ${escapeHtml(u.uid)}
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-muted js-toggle">${active ? "Désactiver" : "Activer"}</button>
+            <button class="btn btn-gold js-edit">Modifier</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  // bind buttons
+  usersTbody.querySelectorAll("tr").forEach(tr => {
+    const uid = tr.getAttribute("data-uid");
+    tr.querySelector(".js-edit")?.addEventListener("click", () => openEdit(uid));
+    tr.querySelector(".js-toggle")?.addEventListener("click", () => toggleActive(uid));
+  });
 }
 
-function applySearch() {
-  const q = String(els.search.value || "").toLowerCase().trim();
-  if (!q) return renderTable(allUsers);
+function applyFilter() {
+  const q = (searchInput.value || "").trim().toLowerCase();
+  if (!q) return render(allUsers);
 
   const filtered = allUsers.filter(u => {
-    const email = String(u.email || "").toLowerCase();
-    const name = String(u.name || "").toLowerCase();
-    const uid = String(u.uid || "").toLowerCase();
-    return email.includes(q) || name.includes(q) || uid.includes(q);
+    return (
+      String(u.uid || "").toLowerCase().includes(q) ||
+      String(u.email || "").toLowerCase().includes(q) ||
+      String(u.name || "").toLowerCase().includes(q) ||
+      String(u.role || "").toLowerCase().includes(q)
+    );
   });
-
-  renderTable(filtered);
+  render(filtered);
 }
 
-async function loadUsers() {
-  els.tbodyUsers.innerHTML = `<tr><td colspan="6" class="muted">CHARGEMENT...</td></tr>`;
+/* ---------------------------
+   Firestore
+--------------------------- */
+async function fetchUsers() {
+  setLoadingRow("CHARGEMENT...");
+  try {
+    // (Optionnel) garde si tu utilises guard.js
+    await requireRole("admin");
 
-  const qy = query(collection(db, "users"), orderBy("updatedAt", "desc"));
-  const snap = await getDocs(qy);
+    const q = query(collection(db, "users"), orderBy("updatedAt", "desc"), limit(500));
+    const snap = await getDocs(q);
 
-  allUsers = snap.docs.map(d => {
-    const data = d.data() || {};
-    return {
-      uid: d.id,
-      email: data.email || "",
-      name: data.name || "",
-      role: data.role || "staff",
-      active: data.active !== false,
-      updatedAt: data.updatedAt || null,
-      createdAt: data.createdAt || null,
-    };
-  });
+    allUsers = snap.docs.map(d => {
+      const data = d.data() || {};
+      return {
+        uid: d.id,
+        email: data.email || "",
+        name: data.name || "",
+        role: data.role || "staff",
+        active: toBool(data.active, true),
+        updatedAt: data.updatedAt || null,
+      };
+    });
 
-  renderTable(allUsers);
+    applyFilter();
+  } catch (e) {
+    console.error(e);
+    setLoadingRow("Erreur de chargement (vérifie tes règles Firestore).");
+    // on garde l'UI stable
+    statTotal.textContent = "0";
+    statAdmins.textContent = "0";
+    statStaff.textContent = "0";
+  }
+}
+
+async function openEdit(uid) {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u) return;
+
+  editingUid = uid;
+  modalTitle.textContent = "Modifier un utilisateur";
+
+  f_uid.value = u.uid;
+  f_uid.disabled = true;
+
+  f_email.value = u.email || "";
+  f_name.value = u.name || "";
+  f_role.value = normRole(u.role);
+  f_active.checked = toBool(u.active, true);
+
+  showModal();
+}
+
+function openCreate() {
+  editingUid = null;
+  modalTitle.textContent = "Créer / Ajouter un utilisateur (Firestore)";
+
+  f_uid.value = "";
+  f_uid.disabled = false;
+
+  f_email.value = "";
+  f_name.value = "";
+  f_role.value = "staff";
+  f_active.checked = true;
+
+  showModal();
+}
+
+async function saveUser() {
+  const uid = (f_uid.value || "").trim();
+  if (!uid) {
+    alert("UID requis.");
+    return;
+  }
+
+  const payload = {
+    email: (f_email.value || "").trim() || "",
+    name: (f_name.value || "").trim() || "",
+    role: normRole(f_role.value),
+    active: !!f_active.checked,
+    updatedAt: serverTimestamp(),
+  };
+
+  try {
+    await requireRole("admin");
+    await setDoc(doc(db, "users", uid), payload, { merge: true });
+    hideModal();
+    await fetchUsers();
+  } catch (e) {
+    console.error(e);
+    alert("Erreur enregistrement (vérifie règles Firestore).");
+  }
 }
 
 async function toggleActive(uid) {
   const u = allUsers.find(x => x.uid === uid);
   if (!u) return;
 
-  await updateDoc(doc(db, "users", uid), {
-    active: !(u.active !== false),
-    updatedAt: serverTimestamp(),
-  });
-
-  await loadUsers();
+  try {
+    await requireRole("admin");
+    await updateDoc(doc(db, "users", uid), {
+      active: !toBool(u.active, true),
+      updatedAt: serverTimestamp(),
+    });
+    await fetchUsers();
+  } catch (e) {
+    console.error(e);
+    alert("Impossible de modifier (vérifie règles Firestore).");
+  }
 }
 
-async function saveModal() {
-  const uid = String(els.mUid.value || "").trim();
-  const email = String(els.mEmail.value || "").trim();
-  const name = String(els.mName.value || "").trim();
-  const role = normalizeRole(els.mRole.value);
-  const active = !!els.mActive.checked;
+/* ---------------------------
+   Auth + boot
+--------------------------- */
+logoutBtn?.addEventListener("click", async () => {
+  try { await signOut(auth); } catch {}
+  window.location.href = "index.html";
+});
 
-  if (!uid) {
-    alert("UID requis.");
+refreshBtn?.addEventListener("click", fetchUsers);
+openCreateBtn?.addEventListener("click", openCreate);
+
+searchInput?.addEventListener("input", applyFilter);
+
+closeModalBtn?.addEventListener("click", hideModal);
+cancelBtn?.addEventListener("click", hideModal);
+backdrop?.addEventListener("click", (e) => {
+  if (e.target === backdrop) hideModal();
+});
+saveBtn?.addEventListener("click", saveUser);
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "index.html";
     return;
   }
 
-  const ref = doc(db, "users", uid);
-
-  if (modalMode === "create") {
-    await setDoc(ref, {
-      email: email || "",
-      name: name || "",
-      role,
-      active,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-  } else {
-    await updateDoc(ref, {
-      email: email || "",
-      name: name || "",
-      role,
-      active,
-      updatedAt: serverTimestamp(),
-    });
+  // Vérif admin via Firestore (simple & fiable)
+  try {
+    const me = await getDoc(doc(db, "users", user.uid));
+    const role = normRole(me.exists() ? me.data()?.role : "staff");
+    if (role !== "admin") {
+      alert("Accès refusé (admin requis).");
+      window.location.href = "dashboard.html";
+      return;
+    }
+  } catch (e) {
+    console.error(e);
+    // Si la règle Firestore bloque, tu verras ici
+    alert("Impossible de vérifier le rôle (règles Firestore ?).");
+    window.location.href = "dashboard.html";
+    return;
   }
 
-  closeModal();
-  await loadUsers();
-}
-
-function bindEvents() {
-  els.btnLogout?.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "./index.html";
-  });
-
-  els.btnRefresh?.addEventListener("click", loadUsers);
-  els.btnOpenCreate?.addEventListener("click", () => openModal("create"));
-
-  els.search?.addEventListener("input", applySearch);
-
-  els.modalClose?.addEventListener("click", closeModal);
-  els.modalCancel?.addEventListener("click", closeModal);
-  els.modalBackdrop?.addEventListener("click", (e) => {
-    if (e.target === els.modalBackdrop) closeModal();
-  });
-
-  els.modalSave?.addEventListener("click", saveModal);
-
-  els.tbodyUsers?.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
-
-    const action = btn.getAttribute("data-action");
-    const uid = btn.getAttribute("data-uid");
-    if (!uid) return;
-
-    if (action === "toggle") {
-      await toggleActive(uid);
-      return;
-    }
-
-    if (action === "edit") {
-      const u = allUsers.find(x => x.uid === uid);
-      if (!u) return;
-      openModal("edit", u);
-      return;
-    }
-  });
-}
-
-async function init() {
-  bindEvents();
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = "./index.html";
-      return;
-    }
-
-    me = user;
-    els.currentUserEmail.value = user.email || "—";
-
-    const ok = await requireAdmin(user.uid);
-    if (!ok) {
-      alert("Accès refusé (admin requis).");
-      window.location.href = "./dashboard.html";
-      return;
-    }
-
-    await loadUsers();
-  });
-}
-
-init().catch((err) => {
-  console.error(err);
-  alert("Erreur gestion: " + (err?.message || err));
+  await fetchUsers();
 });
