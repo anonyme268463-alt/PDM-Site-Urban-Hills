@@ -1,4 +1,4 @@
-<!-- stock.html -->
+<!-- stock.html (remplace ton stock.html par celui-ci) -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -7,6 +7,25 @@
   <title>PDM Admin — Stock</title>
   <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="app.css" />
+
+  <!-- Mini patch modal (pour éviter que le body/CSS casse tout) -->
+  <style>
+    dialog.pdm-dialog{border:0;padding:0;border-radius:16px;max-width:min(720px,92vw);width:720px;background:#0b0d13;color:#e9eefc;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+    dialog.pdm-dialog::backdrop{background:rgba(0,0,0,.55)}
+    .d-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .d-title{font-size:18px;font-weight:800;letter-spacing:.2px}
+    .d-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .d-body{padding:14px 18px 18px}
+    .d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .d-grid .full{grid-column:1/-1}
+    .d-field span{display:block;font-size:12px;opacity:.8;margin:0 0 6px 2px}
+    .d-field input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(18,24,38,.75);color:#fff;outline:none}
+    .d-field input::placeholder{color:rgba(255,255,255,.45)}
+    .d-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+    .d-btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .d-btn.gold{border-color:rgba(224,183,77,.35);background:linear-gradient(180deg,#f2d37a,#d6a83a);color:#111;font-weight:800}
+    @media (max-width:700px){ .d-grid{grid-template-columns:1fr} }
+  </style>
 </head>
 
 <body class="pdm">
@@ -129,47 +148,42 @@
     </main>
   </div>
 
-  <!-- Modal -->
-  <div class="modal-backdrop" id="editModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
-      <div class="modal-head">
-        <div>
-          <div class="modal-title" id="mTitle">Ajouter</div>
-          <div class="modal-sub" id="mSub">—</div>
-        </div>
-        <button class="icon-btn" id="closeModal" type="button" aria-label="Fermer">✕</button>
-      </div>
+  <!-- Modal SIMPLE (comme vehicles: centré, propre, sans casser le body) -->
+  <dialog id="stockDialog" class="pdm-dialog">
+    <div class="d-head">
+      <div class="d-title" id="dTitle">Ajouter</div>
+      <button class="d-close" id="dClose" type="button">✕</button>
+    </div>
 
-      <div class="modal-body">
-        <div class="form-grid">
-          <label class="field">
-            <span>Marque</span>
-            <input id="mBrand" class="input" type="text" placeholder="Pfister" />
-          </label>
+    <div class="d-body">
+      <div class="d-grid">
+        <label class="d-field">
+          <span>Marque</span>
+          <input id="dBrand" type="text" placeholder="Pfister" />
+        </label>
 
-          <label class="field">
-            <span>Modèle</span>
-            <input id="mModel" class="input" type="text" placeholder="Comet S2" />
-          </label>
+        <label class="d-field">
+          <span>Modèle</span>
+          <input id="dModel" type="text" placeholder="Comet S2" />
+        </label>
 
-          <label class="field">
-            <span>Quantité</span>
-            <input id="mQty" class="input" type="number" min="0" step="1" />
-          </label>
+        <label class="d-field">
+          <span>Quantité</span>
+          <input id="dQty" type="number" min="0" step="1" value="1" />
+        </label>
 
-          <label class="field">
-            <span>Client</span>
-            <input id="mClient" class="input" type="text" placeholder="Nom du client" />
-          </label>
-        </div>
-      </div>
-
-      <div class="modal-foot">
-        <button class="btn" id="cancelBtn" type="button">Annuler</button>
-        <button class="btn btn-gold" id="saveBtn" type="button">Enregistrer</button>
+        <label class="d-field full" id="dClientWrap">
+          <span>Client (réservation)</span>
+          <input id="dClient" type="text" placeholder="Nom du client" />
+        </label>
       </div>
     </div>
-  </div>
+
+    <div class="d-foot">
+      <button class="d-btn" id="dCancel" type="button">Annuler</button>
+      <button class="d-btn gold" id="dSave" type="button">Enregistrer</button>
+    </div>
+  </dialog>
 
   <script type="module" src="stock.js"></script>
 </body>
