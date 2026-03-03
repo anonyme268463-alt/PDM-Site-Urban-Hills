@@ -3,240 +3,462 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDM Admin — Gestion</title>
-
+  <title>PDM Admin - Gestion</title>
   <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="app.css" />
 
+  <!-- Style “stable” proche de tes pages (Clients/Ventes) -->
   <style>
-    /* Petits styles UI pour la modal (sans casser le CSS global) */
-    dialog.pdm-dialog{
-      width:min(720px, 92vw);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:18px;
-      padding:0;
-      background: rgba(10,12,18,.92);
-      color:#fff;
-      box-shadow: 0 24px 80px rgba(0,0,0,.60);
+    :root{
+      --bg:#07080c;
+      --card:rgba(12,14,22,.64);
+      --card2:rgba(10,12,18,.55);
+      --stroke:rgba(255,255,255,.08);
+      --stroke2:rgba(255,255,255,.12);
+      --text:rgba(255,255,255,.90);
+      --muted:rgba(255,255,255,.58);
+      --gold:#f6d26b;
+      --gold2:#e2b84a;
+      --danger:#ff6b6b;
+      --ok:#47e6a6;
+      --shadow: 0 24px 60px rgba(0,0,0,.45);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 65% 12%, rgba(246,210,107,.14), transparent 55%),
+        radial-gradient(900px 500px at 22% 70%, rgba(70,120,255,.10), transparent 60%),
+        linear-gradient(180deg, #06070b 0%, #05060a 100%);
+      overflow-x:hidden;
+    }
+
+    /* Layout */
+    .app{
+      display:flex;
+      gap:20px;
+      padding:20px;
+      min-height:100vh;
+      align-items:flex-start;
+    }
+    .sidebar{
+      width:260px;
+      position:sticky;
+      top:20px;
+      height:calc(100vh - 40px);
+      overflow:auto;
+      padding:18px;
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--stroke);
+      box-shadow:var(--shadow);
       backdrop-filter: blur(10px);
     }
-    dialog.pdm-dialog::backdrop{
-      background: rgba(0,0,0,.60);
+    .brand{
+      font-weight:900;
+      letter-spacing:.5px;
+      font-size:18px;
+      margin-bottom:14px;
+      line-height:1.1;
+    }
+    .brand small{
+      display:block;
+      color:var(--muted);
+      font-weight:600;
+      font-size:13px;
+      margin-top:4px;
+    }
+    .nav a{
+      display:block;
+      padding:12px 12px;
+      margin:8px 0;
+      border-radius:14px;
+      text-decoration:none;
+      color:var(--text);
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+      transition:.15s ease;
+    }
+    .nav a:hover{ transform: translateY(-1px); border-color: var(--stroke2); background:rgba(255,255,255,.06); }
+    .nav a.active{
+      border-color: rgba(246,210,107,.35);
+      background: linear-gradient(180deg, rgba(246,210,107,.20), rgba(246,210,107,.08));
+      box-shadow: 0 12px 30px rgba(246,210,107,.10);
+    }
+
+    .logout{
+      margin-top:14px;
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:0;
+      cursor:pointer;
+      font-weight:800;
+      background: linear-gradient(180deg, var(--gold), var(--gold2));
+      color:#0b0c10;
+    }
+
+    .main{
+      flex:1;
+      min-width:0;
+      padding-right:6px;
+    }
+
+    .page-head{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom:14px;
+    }
+    h1{ margin:0; font-size:44px; letter-spacing:.2px; }
+    .sub{ margin:6px 0 0; color:var(--muted); font-size:14px; }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--stroke);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    .input{
+      flex: 1;
+      min-width: 260px;
+      height:44px;
+      padding:0 14px;
+      border-radius:14px;
+      border:1px solid rgba(246,210,107,.30);
+      background:rgba(10,12,18,.55);
+      color:var(--text);
+      outline:none;
+    }
+    .input::placeholder{ color: rgba(255,255,255,.35); }
+
+    .btn{
+      height:40px;
+      padding:0 14px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:800;
+    }
+    .btn:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.07); }
+    .btn-gold{
+      border:0;
+      background: linear-gradient(180deg, var(--gold), var(--gold2));
+      color:#0b0c10;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: rgba(255,255,255,.35);
+    }
+    .pill.ok{ color: rgba(71,230,166,.95); border-color: rgba(71,230,166,.25); }
+    .pill.ok .dot{ background: rgba(71,230,166,.9); }
+    .pill.bad{ color: rgba(255,107,107,.95); border-color: rgba(255,107,107,.25); }
+    .pill.bad .dot{ background: rgba(255,107,107,.9); }
+
+    .kpis{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .kpi{
+      min-width: 220px;
+      flex: 1;
+      padding:14px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+    }
+    .kpi .label{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.12em; }
+    .kpi .value{ font-size:28px; font-weight:900; margin-top:6px; color: var(--gold); }
+
+    .table-card{ margin-top:14px; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:18px;
+    }
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color:rgba(255,255,255,.55);
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      padding:12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding:14px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:middle;
+      color:rgba(255,255,255,.86);
+    }
+    tbody tr:hover td{ background: rgba(255,255,255,.03); }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+    }
+    .btn-sm{
+      height:34px;
+      padding:0 12px;
+      border-radius:12px;
+      font-weight:900;
+    }
+    .btn-danger{
+      border:1px solid rgba(255,107,107,.22);
+      background: rgba(255,107,107,.10);
+      color: rgba(255,107,107,.95);
+    }
+
+    .note{
+      margin-top:10px;
+      color: rgba(255,255,255,.48);
+      font-size:12px;
+      letter-spacing:.02em;
+      border-top: 1px dashed rgba(255,255,255,.08);
+      padding-top:10px;
+    }
+
+    /* Dialog */
+    dialog#createDialog{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:22px;
+      padding:0;
+      background: rgba(12,14,22,.90);
+      color: var(--text);
+      box-shadow: 0 30px 90px rgba(0,0,0,.6);
+      width:min(720px, calc(100vw - 30px));
+    }
+    dialog::backdrop{
+      background: rgba(0,0,0,.55);
       backdrop-filter: blur(6px);
     }
     .dlg-head{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:16px 16px 10px 16px;
-      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:16px 16px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
     }
-    .dlg-title{ font-size:18px; font-weight:800; letter-spacing:.3px; }
+    .dlg-title{
+      font-size:16px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
     .dlg-close{
-      width:34px; height:34px; border-radius:10px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color:#fff; cursor:pointer;
-    }
-    .dlg-body{ padding:14px 16px 16px 16px; }
-    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media (max-width:700px){ .grid-2{ grid-template-columns:1fr; } }
-    .field label{ display:block; font-size:12px; opacity:.75; margin:0 0 6px; }
-    .field input, .field select{
-      width:100%;
-      padding:12px 12px;
+      width:34px;height:34px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+    }
+    .dlg-body{ padding:16px; }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-weight:800;
+    }
+    .field input, .field select{
+      width:100%;
+      height:44px;
+      padding:0 12px;
+      border-radius:14px;
+      border:1px solid rgba(246,210,107,.22);
       background: rgba(10,12,18,.55);
-      color:#fff;
+      color: var(--text);
       outline:none;
     }
-    .field input::placeholder{ color: rgba(255,255,255,.35); }
     .dlg-actions{
-      display:flex; gap:10px; justify-content:flex-end;
-      padding:12px 16px 16px;
-      border-top:1px solid rgba(255,255,255,.08);
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      padding: 0 16px 16px;
     }
-    .btn{
-      padding:10px 14px; border-radius:12px; cursor:pointer;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color:#fff;
-      font-weight:700;
+    @media (max-width: 920px){
+      .sidebar{ position:static; height:auto; width:100%; }
+      .app{ flex-direction:column; }
+      h1{ font-size:34px; }
+      .grid{ grid-template-columns: 1fr; }
     }
-    .btn-primary{
-      background: linear-gradient(180deg, rgba(255,215,120,.95), rgba(225,175,70,.95));
-      border-color: rgba(255,215,120,.45);
-      color:#111;
-    }
-    .btn-danger{
-      background: rgba(170,40,55,.18);
-      border-color: rgba(170,40,55,.45);
-      color:#fff;
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      font-size:12px;
-    }
-    .pill-ok{ border-color: rgba(35,180,120,.30); background: rgba(35,180,120,.12); }
-    .pill-off{ border-color: rgba(200,60,70,.30); background: rgba(200,60,70,.12); }
-    .hint{
-      font-size:12px; opacity:.75; margin-top:10px;
-    }
-    .hint code{
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.10);
-      padding:2px 6px; border-radius:8px;
-    }
-    .table-actions{ display:flex; gap:8px; justify-content:flex-end; }
-    .btn-xs{ padding:8px 10px; border-radius:10px; font-size:12px; }
   </style>
 </head>
 
-<body class="pdm">
-  <div class="app">
+<body>
+  <div class="app" id="pageRoot">
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-title">PDM ADMIN</div>
-        <div class="brand-sub">Urban Hills</div>
-        <div class="brand-divider"></div>
+        PDM ADMIN
+        <small>Urban Hills</small>
       </div>
 
       <nav class="nav">
-        <a class="nav-link" href="dashboard.html">Dashboard</a>
-        <a class="nav-link" href="clients.html">Clients</a>
-        <a class="nav-link" href="stock.html">Stock</a>
-        <a class="nav-link" href="ventes.html">Ventes</a>
-        <a class="nav-link" href="vehicles.html">Véhicules</a>
-        <a class="nav-link" href="partenariats.html">Partenaires</a>
-        <a class="nav-link" href="compta.html">Comptabilité</a>
-        <a class="nav-link" href="catalogue.html">Catalogue</a>
-        <a class="nav-link active" href="gestion.html">Gestion</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="clients.html">Clients</a>
+        <a href="stock.html">Stock</a>
+        <a href="ventes.html">Ventes</a>
+        <a href="vehicles.html">Véhicules</a>
+        <a href="partenariats.html">Partenaires</a>
+        <a href="compta.html">Comptabilité</a>
+        <a href="catalogue.html">Catalogue</a>
+        <a class="active" href="gestion.html">Gestion</a>
       </nav>
 
-      <div class="sidebar-bottom">
-        <button id="btnLogout" class="sb-btn sb-btn-primary">Déconnexion</button>
-      </div>
+      <button class="logout" id="logoutBtn">Déconnexion</button>
     </aside>
 
     <!-- MAIN -->
     <main class="main">
-      <header class="page-head">
+      <div class="page-head">
         <div>
-          <div class="page-title">Gestion</div>
-          <div class="page-sub">Admin-only — utilisateurs & paramètres</div>
+          <h1>Gestion</h1>
+          <div class="sub">Admin-only — utilisateurs & paramètres</div>
         </div>
-      </header>
+        <div class="pill" id="statusPill"><span class="dot"></span><span>—</span></div>
+      </div>
 
-      <section class="panel">
-        <div class="panel-row">
-          <input id="searchInput" class="input" placeholder="Rechercher (email, nom, uid)..." />
-          <button id="btnRefresh" class="btn">Rafraîchir</button>
-          <button id="btnNew" class="btn btn-primary">+ Créer une fiche utilisateur</button>
-        </div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="stat-label">Total users</div>
-            <div id="statTotal" class="stat-value">—</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Admins</div>
-            <div id="statAdmins" class="stat-value">—</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Staff</div>
-            <div id="statStaff" class="stat-value">—</div>
-          </div>
+      <section class="card">
+        <div class="toolbar">
+          <input id="searchInput" class="input" placeholder="Rechercher par email, nom ou UID..." />
+          <button class="btn" id="refreshBtn">Rafraîchir</button>
+          <button class="btn btn-gold" id="createBtn">+ Créer un utilisateur</button>
         </div>
 
-        <div class="card">
-          <div class="card-head">
-            <div class="card-title">Utilisateurs</div>
-            <div class="card-sub">Collection Firestore : <b>users</b></div>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">Total users</div>
+            <div class="value" id="statTotal">0</div>
           </div>
+          <div class="kpi">
+            <div class="label">Admins</div>
+            <div class="value" id="statAdmins">0</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Staff</div>
+            <div class="value" id="statStaff">0</div>
+          </div>
+        </div>
+      </section>
 
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Nom</th>
-                  <th>Rôle</th>
-                  <th>Statut</th>
-                  <th>UID</th>
-                  <th style="text-align:right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyUsers">
-                <tr><td colspan="6" style="opacity:.7;">Chargement…</td></tr>
-              </tbody>
-            </table>
-          </div>
+      <section class="card table-card">
+        <div style="color:rgba(255,255,255,.65); font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px; margin-bottom:10px;">
+          Utilisateurs — Collection Firestore : <span style="color:var(--gold)">users</span>
+        </div>
 
-          <div class="hint">
-            ⚠️ Cette page ne crée pas les comptes Auth (Firebase ne permet pas “lister/créer” des users Auth côté client).
-            Tu crées le compte dans <b>Firebase Console → Auth</b>, puis tu mets/édites sa fiche dans <code>users/{uid}</code>.
-          </div>
+        <div style="overflow:auto; border-radius:18px; border:1px solid rgba(255,255,255,.06);">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Nom</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>UID</th>
+                <th style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody">
+              <tr><td colspan="6" style="color:rgba(255,255,255,.55)">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          ⚠️ Cette page ne crée pas les comptes Auth (Firebase ne permet pas “lister/créer” des users Auth côté client).  
+          Tu crées le compte dans Firebase Console → Auth, puis tu mets/édites sa fiche dans <code>users/{uid}</code>.
         </div>
       </section>
     </main>
   </div>
 
-  <!-- MODAL -->
-  <dialog id="dlgUser" class="pdm-dialog">
+  <!-- DIALOG (IDs EXACTS attendus par gestion.js) -->
+  <dialog id="createDialog">
     <div class="dlg-head">
-      <div class="dlg-title" id="dlgTitle">Utilisateur</div>
-      <button class="dlg-close" id="dlgClose" aria-label="Fermer">✕</button>
+      <div class="dlg-title">Créer un utilisateur</div>
+      <button class="dlg-close" id="dClose" aria-label="Fermer">✕</button>
     </div>
 
-    <form id="userForm" class="dlg-body" method="dialog">
-      <div class="grid-2">
+    <div class="dlg-body">
+      <div class="grid">
         <div class="field">
-          <label>UID (ID utilisateur Firebase Auth) *</label>
-          <input id="fUid" placeholder="ex: 48IAqVDRdVV7jz3d9PS0kZm543n2" required />
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input id="fEmail" type="email" placeholder="pdm-staff@pdm.local" />
+          <label for="dEmail">Email</label>
+          <input id="dEmail" type="email" placeholder="ex: pdm-staff@pdm.local" />
         </div>
 
         <div class="field">
-          <label>Nom affiché</label>
-          <input id="fName" placeholder="PDG - Hundo" />
+          <label for="dPassword">Mot de passe</label>
+          <input id="dPassword" type="password" placeholder="Min. 6 caractères" />
         </div>
+
         <div class="field">
-          <label>Rôle *</label>
-          <select id="fRole" required>
+          <label for="dName">Nom / Affichage</label>
+          <input id="dName" type="text" placeholder="ex: PDG - Hundo" />
+        </div>
+
+        <div class="field">
+          <label for="dRole">Rôle</label>
+          <select id="dRole">
             <option value="staff">staff</option>
             <option value="admin">admin</option>
           </select>
         </div>
-
-        <div class="field">
-          <label>Actif</label>
-          <select id="fActive">
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Info</label>
-          <input id="fNote" placeholder="Optionnel (ex: responsable showroom)" />
-        </div>
       </div>
-    </form>
+    </div>
 
     <div class="dlg-actions">
-      <button id="btnDelete" class="btn btn-danger btn-xs" type="button">Supprimer fiche</button>
-      <button id="btnCancel" class="btn btn-xs" type="button">Annuler</button>
-      <button id="btnSave" class="btn btn-primary btn-xs" type="button">Enregistrer</button>
+      <button class="btn" id="dCancel">Annuler</button>
+      <button class="btn btn-gold" id="dCreate">Créer</button>
     </div>
   </dialog>
 
-  <script type="module" src="gestion.js"></script>
+  <!-- SCRIPTS (garde tes fichiers existants) -->
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="guard.js"></script>
+  <script src="gestion.js"></script>
 </body>
 </html>
