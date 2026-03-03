@@ -1,335 +1,361 @@
-// gestion.js (MODULE)
+// gestion.js — page Gestion (ESM)
 import { auth, db } from "./config.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  $,
+  escapeHtml,
+  toast,
+} from "./common.js";
+
+import {
+  onAuthStateChanged,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
 import {
   collection,
   doc,
   getDoc,
   getDocs,
-  onSnapshot,
-  orderBy,
   query,
-  serverTimestamp,
+  orderBy,
   setDoc,
   updateDoc,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-import { $, toast, fmtDate } from "./common.js";
+/* --------------------------- DOM --------------------------- */
+const els = {
+  authInfoBar: $("authInfoBar"),
+  authInfo: $("authInfo"),
+  btnLogout: $("btnLogout"),
 
-/** ---------------------------
- *  Guard admin (users/{uid}.role === "admin")
- *  --------------------------*/
-async function requireAdminOrRedirect() {
-  const user = auth.currentUser;
-  if (!user) return false;
+  filterInput: $("filterInput"),
+  btnFilter: $("btnFilter"),
+  btnRefresh: $("btnRefresh"),
+  btnCreate: $("btnCreate"),
 
-  const snap = await getDoc(doc(db, "users", user.uid));
-  const role = (snap.exists() ? snap.data()?.role : "") || "";
-  const ok = String(role).toLowerCase() === "admin";
+  statTotalUsers: $("statTotalUsers"),
+  statAdmins: $("statAdmins"),
+  statStaff: $("statStaff"),
 
-  if (!ok) {
+  usersTbody: $("usersTbody"),
+
+  userModal: $("userModal"),
+  closeUserModal: $("closeUserModal"),
+  cancelUser: $("cancelUser"),
+  saveUser: $("saveUser"),
+
+  userForm: $("userForm"),
+  userUid: $("userUid"),
+  userEmail: $("userEmail"),
+  userName: $("userName"),
+  userRole: $("userRole"),
+  userActive: $("userActive"),
+};
+
+/* --------------------------- State --------------------------- */
+let allUsers = [];     // raw list
+let currentFilter = ""; // lowercased
+let isReady = false;
+
+/* --------------------------- Helpers --------------------------- */
+function norm(v) {
+  return String(v ?? "").trim();
+}
+
+function openModal() {
+  els.userModal.classList.add("open");
+}
+
+function closeModal() {
+  els.userModal.classList.remove("open");
+}
+
+function clearForm() {
+  els.userUid.value = "";
+  els.userEmail.value = "";
+  els.userName.value = "";
+  els.userRole.value = "staff";
+  els.userActive.checked = true;
+}
+
+function fillForm(u) {
+  els.userUid.value = u.uid || "";
+  els.userEmail.value = u.email || "";
+  els.userName.value = u.name || "";
+  els.userRole.value = (u.role || "staff").toLowerCase() === "admin" ? "admin" : "staff";
+  els.userActive.checked = u.active !== false;
+}
+
+function userMatchesFilter(u, f) {
+  if (!f) return true;
+  const hay = [
+    u.uid,
+    u.email,
+    u.name,
+    u.role,
+  ].map(v => String(v ?? "").toLowerCase()).join(" | ");
+  return hay.includes(f);
+}
+
+function setStats() {
+  const total = allUsers.length;
+  const admins = allUsers.filter(u => String(u.role || "").toLowerCase() === "admin").length;
+  const staff = total - admins;
+
+  els.statTotalUsers.textContent = String(total);
+  els.statAdmins.textContent = String(admins);
+  els.statStaff.textContent = String(staff);
+}
+
+function badgeRole(role) {
+  const r = String(role || "staff").toLowerCase() === "admin" ? "ADMIN" : "STAFF";
+  return `<span class="badge-role">${escapeHtml(r)}</span>`;
+}
+
+function badgeStatus(active) {
+  const ok = active !== false;
+  return `<span class="badge ${ok ? "badge-ok" : "badge-bad"}">${ok ? "● ACTIF" : "● INACTIF"}</span>`;
+}
+
+function renderTable() {
+  const f = currentFilter;
+
+  const list = allUsers
+    .filter(u => userMatchesFilter(u, f))
+    // Admins first, then name
+    .sort((a, b) => {
+      const ra = String(a.role || "").toLowerCase() === "admin" ? 0 : 1;
+      const rb = String(b.role || "").toLowerCase() === "admin" ? 0 : 1;
+      if (ra !== rb) return ra - rb;
+      return String(a.name || "").localeCompare(String(b.name || ""), "fr", { sensitivity: "base" });
+    });
+
+  if (!list.length) {
+    els.usersTbody.innerHTML = `<tr><td colspan="6" class="muted">Aucun utilisateur.</td></tr>`;
+    return;
+  }
+
+  els.usersTbody.innerHTML = list.map(u => {
+    const email = u.email ? escapeHtml(u.email) : "—";
+    const name = u.name ? escapeHtml(u.name) : "—";
+    const uid = u.uid ? escapeHtml(u.uid) : "—";
+    const active = u.active !== false;
+
+    const btnToggleLabel = active ? "Désactiver" : "Activer";
+    const btnToggleClass = active ? "btn-danger" : "btn-secondary";
+
+    return `
+      <tr>
+        <td class="mono">${email}</td>
+        <td>${name}</td>
+        <td>${badgeRole(u.role)}</td>
+        <td>${badgeStatus(u.active)}</td>
+        <td class="mono">${uid}</td>
+        <td class="actions">
+          <button class="btn ${btnToggleClass}" data-action="toggle" data-uid="${uid}">
+            ${escapeHtml(btnToggleLabel)}
+          </button>
+          <button class="btn btn-secondary" data-action="edit" data-uid="${uid}">
+            Modifier
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+/* --------------------------- Firestore --------------------------- */
+async function fetchUsers() {
+  // users collection
+  const ref = collection(db, "users");
+  const qy = query(ref, orderBy("updatedAt", "desc"));
+
+  const snap = await getDocs(qy);
+  allUsers = snap.docs.map(d => {
+    const data = d.data() || {};
+    return {
+      uid: d.id,
+      email: data.email ?? "",
+      name: data.name ?? "",
+      role: data.role ?? "staff",
+      active: data.active !== false,
+      updatedAt: data.updatedAt ?? null,
+    };
+  });
+
+  setStats();
+  renderTable();
+}
+
+async function toggleUser(uid) {
+  const cleanUid = norm(uid);
+  if (!cleanUid) return;
+
+  const ref = doc(db, "users", cleanUid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    toast("Utilisateur introuvable dans Firestore.", "err");
+    return;
+  }
+  const data = snap.data() || {};
+  const nowActive = !(data.active !== false);
+
+  await updateDoc(ref, {
+    active: !nowActive,
+    updatedAt: serverTimestamp(),
+  });
+
+  toast(!nowActive ? "Utilisateur activé." : "Utilisateur désactivé.", "ok");
+  await fetchUsers();
+}
+
+async function saveUserFromForm() {
+  const uid = norm(els.userUid.value);
+  if (!uid) {
+    toast("UID requis (ID du document users/{uid}).", "warn");
+    return;
+  }
+
+  const payload = {
+    email: norm(els.userEmail.value) || "",
+    name: norm(els.userName.value) || "",
+    role: (norm(els.userRole.value).toLowerCase() === "admin") ? "admin" : "staff",
+    active: !!els.userActive.checked,
+    updatedAt: serverTimestamp(),
+  };
+
+  await setDoc(doc(db, "users", uid), payload, { merge: true });
+  toast("Utilisateur mis à jour.", "ok");
+
+  closeModal();
+  await fetchUsers();
+}
+
+async function getCurrentUserRole(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (!snap.exists()) return "staff";
+  const role = snap.data()?.role || "staff";
+  return String(role).toLowerCase();
+}
+
+/* --------------------------- Auth / Guard --------------------------- */
+function redirectToLogin() {
+  // adapte si ton login est ailleurs
+  window.location.href = "index.html";
+}
+
+function setAuthInfo(user) {
+  els.authInfo.textContent = user?.email || user?.uid || "Connecté";
+}
+
+async function ensureAdmin(user) {
+  const role = await getCurrentUserRole(user.uid);
+  if (role !== "admin") {
     alert("Accès refusé (admin requis).");
-    // Option: redirect vers dashboard
-    window.location.href = "./dashboard.html";
+    redirectToLogin();
     return false;
   }
   return true;
 }
 
-/** ---------------------------
- *  Helpers UI
- *  --------------------------*/
-function escapeHtml(str = "") {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+/* --------------------------- Events --------------------------- */
+function bindEvents() {
+  // logout
+  els.btnLogout?.addEventListener("click", async () => {
+    await signOut(auth);
+    redirectToLogin();
+  });
 
-function badgeRole(role) {
-  const r = String(role || "").toLowerCase();
-  const label = r === "admin" ? "ADMIN" : "STAFF";
-  const cls = r === "admin" ? "badge ok" : "badge";
-  return `<span class="${cls}">${label}</span>`;
-}
-
-function badgeActive(active) {
-  const ok = !!active;
-  return `<span class="pill ${ok ? "ok" : "bad"}">${ok ? "• ACTIF" : "• INACTIF"}</span>`;
-}
-
-function setText(id, value) {
-  const el = $(id);
-  if (el) el.textContent = value;
-}
-
-/** ---------------------------
- *  DOM refs (IDs attendus)
- *  --------------------------*/
-const els = {
-  emailBox: $("adminEmail"),
-  btnRefresh: $("btnRefresh"),
-  btnCreate: $("btnCreate"),
-  tblBody: $("usersTbody"),
-  countTotal: $("countTotal"),
-  countAdmins: $("countAdmins"),
-  countStaff: $("countStaff"),
-  note: $("usersNote"),
-  // Modal
-  modal: $("userModal"),
-  modalTitle: $("userModalTitle"),
-  modalClose: $("userModalClose"),
-  inputUid: $("m_uid"),
-  inputEmail: $("m_email"),
-  inputName: $("m_name"),
-  inputRole: $("m_role"),
-  inputActive: $("m_active"),
-  btnCancel: $("m_cancel"),
-  btnSave: $("m_save"),
-};
-
-function hasRequiredDom() {
-  // On évite de crash si un ID manque
-  return !!(els.tblBody && els.countTotal && els.countAdmins && els.countStaff);
-}
-
-/** ---------------------------
- *  Modal
- *  --------------------------*/
-function openModal(data = {}) {
-  if (!els.modal) return;
-
-  els.modal.classList.add("open");
-
-  if (els.modalTitle) els.modalTitle.textContent = data._mode === "create" ? "Créer / Ajouter un utilisateur" : "Modifier utilisateur";
-
-  if (els.inputUid) els.inputUid.value = data.uid || "";
-  if (els.inputEmail) els.inputEmail.value = data.email || "";
-  if (els.inputName) els.inputName.value = data.name || "";
-  if (els.inputRole) els.inputRole.value = (data.role || "staff").toLowerCase() === "admin" ? "admin" : "staff";
-  if (els.inputActive) els.inputActive.checked = data.active !== false;
-
-  // Email/UID non modifiables si edit (sauf si tu veux)
-  if (els.inputEmail) els.inputEmail.disabled = data._mode !== "create"; // en create tu peux saisir
-  if (els.inputUid) els.inputUid.disabled = data._mode !== "create";
-}
-
-function closeModal() {
-  if (!els.modal) return;
-  els.modal.classList.remove("open");
-}
-
-function wireModal() {
-  if (els.modalClose) els.modalClose.addEventListener("click", closeModal);
-  if (els.btnCancel) els.btnCancel.addEventListener("click", closeModal);
-
-  // click backdrop -> close
-  if (els.modal) {
-    els.modal.addEventListener("click", (e) => {
-      if (e.target === els.modal) closeModal();
-    });
-  }
-
-  if (els.btnSave) {
-    els.btnSave.addEventListener("click", async () => {
-      const uid = (els.inputUid?.value || "").trim();
-      const email = (els.inputEmail?.value || "").trim();
-      const name = (els.inputName?.value || "").trim();
-      const role = (els.inputRole?.value || "staff").trim().toLowerCase();
-      const active = !!els.inputActive?.checked;
-
-      if (!uid) return toast("UID requis (users/{uid})", "bad");
-      if (!name) return toast("Nom requis", "bad");
-
-      // email optionnel côté Firestore, mais pratique
-      const payload = {
-        name,
-        role: role === "admin" ? "admin" : "staff",
-        active,
-        updatedAt: serverTimestamp(),
-      };
-
-      if (email) payload.email = email;
-
-      try {
-        // si doc existe -> update, sinon set
-        const ref = doc(db, "users", uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          await updateDoc(ref, payload);
-          toast("Utilisateur mis à jour ✅", "ok");
-        } else {
-          await setDoc(ref, { ...payload, createdAt: serverTimestamp() }, { merge: true });
-          toast("Utilisateur ajouté ✅", "ok");
-        }
-        closeModal();
-      } catch (err) {
-        console.error(err);
-        toast("Erreur sauvegarde utilisateur", "bad");
-      }
-    });
-  }
-}
-
-/** ---------------------------
- *  Users table
- *  --------------------------*/
-function renderUsers(users) {
-  let total = users.length;
-  let admins = users.filter((u) => String(u.role || "").toLowerCase() === "admin").length;
-  let staff = total - admins;
-
-  setText("countTotal", String(total));
-  setText("countAdmins", String(admins));
-  setText("countStaff", String(staff));
-
-  if (!els.tblBody) return;
-  if (!users.length) {
-    els.tblBody.innerHTML = `<tr><td colspan="6" class="muted">Aucun utilisateur.</td></tr>`;
-    return;
-  }
-
-  els.tblBody.innerHTML = users
-    .map((u) => {
-      const email = escapeHtml(u.email || "—");
-      const name = escapeHtml(u.name || "—");
-      const role = u.role || "staff";
-      const uid = escapeHtml(u.uid || "—");
-      const active = !!u.active;
-
-      return `
-        <tr>
-          <td>${email}</td>
-          <td>${name}</td>
-          <td>${badgeRole(role)}</td>
-          <td>${badgeActive(active)}</td>
-          <td class="mono">${uid}</td>
-          <td class="actions">
-            <button class="btn small" data-action="toggle" data-uid="${uid}" data-active="${active ? "1" : "0"}">
-              ${active ? "Désactiver" : "Activer"}
-            </button>
-            <button class="btn gold small" data-action="edit" data-uid="${uid}">
-              Modifier
-            </button>
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
-}
-
-async function toggleActive(uid, nextActive) {
-  try {
-    await updateDoc(doc(db, "users", uid), {
-      active: nextActive,
-      updatedAt: serverTimestamp(),
-    });
-    toast(nextActive ? "Activé ✅" : "Désactivé ✅", "ok");
-  } catch (e) {
-    console.error(e);
-    toast("Erreur changement statut", "bad");
-  }
-}
-
-async function editUser(uid) {
-  try {
-    const snap = await getDoc(doc(db, "users", uid));
-    if (!snap.exists()) return toast("Utilisateur introuvable", "bad");
-    openModal({ uid, ...snap.data(), _mode: "edit" });
-  } catch (e) {
-    console.error(e);
-    toast("Erreur chargement utilisateur", "bad");
-  }
-}
-
-/** ---------------------------
- *  Live subscription
- *  --------------------------*/
-let unsubUsers = null;
-
-function subscribeUsers() {
-  if (unsubUsers) unsubUsers();
-
-  const q = query(collection(db, "users"), orderBy("updatedAt", "desc"));
-  unsubUsers = onSnapshot(
-    q,
-    (snap) => {
-      const users = [];
-      snap.forEach((d) => {
-        users.push({ uid: d.id, ...d.data() });
-      });
-      renderUsers(users);
-    },
-    (err) => {
-      console.error(err);
-      toast("Erreur lecture users", "bad");
-      if (els.tblBody) els.tblBody.innerHTML = `<tr><td colspan="6" class="muted">Erreur chargement.</td></tr>`;
+  // filter
+  els.btnFilter?.addEventListener("click", () => {
+    currentFilter = norm(els.filterInput.value).toLowerCase();
+    renderTable();
+  });
+  els.filterInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      currentFilter = norm(els.filterInput.value).toLowerCase();
+      renderTable();
     }
-  );
-}
+  });
 
-async function refreshOnce() {
-  const q = query(collection(db, "users"), orderBy("updatedAt", "desc"));
-  const snap = await getDocs(q);
-  const users = [];
-  snap.forEach((d) => users.push({ uid: d.id, ...d.data() }));
-  renderUsers(users);
-}
+  // refresh
+  els.btnRefresh?.addEventListener("click", async () => {
+    await fetchUsers();
+    toast("Rafraîchi.", "ok");
+  });
 
-/** ---------------------------
- *  Init
- *  --------------------------*/
-function wireActions() {
-  // Refresh
-  if (els.btnRefresh) els.btnRefresh.addEventListener("click", refreshOnce);
+  // create (firestore doc only)
+  els.btnCreate?.addEventListener("click", () => {
+    clearForm();
+    openModal();
+    toast("⚠️ Crée d'abord le compte dans Firebase Console → Auth, puis complète users/{uid}.", "warn", 4200);
+  });
 
-  // Create (Firestore doc only)
-  if (els.btnCreate) {
-    els.btnCreate.addEventListener("click", () => {
-      // IMPORTANT: ici on ne crée pas le compte AUTH (tu le fais dans Firebase Console > Auth)
-      openModal({ _mode: "create", active: true, role: "staff" });
-    });
-  }
+  // modal close
+  els.closeUserModal?.addEventListener("click", closeModal);
+  els.cancelUser?.addEventListener("click", closeModal);
+  els.userModal?.addEventListener("click", (e) => {
+    if (e.target === els.userModal) closeModal();
+  });
 
-  // Table delegation
-  document.addEventListener("click", async (e) => {
-    const btn = e.target?.closest?.("button[data-action]");
+  // save
+  els.userForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await saveUserFromForm();
+  });
+
+  // actions table (delegate)
+  els.usersTbody?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
     if (!btn) return;
 
-    const action = btn.dataset.action;
-    const uid = btn.dataset.uid;
-    if (!uid) return;
+    const action = btn.getAttribute("data-action");
+    const uid = btn.getAttribute("data-uid");
+
+    if (!uid || uid === "—") return;
 
     if (action === "toggle") {
-      const current = btn.dataset.active === "1";
-      await toggleActive(uid, !current);
-    } else if (action === "edit") {
-      await editUser(uid);
+      await toggleUser(uid);
+      return;
+    }
+
+    if (action === "edit") {
+      const u = allUsers.find(x => x.uid === uid);
+      if (!u) {
+        toast("Impossible de trouver l'utilisateur.", "err");
+        return;
+      }
+      fillForm(u);
+      openModal();
+      return;
     }
   });
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "./index.html";
-    return;
-  }
+/* --------------------------- Init --------------------------- */
+async function boot() {
+  if (isReady) return;
+  isReady = true;
 
-  // Affiche email en haut si tu as l’input
-  if (els.emailBox) els.emailBox.value = user.email || "";
+  bindEvents();
 
-  // Guard admin
-  const ok = await requireAdminOrRedirect();
-  if (!ok) return;
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      redirectToLogin();
+      return;
+    }
 
-  if (!hasRequiredDom()) {
-    console.warn("DOM manquant: vérifie les IDs dans gestion.html");
-    return;
-  }
+    setAuthInfo(user);
 
-  wireActions();
-  wireModal();
-  subscribeUsers();
+    const ok = await ensureAdmin(user);
+    if (!ok) return;
+
+    await fetchUsers();
+  });
+}
+
+boot().catch((err) => {
+  console.error(err);
+  toast("Erreur init Gestion (console).", "err");
 });
