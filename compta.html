@@ -1,1 +1,166 @@
-<h1>compta</h1>
+<!-- compta.html -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin — Comptabilité</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="app.css" />
+
+  <style>
+    dialog.pdm-dialog{border:0;padding:0;border-radius:16px;max-width:min(820px,92vw);width:820px;background:#0b0d13;color:#e9eefc;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+    dialog.pdm-dialog::backdrop{background:rgba(0,0,0,.55)}
+    .d-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .d-title{font-size:18px;font-weight:800}
+    .d-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .d-body{padding:14px 18px 18px}
+    .d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .d-grid .full{grid-column:1/-1}
+    .d-field span{display:block;font-size:12px;opacity:.8;margin:0 0 6px 2px}
+    .d-field input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(18,24,38,.75);color:#fff;outline:none}
+    .d-field input::placeholder{color:rgba(255,255,255,.45)}
+    .d-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+    .d-btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+    .d-btn.gold{border-color:rgba(224,183,77,.35);background:linear-gradient(180deg,#f2d37a,#d6a83a);color:#111;font-weight:800}
+    @media (max-width:760px){ .d-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+
+<body class="pdm">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-title">PDM ADMIN</div>
+        <div class="sb-sub">Urban Hills</div>
+      </div>
+
+      <nav class="sb-nav">
+        <a class="sb-link" href="dashboard.html">Dashboard</a>
+        <a class="sb-link" href="clients.html">Clients</a>
+        <a class="sb-link" href="stock.html">Stock</a>
+        <a class="sb-link" href="ventes.html">Ventes</a>
+        <a class="sb-link" href="vehicles.html">Véhicules</a>
+        <a class="sb-link" href="partenariats.html">Partenaires</a>
+        <a class="sb-link active" href="compta.html">Comptabilité</a>
+        <a class="sb-link" href="catalogue.html">Catalogue</a>
+        <a class="sb-link" href="gestion.html">Gestion</a>
+      </nav>
+
+      <button class="btn btn-gold sb-logout" id="logoutBtn" type="button">Déconnexion</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Comptabilité</div>
+          <div class="topbar-sub">Source : Firestore (transactions)</div>
+        </div>
+      </div>
+
+      <section class="page">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="search">
+              <input id="searchInput" class="input" type="search" placeholder="Rechercher (client, modèle, vendeur)..." autocomplete="off" />
+            </div>
+            <div class="toolbar-actions">
+              <button id="refreshBtn" class="btn" type="button">Rafraîchir</button>
+              <button id="addBtn" class="btn btn-gold" type="button">+ Transaction</button>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">CA total</div>
+              <div class="stat-value" id="statCA">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Profit total</div>
+              <div class="stat-value" id="statProfit">—</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Nombre</div>
+              <div class="stat-value" id="statCount">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-1">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Transactions</div>
+                <div class="card-sub">Achat/Vente (buyPrice / sellPrice)</div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Modèle</th>
+                    <th>BUY</th>
+                    <th>SELL</th>
+                    <th>PROFIT</th>
+                    <th>Vendeur</th>
+                    <th class="th-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="txTable">
+                  <tr><td colspan="8" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="txDialog" class="pdm-dialog">
+    <div class="d-head">
+      <div class="d-title" id="dTitle">Ajouter une transaction</div>
+      <button class="d-close" id="dClose" type="button">✕</button>
+    </div>
+
+    <div class="d-body">
+      <div class="d-grid">
+        <label class="d-field">
+          <span>Client</span>
+          <input id="dClient" type="text" placeholder="Nom du client" />
+        </label>
+
+        <label class="d-field">
+          <span>Modèle (nom complet)</span>
+          <input id="dModel" type="text" placeholder="Brioso R/A" />
+        </label>
+
+        <label class="d-field">
+          <span>BUY (buyPrice)</span>
+          <input id="dBuy" type="number" min="0" step="1" placeholder="10000" />
+        </label>
+
+        <label class="d-field">
+          <span>SELL (sellPrice)</span>
+          <input id="dSell" type="number" min="0" step="1" placeholder="20000" />
+        </label>
+
+        <label class="d-field full">
+          <span>Date (optionnel)</span>
+          <input id="dDate" type="date" />
+        </label>
+      </div>
+    </div>
+
+    <div class="d-foot">
+      <button class="d-btn" id="dCancel" type="button">Annuler</button>
+      <button class="d-btn gold" id="dSave" type="button">Enregistrer</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="compta.js"></script>
+</body>
+</html>
