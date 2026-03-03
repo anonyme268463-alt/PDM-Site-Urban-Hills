@@ -1,5 +1,5 @@
-// stock.js
-import { app, auth, db } from "./config.js";
+// stock.js (remplace ton stock.js par celui-ci)
+import { auth, db } from "./config.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
   collection, addDoc, deleteDoc, doc, updateDoc,
@@ -18,25 +18,24 @@ const statResActive  = document.getElementById("statResActive");
 
 const stockTbody = document.getElementById("stockTable");
 const resTbody   = document.getElementById("resTable");
-
-// Modal
-const editModal  = document.getElementById("editModal");
-const closeModal = document.getElementById("closeModal");
-const mTitle     = document.getElementById("mTitle");
-const mSub       = document.getElementById("mSub");
-const mBrand     = document.getElementById("mBrand");
-const mModel     = document.getElementById("mModel");
-const mQty       = document.getElementById("mQty");
-const mClient    = document.getElementById("mClient");
-const saveBtn    = document.getElementById("saveBtn");
-const cancelBtn  = document.getElementById("cancelBtn");
-
 const logoutBtn  = document.getElementById("logoutBtn");
 
-let mode = "stock";          // "stock" | "res"
-let editTarget = null;       // { kind, id } or null
+// Dialog (modal)
+const dlg         = document.getElementById("stockDialog");
+const dTitle      = document.getElementById("dTitle");
+const dClose      = document.getElementById("dClose");
+const dCancel     = document.getElementById("dCancel");
+const dSave       = document.getElementById("dSave");
+const dBrand      = document.getElementById("dBrand");
+const dModel      = document.getElementById("dModel");
+const dQty        = document.getElementById("dQty");
+const dClientWrap = document.getElementById("dClientWrap");
+const dClient     = document.getElementById("dClient");
+
 let rowsStock = [];
 let rowsRes = [];
+let editTarget = null; // { kind: "stock"|"res", id: string } | null
+let mode = "stock";    // when creating new
 
 function fmtDate(ts) {
   try {
@@ -46,48 +45,38 @@ function fmtDate(ts) {
   } catch { return "—"; }
 }
 
-function openModal({ title, sub, kind, row }) {
+function norm(s){ return (s ?? "").toString().trim().toLowerCase(); }
+
+function openDialog(kind, row=null) {
   mode = kind;
   editTarget = row?.id ? { kind, id: row.id } : null;
 
-  mTitle.textContent = title;
-  mSub.textContent = sub;
+  dTitle.textContent = row?.id ? "Modifier" : "Ajouter";
+  dBrand.value = row?.brand ?? "";
+  dModel.value = row?.model ?? "";
+  dQty.value   = (row?.qty ?? 1);
 
-  mBrand.value  = row?.brand  ?? "";
-  mModel.value  = row?.model  ?? "";
-  mQty.value    = row?.qty    ?? 1;
-  mClient.value = row?.client ?? "";
+  if (kind === "res") {
+    dClientWrap.style.display = "";
+    dClient.value = row?.client ?? "";
+  } else {
+    dClientWrap.style.display = "none";
+    dClient.value = "";
+  }
 
-  // Client only for reservation
-  mClient.closest(".field").style.display = (kind === "res") ? "" : "none";
-
-  editModal.classList.add("open");
-  editModal.setAttribute("aria-hidden", "false");
+  dlg.showModal();
 }
 
-function closeModalFn() {
-  editModal.classList.remove("open");
-  editModal.setAttribute("aria-hidden", "true");
+function closeDialog() {
+  try { dlg.close(); } catch {}
   editTarget = null;
 }
 
-function filterText(s) {
-  return (s ?? "").toString().trim().toLowerCase();
-}
-
-function applyFilter() {
-  const q = filterText(searchInput.value);
-
-  const s = q
-    ? rowsStock.filter(r => [r.brand, r.model].some(x => filterText(x).includes(q)))
-    : rowsStock;
-
-  const r = q
-    ? rowsRes.filter(r => [r.brand, r.model, r.client].some(x => filterText(x).includes(q)))
-    : rowsRes;
-
-  renderStock(s);
-  renderRes(r);
+function refreshStats() {
+  const totalQty = rowsStock.reduce((a, r) => a + (Number(r.qty) || 0), 0);
+  statStockQty.textContent = `${totalQty}`;
+  statStockLines.textContent = `${rowsStock.length}`;
+  statResActive.textContent = `${rowsRes.length}`;
 }
 
 function renderStock(list) {
@@ -95,16 +84,15 @@ function renderStock(list) {
     stockTbody.innerHTML = `<tr><td colspan="5" class="muted">Aucune ligne.</td></tr>`;
     return;
   }
-
-  stockTbody.innerHTML = list.map(row => `
+  stockTbody.innerHTML = list.map(r => `
     <tr>
-      <td>${row.brand ?? "-"}</td>
-      <td>${row.model ?? "-"}</td>
-      <td>${row.qty ?? 0}</td>
-      <td>${fmtDate(row.createdAt)}</td>
+      <td>${r.brand ?? "-"}</td>
+      <td>${r.model ?? "-"}</td>
+      <td>${r.qty ?? 0}</td>
+      <td>${fmtDate(r.createdAt)}</td>
       <td class="td-actions">
-        <button class="btn btn-sm" data-action="edit" data-kind="stock" data-id="${row.id}">Modifier</button>
-        <button class="btn btn-sm btn-danger" data-action="del" data-kind="stock" data-id="${row.id}">Supprimer</button>
+        <button class="btn btn-sm" data-action="edit" data-kind="stock" data-id="${r.id}">Modifier</button>
+        <button class="btn btn-sm btn-danger" data-action="del" data-kind="stock" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
   `).join("");
@@ -115,128 +103,82 @@ function renderRes(list) {
     resTbody.innerHTML = `<tr><td colspan="7" class="muted">Aucune ligne.</td></tr>`;
     return;
   }
-
-  resTbody.innerHTML = list.map(row => `
+  resTbody.innerHTML = list.map(r => `
     <tr>
-      <td>${row.brand ?? "-"}</td>
-      <td>${row.model ?? "-"}</td>
-      <td>${row.client ?? "-"}</td>
-      <td>${row.qty ?? 0}</td>
-      <td><span class="pill">${row.status ?? "RÉSERVÉ"}</span></td>
-      <td>${fmtDate(row.createdAt)}</td>
+      <td>${r.brand ?? "-"}</td>
+      <td>${r.model ?? "-"}</td>
+      <td>${r.client ?? "-"}</td>
+      <td>${r.qty ?? 0}</td>
+      <td><span class="pill">${r.status ?? "RÉSERVÉ"}</span></td>
+      <td>${fmtDate(r.createdAt)}</td>
       <td class="td-actions">
-        <button class="btn btn-sm" data-action="edit" data-kind="res" data-id="${row.id}">Modifier</button>
-        <button class="btn btn-sm btn-danger" data-action="del" data-kind="res" data-id="${row.id}">Supprimer</button>
+        <button class="btn btn-sm" data-action="edit" data-kind="res" data-id="${r.id}">Modifier</button>
+        <button class="btn btn-sm btn-danger" data-action="del" data-kind="res" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
   `).join("");
 }
 
-function refreshStats() {
-  const totalQty = rowsStock.reduce((a, r) => a + (Number(r.qty) || 0), 0);
-  statStockQty.textContent = `${totalQty}`;
-  statStockLines.textContent = `${rowsStock.length}`;
-  statResActive.textContent = `${rowsRes.length}`;
+function applyFilter() {
+  const q = norm(searchInput.value);
+  const s = q ? rowsStock.filter(r => [r.brand, r.model].some(x => norm(x).includes(q))) : rowsStock;
+  const r = q ? rowsRes.filter(r => [r.brand, r.model, r.client].some(x => norm(x).includes(q))) : rowsRes;
+  renderStock(s);
+  renderRes(r);
 }
 
-// Firestore listeners
-let unsubStock = null;
-let unsubRes = null;
-
+// listeners
+let unsubStock=null, unsubRes=null;
 function startListeners() {
   const qStock = query(collection(db, "stock"), orderBy("createdAt", "desc"));
   const qRes   = query(collection(db, "reservations"), orderBy("createdAt", "desc"));
 
   unsubStock = onSnapshot(qStock, (snap) => {
-    rowsStock = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    applyFilter();
-    refreshStats();
+    rowsStock = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    applyFilter(); refreshStats();
   });
 
   unsubRes = onSnapshot(qRes, (snap) => {
-    rowsRes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    applyFilter();
-    refreshStats();
+    rowsRes = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    applyFilter(); refreshStats();
   });
 }
+function stopListeners(){ try{unsubStock?.()}catch{} try{unsubRes?.()}catch{} unsubStock=unsubRes=null; }
 
-function stopListeners() {
-  try { unsubStock?.(); } catch {}
-  try { unsubRes?.(); } catch {}
-  unsubStock = unsubRes = null;
-}
-
-// Events
+// UI events
 searchInput.addEventListener("input", applyFilter);
+refreshBtn.addEventListener("click", () => { applyFilter(); refreshStats(); });
 
-refreshBtn.addEventListener("click", () => {
-  // force redraw (snapshots already live)
-  applyFilter();
-  refreshStats();
-});
+addStockBtn.addEventListener("click", () => openDialog("stock"));
+addResBtn.addEventListener("click", () => openDialog("res"));
 
-addStockBtn.addEventListener("click", () => {
-  openModal({
-    title: "Ajouter",
-    sub: "Si client vide → Stock",
-    kind: "stock",
-    row: { qty: 1 }
-  });
-});
+dClose.addEventListener("click", closeDialog);
+dCancel.addEventListener("click", closeDialog);
 
-addResBtn.addEventListener("click", () => {
-  openModal({
-    title: "Ajouter",
-    sub: "Client requis → Réservation",
-    kind: "res",
-    row: { qty: 1, status: "RÉSERVÉ" }
-  });
-});
+dSave.addEventListener("click", async () => {
+  const brand = (dBrand.value||"").trim();
+  const model = (dModel.value||"").trim();
+  const qty   = Math.max(0, Number(dQty.value||0));
+  const client= (dClient.value||"").trim();
 
-closeModal.addEventListener("click", closeModalFn);
-cancelBtn.addEventListener("click", closeModalFn);
-editModal.addEventListener("click", (e) => {
-  if (e.target === editModal) closeModalFn();
-});
-
-saveBtn.addEventListener("click", async () => {
-  const brand = (mBrand.value || "").trim();
-  const model = (mModel.value || "").trim();
-  const qty = Math.max(0, Number(mQty.value || 0));
-  const client = (mClient.value || "").trim();
-
-  if (!brand || !model) {
-    alert("Marque et modèle sont requis.");
-    return;
-  }
+  if (!brand || !model) return alert("Marque et modèle sont requis.");
 
   try {
     if (editTarget) {
-      // update existing
-      const colName = editTarget.kind === "res" ? "reservations" : "stock";
-      const ref = doc(db, colName, editTarget.id);
+      const col = editTarget.kind === "res" ? "reservations" : "stock";
+      const ref = doc(db, col, editTarget.id);
 
-      const payload = {
-        brand, model, qty,
-        updatedAt: serverTimestamp()
-      };
-
+      const payload = { brand, model, qty, updatedAt: serverTimestamp() };
       if (editTarget.kind === "res") {
         payload.client = client || "-";
         payload.status = "RÉSERVÉ";
       }
-
       await updateDoc(ref, payload);
     } else {
-      // create new
       if (mode === "res") {
-        if (!client) {
-          alert("Client requis pour une réservation.");
-          return;
-        }
+        if (!client) return alert("Client requis pour une réservation.");
         await addDoc(collection(db, "reservations"), {
-          brand, model, qty,
-          client,
+          brand, model, qty, client,
           status: "RÉSERVÉ",
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser?.uid || null
@@ -249,55 +191,43 @@ saveBtn.addEventListener("click", async () => {
         });
       }
     }
-
-    closeModalFn();
-  } catch (err) {
-    console.error(err);
+    closeDialog();
+  } catch (e) {
+    console.error(e);
     alert("Erreur lors de l'enregistrement.");
   }
 });
 
-function handleTableClick(e) {
-  const btn = e.target.closest("button[data-action]");
-  if (!btn) return;
+function onTableClick(e) {
+  const b = e.target.closest("button[data-action]");
+  if (!b) return;
+  const action = b.dataset.action;
+  const kind = b.dataset.kind; // stock|res
+  const id = b.dataset.id;
 
-  const action = btn.dataset.action;
-  const kind = btn.dataset.kind;       // stock | res
-  const id = btn.dataset.id;
-
-  const list = (kind === "res") ? rowsRes : rowsStock;
-  const row = list.find(r => r.id === id);
+  const list = kind === "res" ? rowsRes : rowsStock;
+  const row = list.find(x => x.id === id);
   if (!row) return;
 
-  if (action === "edit") {
-    openModal({
-      title: "Modifier",
-      sub: kind === "res" ? "Réservation" : "Stock",
-      kind,
-      row
-    });
-  }
+  if (action === "edit") openDialog(kind, row);
 
   if (action === "del") {
-    const ok = confirm("Supprimer cette ligne ?");
-    if (!ok) return;
-    const colName = kind === "res" ? "reservations" : "stock";
-    deleteDoc(doc(db, colName, id)).catch((err) => {
+    if (!confirm("Supprimer cette ligne ?")) return;
+    const col = kind === "res" ? "reservations" : "stock";
+    deleteDoc(doc(db, col, id)).catch(err => {
       console.error(err);
       alert("Erreur lors de la suppression.");
     });
   }
 }
-
-stockTbody.addEventListener("click", handleTableClick);
-resTbody.addEventListener("click", handleTableClick);
+stockTbody.addEventListener("click", onTableClick);
+resTbody.addEventListener("click", onTableClick);
 
 logoutBtn?.addEventListener("click", async () => {
   await signOut(auth);
   window.location.href = "pdm-staff.html";
 });
 
-// Auth guard (simple)
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     stopListeners();
