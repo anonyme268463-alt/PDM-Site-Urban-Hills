@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PDM Admin - Gestion</title>
-  <link rel="icon" href="./favicon.png" />
-  <link rel="stylesheet" href="./app.css" />
+  <title>PDM Admin — Gestion</title>
+  <link rel="stylesheet" href="app.css" />
 </head>
 
 <body>
@@ -13,67 +12,66 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-title">PDM ADMIN</div>
-        <div class="brand-sub">Urban Hills</div>
+        <div class="title">PDM ADMIN</div>
+        <div class="subtitle">Urban Hills</div>
       </div>
 
       <nav class="nav">
-        <a class="nav-item" href="./dashboard.html">Dashboard</a>
-        <a class="nav-item" href="./clients.html">Clients</a>
-        <a class="nav-item" href="./stock.html">Stock</a>
-        <a class="nav-item" href="./ventes.html">Ventes</a>
-        <a class="nav-item" href="./vehicles.html">Véhicules</a>
-        <a class="nav-item" href="./partenariats.html">Partenaires</a>
-        <a class="nav-item" href="./compta.html">Comptabilité</a>
-        <a class="nav-item" href="./catalogue.html">Catalogue</a>
-        <a class="nav-item active" href="./gestion.html">Gestion</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="clients.html">Clients</a>
+        <a href="stock.html">Stock</a>
+        <a href="ventes.html">Ventes</a>
+        <a href="vehicles.html">Véhicules</a>
+        <a href="partenariats.html">Partenaires</a>
+        <a href="compta.html">Comptabilité</a>
+        <a href="catalogue.html">Catalogue</a>
+        <a class="active" href="gestion.html">Gestion</a>
       </nav>
 
-      <button class="btn btn-gold btn-logout" id="btnLogout">Déconnexion</button>
+      <div class="logout">
+        <button id="logoutBtn" class="btn-logout">Déconnexion</button>
+      </div>
     </aside>
 
     <!-- MAIN -->
     <main class="main">
-      <header class="page-header">
-        <div>
-          <h1 class="page-title">Gestion</h1>
-          <div class="page-subtitle">Admin-only — utilisateurs & paramètres</div>
-        </div>
-      </header>
+      <div class="page">
+        <h1>Gestion</h1>
+        <p class="sub">Admin-only — utilisateurs &amp; paramètres</p>
 
-      <!-- TOP BAR -->
-      <section class="card card-pad">
-        <div class="row gap">
-          <input id="currentUserEmail" class="input" type="text" readonly value="—" />
-          <button id="btnRefresh" class="btn">Rafraîchir</button>
-          <button id="btnOpenCreate" class="btn btn-gold">+ Créer un utilisateur</button>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat">
-            <div class="stat-label">Total users</div>
-            <div class="stat-value" id="statTotal">0</div>
+        <!-- TOP CARD -->
+        <section class="card pad">
+          <div class="toolbar">
+            <input id="searchInput" class="input" placeholder="Rechercher par email, nom, UID..." />
+            <button id="refreshBtn" class="btn">Rafraîchir</button>
+            <button id="openCreateBtn" class="btn btn-gold">+ Créer un utilisateur</button>
           </div>
-          <div class="stat">
-            <div class="stat-label">Admins</div>
-            <div class="stat-value" id="statAdmins">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Staff</div>
-            <div class="stat-value" id="statStaff">0</div>
-          </div>
-        </div>
-      </section>
 
-      <!-- USERS TABLE -->
-      <section class="card card-pad">
-        <div class="card-titleline">
-          <div class="card-kicker">UTILISATEURS — COLLECTION FIRESTORE : <span class="gold">USERS</span></div>
-          <input id="search" class="input input-sm" placeholder="Rechercher (email, nom, uid)..." />
-        </div>
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Total users</div>
+              <div id="statTotal" class="value">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Admins</div>
+              <div id="statAdmins" class="value">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Staff</div>
+              <div id="statStaff" class="value">0</div>
+            </div>
+          </div>
+        </section>
 
-        <div class="table-wrap">
-          <table class="table">
+        <!-- TABLE CARD -->
+        <section class="card table-wrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+            <div style="font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px; opacity:.85;">
+              Utilisateurs — collection Firestore : <span style="color:var(--gold);">users</span>
+            </div>
+          </div>
+
+          <table>
             <thead>
               <tr>
                 <th>Email</th>
@@ -81,70 +79,71 @@
                 <th>Rôle</th>
                 <th>Statut</th>
                 <th>UID</th>
-                <th class="right">Actions</th>
+                <th style="text-align:right;">Actions</th>
               </tr>
             </thead>
-            <tbody id="tbodyUsers">
-              <tr><td colspan="6" class="muted">CHARGEMENT...</td></tr>
+            <tbody id="usersTbody">
+              <tr><td colspan="6" style="opacity:.7;">CHARGEMENT...</td></tr>
             </tbody>
           </table>
-        </div>
 
-        <div class="note muted">
-          ⚠️ Cette page ne crée pas les comptes Auth (Firebase ne permet pas “lister/créer” des users Auth côté client).
-          Tu crées le compte dans Firebase Console → Auth, puis tu mets/édites sa fiche dans <b>users/{uid}</b>.
-        </div>
-      </section>
+          <div style="margin-top:12px;opacity:.75;font-size:12px;">
+            ⚠ Cette page ne crée pas les comptes Auth (Firebase ne permet pas “lister/créer” des users Auth côté client).
+            Tu crées le compte dans Firebase Console → <b>Auth</b>, puis tu mets/édites sa fiche dans <b>users/{uid}</b>.
+          </div>
+        </section>
+      </div>
     </main>
   </div>
 
   <!-- MODAL -->
-  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div id="userModalBackdrop" class="modal-backdrop">
     <div class="modal">
       <div class="modal-head">
-        <div class="modal-title" id="modalTitle">Utilisateur</div>
-        <button class="btn btn-icon" id="modalClose" aria-label="Fermer">✕</button>
+        <div id="modalTitle" class="modal-title">Utilisateur</div>
+        <button id="closeModalBtn" class="modal-close">×</button>
       </div>
 
       <div class="modal-body">
-        <div class="grid2">
-          <div>
-            <label class="label">UID</label>
-            <input class="input" id="mUid" placeholder="uid firebase auth" />
+        <div class="form-grid">
+          <div class="full">
+            <label for="f_uid">UID</label>
+            <input id="f_uid" class="input" placeholder="uid firebase auth" />
           </div>
-          <div>
-            <label class="label">Email (optionnel)</label>
-            <input class="input" id="mEmail" placeholder="ex: pdm-staff@pdm.local" />
+
+          <div class="full">
+            <label for="f_email">Email (optionnel)</label>
+            <input id="f_email" class="input" placeholder="ex: pdm-staff@pdm.local" />
           </div>
-          <div>
-            <label class="label">Nom</label>
-            <input class="input" id="mName" placeholder="Ex: PDG - Hundo" />
+
+          <div class="full">
+            <label for="f_name">Nom</label>
+            <input id="f_name" class="input" placeholder="Ex: PDG - Hundo" />
           </div>
+
           <div>
-            <label class="label">Rôle</label>
-            <select class="input" id="mRole">
+            <label for="f_role">Rôle</label>
+            <select id="f_role">
               <option value="admin">admin</option>
               <option value="staff">staff</option>
             </select>
           </div>
-        </div>
 
-        <div class="row gap">
-          <label class="chk">
-            <input type="checkbox" id="mActive" />
-            <span>Actif</span>
-          </label>
+          <div class="checkbox" style="margin-top:22px;">
+            <input id="f_active" type="checkbox" />
+            <label for="f_active" style="margin:0;">Actif</label>
+          </div>
         </div>
       </div>
 
       <div class="modal-foot">
-        <button class="btn" id="modalCancel">Annuler</button>
-        <button class="btn btn-gold" id="modalSave">Enregistrer</button>
+        <button id="cancelBtn" class="btn btn-muted">Annuler</button>
+        <button id="saveBtn" class="btn btn-gold">Enregistrer</button>
       </div>
     </div>
   </div>
 
-  <!-- IMPORTANT: module -->
-  <script type="module" src="./gestion.js"></script>
+  <!-- IMPORTANT: module, sinon import casse -->
+  <script type="module" src="gestion.js"></script>
 </body>
 </html>
