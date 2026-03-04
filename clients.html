@@ -30,8 +30,9 @@
   <main class="content">
     <h1>Gestion Clients</h1>
 
-    <div class="card" style="margin-bottom:14px;">
-      <input id="search" type="text" placeholder="Rechercher par nom ou telephone">
+    <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center;">
+      <input id="search" type="text" placeholder="Rechercher par nom ou telephone" style="flex:1;">
+      <button id="addClientBtn" class="btn btn-gold">+ Client</button>
     </div>
 
     <table class="table">
@@ -56,6 +57,7 @@
 
 </div>
 
+<!-- Modal fiche client (existant) -->
 <div id="clientModal" class="modal hidden">
   <div class="modal-content">
     <div class="modal-header">
@@ -97,6 +99,61 @@
       </tbody>
     </table>
 
+  </div>
+</div>
+
+<!-- Modal ajout client (NOUVEAU) -->
+<div id="addClientModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">Ajouter un client</div>
+      <div class="close" id="addClientClose">X</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div>
+          <div style="margin-bottom:6px; opacity:.85;">Nom *</div>
+          <input id="cName" type="text" placeholder="Ex: Antonio Moretti">
+        </div>
+        <div>
+          <div style="margin-bottom:6px; opacity:.85;">Téléphone</div>
+          <input id="cPhone" type="text" placeholder="Ex: (0)896055">
+        </div>
+
+        <div>
+          <div style="margin-bottom:6px; opacity:.85;">Permis</div>
+          <select id="cLicense">
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+        </div>
+
+        <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+          <label style="display:flex; gap:8px; align-items:center;">
+            <input id="cCar" type="checkbox">
+            <span>Voiture</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:center;">
+            <input id="cMoto" type="checkbox">
+            <span>Moto</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:center;">
+            <input id="cTruck" type="checkbox">
+            <span>Camion</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+        <button id="cCancel" class="btn">Annuler</button>
+        <button id="cSave" class="btn btn-gold">Enregistrer</button>
+      </div>
+
+      <div id="cError" style="margin-top:10px; color:#ff9b9b; display:none;"></div>
+    </div>
   </div>
 </div>
 
