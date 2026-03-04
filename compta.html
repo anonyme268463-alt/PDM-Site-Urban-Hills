@@ -1,165 +1,274 @@
-<!-- compta.html -->
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDM Admin — Comptabilité</title>
-  <link rel="icon" href="favicon.png" />
+
   <link rel="stylesheet" href="app.css" />
 
   <style>
-    dialog.pdm-dialog{border:0;padding:0;border-radius:16px;max-width:min(820px,92vw);width:820px;background:#0b0d13;color:#e9eefc;box-shadow:0 30px 90px rgba(0,0,0,.55)}
-    dialog.pdm-dialog::backdrop{background:rgba(0,0,0,.55)}
-    .d-head{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
-    .d-title{font-size:18px;font-weight:800}
-    .d-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
-    .d-body{padding:14px 18px 18px}
-    .d-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .d-grid .full{grid-column:1/-1}
-    .d-field span{display:block;font-size:12px;opacity:.8;margin:0 0 6px 2px}
-    .d-field input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(18,24,38,.75);color:#fff;outline:none}
-    .d-field input::placeholder{color:rgba(255,255,255,.45)}
-    .d-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
-    .d-btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
-    .d-btn.gold{border-color:rgba(224,183,77,.35);background:linear-gradient(180deg,#f2d37a,#d6a83a);color:#111;font-weight:800}
-    @media (max-width:760px){ .d-grid{grid-template-columns:1fr} }
+    /* Print = export PDF via "Enregistrer en PDF" */
+    @media print {
+      .sidebar, .top-actions, .no-print { display:none !important; }
+      body { background:#fff !important; }
+      .main { padding: 0 !important; }
+      .card, .table-wrap { box-shadow:none !important; border: 1px solid #ddd !important; }
+      .table th, .table td { color:#000 !important; }
+      h1, h2, h3, p, span, div { color:#000 !important; }
+    }
+
+    /* petit layout spécifique compta sans casser ton body global */
+    .compta-grid {
+      display: grid;
+      grid-template-columns: 1.45fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 1100px){
+      .compta-grid { grid-template-columns: 1fr; }
+    }
+    .filters-row{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    }
+    .filters-row .input { min-width: 240px; }
+    .filters-row .date { min-width: 170px; }
+    .kpi-row{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (max-width: 1400px){
+      .kpi-row{ grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+    }
+    @media (max-width: 800px){
+      .kpi-row{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+    }
+    .kpi .label{ opacity:.8; text-transform:uppercase; letter-spacing:.14em; font-size:.72rem; }
+    .kpi .value{ font-size:1.7rem; font-weight:800; margin-top:6px; color: var(--gold, #d6b25e); }
+
+    .split-title{
+      display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    .muted{ opacity:.75; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      font-size: .88rem;
+    }
+    .table-actions{ display:flex; gap:8px; justify-content:flex-end; }
+    .small{ font-size:.9rem; }
   </style>
 </head>
 
-<body class="pdm">
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sb-brand">
-        <div class="sb-title">PDM ADMIN</div>
-        <div class="sb-sub">Urban Hills</div>
+<body>
+  <!-- Sidebar (tu gardes exactement le même pattern que tes autres pages) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-title">PDM ADMIN</div>
+      <div class="brand-sub">Urban Hills</div>
+    </div>
+
+    <nav class="nav">
+      <a class="nav-item" href="dashboard.html">Dashboard</a>
+      <a class="nav-item" href="clients.html">Clients</a>
+      <a class="nav-item" href="stock.html">Stock</a>
+      <a class="nav-item" href="ventes.html">Ventes</a>
+      <a class="nav-item" href="vehicles.html">Véhicules</a>
+      <a class="nav-item" href="partenariats.html">Partenaires</a>
+      <a class="nav-item active" href="compta.html">Comptabilité</a>
+      <a class="nav-item" href="catalogue.html">Catalogue</a>
+      <a class="nav-item" href="gestion.html">Gestion</a>
+    </nav>
+
+    <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="page-header">
+      <h1>Comptabilité</h1>
+      <p class="muted">Source : ventes (transactions) + opérations manuelles (cashbook)</p>
+    </header>
+
+    <section class="card top-actions no-print">
+      <div class="filters-row">
+        <input id="search" class="input" placeholder="Rechercher (client, modèle, vendeur)..." />
+
+        <button id="btnThisWeek" class="btn">Semaine en cours</button>
+
+        <input id="dateStart" class="input date" type="date" />
+        <input id="dateEnd" class="input date" type="date" />
+
+        <button id="btnApply" class="btn">Appliquer</button>
+        <button id="btnRefresh" class="btn">Rafraîchir</button>
+
+        <div style="flex:1"></div>
+
+        <button id="btnAddCash" class="btn btn-gold">+ Dépense / Gain</button>
+        <button id="btnPdf" class="btn">Exporter PDF</button>
       </div>
 
-      <nav class="sb-nav">
-        <a class="sb-link" href="dashboard.html">Dashboard</a>
-        <a class="sb-link" href="clients.html">Clients</a>
-        <a class="sb-link" href="stock.html">Stock</a>
-        <a class="sb-link" href="ventes.html">Ventes</a>
-        <a class="sb-link" href="vehicles.html">Véhicules</a>
-        <a class="sb-link" href="partenariats.html">Partenaires</a>
-        <a class="sb-link active" href="compta.html">Comptabilité</a>
-        <a class="sb-link" href="catalogue.html">Catalogue</a>
-        <a class="sb-link" href="gestion.html">Gestion</a>
-      </nav>
-
-      <button class="btn btn-gold sb-logout" id="logoutBtn" type="button">Déconnexion</button>
-    </aside>
-
-    <main class="main">
-      <div class="topbar">
-        <div>
-          <div class="topbar-title">Comptabilité</div>
-          <div class="topbar-sub">Source : Firestore (transactions)</div>
+      <div class="kpi-row">
+        <div class="card kpi">
+          <div class="label">CA total (ventes)</div>
+          <div id="kpiCA" class="value">$0</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">Profit total (ventes)</div>
+          <div id="kpiProfit" class="value">$0</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">Nombre de ventes</div>
+          <div id="kpiCount" class="value">0</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">Dépenses (manuel)</div>
+          <div id="kpiExpense" class="value">$0</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">Gains autres (manuel)</div>
+          <div id="kpiOther" class="value">$0</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">Résultat net (profit + gains - dépenses)</div>
+          <div id="kpiNet" class="value">$0</div>
         </div>
       </div>
+    </section>
 
-      <section class="page">
-        <div class="panel">
-          <div class="toolbar">
-            <div class="search">
-              <input id="searchInput" class="input" type="search" placeholder="Rechercher (client, modèle, vendeur)..." autocomplete="off" />
+    <section class="compta-grid">
+      <!-- Colonne gauche -->
+      <div>
+        <section class="card table-wrap">
+          <div class="split-title">
+            <div>
+              <h3>Transactions — Ventes (auto)</h3>
+              <div id="rangeLabel" class="muted small">—</div>
             </div>
-            <div class="toolbar-actions">
-              <button id="refreshBtn" class="btn" type="button">Rafraîchir</button>
-              <button id="addBtn" class="btn btn-gold" type="button">+ Transaction</button>
-            </div>
+            <div class="pill"><span>Collection :</span><b>transactions</b></div>
           </div>
 
-          <div class="stats">
-            <div class="stat">
-              <div class="stat-label">CA total</div>
-              <div class="stat-value" id="statCA">—</div>
+          <div class="table-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Client</th>
+                  <th>Modèle</th>
+                  <th>Sell</th>
+                  <th>Buy</th>
+                  <th>Profit</th>
+                  <th>Vendeur</th>
+                </tr>
+              </thead>
+              <tbody id="txBody">
+                <tr><td colspan="7">Chargement...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card table-wrap" style="margin-top:16px;">
+          <div class="split-title">
+            <div>
+              <h3>Opérations manuelles</h3>
+              <div class="muted small">Uniquement dépenses + gains autres que les ventes</div>
             </div>
-            <div class="stat">
-              <div class="stat-label">Profit total</div>
-              <div class="stat-value" id="statProfit">—</div>
-            </div>
-            <div class="stat">
-              <div class="stat-label">Nombre</div>
-              <div class="stat-value" id="statCount">—</div>
-            </div>
+            <div class="pill"><span>Collection :</span><b>cashbook</b></div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Libellé</th>
+                  <th>Montant</th>
+                  <th class="no-print">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cashBody">
+                <tr><td colspan="5">Chargement...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Colonne droite -->
+      <aside class="card table-wrap">
+        <div class="split-title">
+          <div>
+            <h3>Salaires vendeurs (commissions)</h3>
+            <div class="muted small">Selon <b>users.grade</b> : Vendeur 10% • Co-PDG 12% • PDG 5% sur tout</div>
           </div>
         </div>
 
-        <div class="grid-1">
-          <div class="card">
-            <div class="card-head">
-              <div>
-                <div class="card-title">Transactions</div>
-                <div class="card-sub">Achat/Vente (buyPrice / sellPrice)</div>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Client</th>
-                    <th>Modèle</th>
-                    <th>BUY</th>
-                    <th>SELL</th>
-                    <th>PROFIT</th>
-                    <th>Vendeur</th>
-                    <th class="th-actions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="txTable">
-                  <tr><td colspan="8" class="muted">Chargement…</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div class="pill" style="margin-bottom:10px;">
+          <span>Période :</span> <b id="payPeriod">—</b>
         </div>
-      </section>
-    </main>
+
+        <div class="table-scroll">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Grade</th>
+                <th>Ventes</th>
+                <th>Commission</th>
+                <th>Salaire</th>
+              </tr>
+            </thead>
+            <tbody id="payBody">
+              <tr><td colspan="5">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="muted small" style="margin-top:10px;">
+          📌 Le PDG est calculé sur <b>toutes les ventes</b> de la période filtrée (5%).
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- Modal ajout cashbook -->
+  <div id="cashModal" class="modal hidden">
+    <div class="modal-content card">
+      <div class="modal-head">
+        <h3>Ajouter une opération</h3>
+        <button id="closeCashModal" class="btn">×</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="label">Type</label>
+        <select id="cashType" class="input">
+          <option value="expense">Dépense</option>
+          <option value="income">Gain (autre que ventes)</option>
+        </select>
+
+        <label class="label">Libellé</label>
+        <input id="cashLabel" class="input" placeholder="Ex: Loyer, Réparation, Sponsor..." />
+
+        <label class="label">Montant</label>
+        <input id="cashAmount" class="input" type="number" step="1" placeholder="Ex: 25000" />
+
+        <label class="label">Date</label>
+        <input id="cashDate" class="input" type="date" />
+
+        <div style="grid-column:1/-1; display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+          <button id="cancelCash" class="btn">Annuler</button>
+          <button id="saveCash" class="btn btn-gold">Enregistrer</button>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <dialog id="txDialog" class="pdm-dialog">
-    <div class="d-head">
-      <div class="d-title" id="dTitle">Ajouter une transaction</div>
-      <button class="d-close" id="dClose" type="button">✕</button>
-    </div>
-
-    <div class="d-body">
-      <div class="d-grid">
-        <label class="d-field">
-          <span>Client</span>
-          <input id="dClient" type="text" placeholder="Nom du client" />
-        </label>
-
-        <label class="d-field">
-          <span>Modèle (nom complet)</span>
-          <input id="dModel" type="text" placeholder="Brioso R/A" />
-        </label>
-
-        <label class="d-field">
-          <span>BUY (buyPrice)</span>
-          <input id="dBuy" type="number" min="0" step="1" placeholder="10000" />
-        </label>
-
-        <label class="d-field">
-          <span>SELL (sellPrice)</span>
-          <input id="dSell" type="number" min="0" step="1" placeholder="20000" />
-        </label>
-
-        <label class="d-field full">
-          <span>Date (optionnel)</span>
-          <input id="dDate" type="date" />
-        </label>
-      </div>
-    </div>
-
-    <div class="d-foot">
-      <button class="d-btn" id="dCancel" type="button">Annuler</button>
-      <button class="d-btn gold" id="dSave" type="button">Enregistrer</button>
-    </div>
-  </dialog>
 
   <script type="module" src="compta.js"></script>
 </body>
