@@ -1,10 +1,16 @@
 import { db, auth } from "./config.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
 const tbody = document.getElementById("clientsTable");
 const search = document.getElementById("search");
 
+// Fiche client (existant)
 const modal = document.getElementById("clientModal");
 const closeModal = document.getElementById("closeModal");
 
@@ -13,6 +19,21 @@ const mTotal = document.getElementById("mTotal");
 const mProfit = document.getElementById("mProfit");
 const mCount = document.getElementById("mCount");
 const mSales = document.getElementById("mSales");
+
+// Ajout client (nouveau)
+const addClientBtn = document.getElementById("addClientBtn");
+const addClientModal = document.getElementById("addClientModal");
+const addClientClose = document.getElementById("addClientClose");
+
+const cName = document.getElementById("cName");
+const cPhone = document.getElementById("cPhone");
+const cLicense = document.getElementById("cLicense");
+const cCar = document.getElementById("cCar");
+const cMoto = document.getElementById("cMoto");
+const cTruck = document.getElementById("cTruck");
+const cSave = document.getElementById("cSave");
+const cCancel = document.getElementById("cCancel");
+const cError = document.getElementById("cError");
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
@@ -153,14 +174,91 @@ function openClient(clientId) {
   modal.classList.remove("hidden");
 }
 
-function close() {
+function closeClientModal() {
   modal.classList.add("hidden");
 }
 
-if (closeModal) closeModal.addEventListener("click", close);
-if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+if (closeModal) closeModal.addEventListener("click", closeClientModal);
+if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeClientModal(); });
 
 if (search) search.addEventListener("input", render);
 
-load();
+/* ---------- AJOUT CLIENT ---------- */
 
+function showErr(msg) {
+  if (!cError) return;
+  cError.textContent = msg;
+  cError.style.display = msg ? "block" : "none";
+}
+
+function resetAddForm() {
+  if (cName) cName.value = "";
+  if (cPhone) cPhone.value = "";
+  if (cLicense) cLicense.value = "Oui";
+  if (cCar) cCar.checked = false;
+  if (cMoto) cMoto.checked = false;
+  if (cTruck) cTruck.checked = false;
+  showErr("");
+}
+
+function openAddClient() {
+  resetAddForm();
+  addClientModal?.classList.remove("hidden");
+  setTimeout(() => cName?.focus(), 50);
+}
+
+function closeAddClient() {
+  addClientModal?.classList.add("hidden");
+}
+
+if (addClientBtn) addClientBtn.addEventListener("click", openAddClient);
+if (addClientClose) addClientClose.addEventListener("click", closeAddClient);
+if (cCancel) cCancel.addEventListener("click", closeAddClient);
+if (addClientModal) {
+  addClientModal.addEventListener("click", (e) => {
+    if (e.target === addClientModal) closeAddClient();
+  });
+}
+
+if (cSave) {
+  cSave.addEventListener("click", async () => {
+    try {
+      showErr("");
+
+      const name = (cName?.value || "").trim();
+      const phone = (cPhone?.value || "").trim();
+
+      if (!name) {
+        showErr("Le nom est obligatoire.");
+        return;
+      }
+
+      cSave.disabled = true;
+      cSave.textContent = "Enregistrement...";
+
+      await addDoc(collection(db, "clients"), {
+        name,
+        phone,
+        license: cLicense?.value || "Oui", // "Oui"/"Non" comme ton affichage
+        car: !!cCar?.checked,
+        moto: !!cMoto?.checked,
+        truck: !!cTruck?.checked,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      closeAddClient();
+      await load();
+    } catch (e) {
+      console.error(e);
+      showErr("Erreur lors de l'ajout (voir console).");
+    } finally {
+      if (cSave) {
+        cSave.disabled = false;
+        cSave.textContent = "Enregistrer";
+      }
+    }
+  });
+}
+
+load();
