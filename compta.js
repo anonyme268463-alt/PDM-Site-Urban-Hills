@@ -1,546 +1,484 @@
-import { auth, db, Timestamp } from "./config.js";
+import { auth, db } from "./config.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  collection, getDocs, addDoc, deleteDoc, doc,
-  query, where, orderBy
-} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import { money, esc, fmtDateFR } from "./common.js";
+  collection, getDocs, query, where, orderBy,
+  addDoc, deleteDoc, doc, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/**
- * Collections:
- * - transactions : ventes (AUTO)
- * - cashbook     : dépenses + gains hors ventes (MANUEL)
- * - users        : { name, grade: "Vendeur"|"Co-PDG"|"PDG", ... }
- */
-
+/* ------------------------- Helpers ------------------------- */
 const $ = (id) => document.getElementById(id);
 
-const els = {
-  q: $("q"),
-  dateFrom: $("dateFrom"),
-  dateTo: $("dateTo"),
-  btnWeek: $("btnWeek"),
-  btnApply: $("btnApply"),
-  btnRefresh: $("btnRefresh"),
-  btnAddCash: $("btnAddCash"),
-  btnPdf: $("btnPdf"),
-  btnLogout: $("btnLogout"),
+function money(n) {
+  const v = Number(n || 0);
+  return v.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
 
-  kpiSales: $("kpiSales"),
-  kpiProfit: $("kpiProfit"),
-  kpiCount: $("kpiCount"),
-  kpiExpenses: $("kpiExpenses"),
-  kpiOtherIncome: $("kpiOtherIncome"),
-  kpiNet: $("kpiNet"),
+function toDate(tsOrDate) {
+  if (!tsOrDate) return null;
+  // Firestore Timestamp
+  if (typeof tsOrDate.toDate === "function") return tsOrDate.toDate();
+  // JS Date
+  if (tsOrDate instanceof Date) return tsOrDate;
+  // string/number
+  const d = new Date(tsOrDate);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
-  txBody: $("txBody"),
-  cashBody: $("cashBody"),
-  salaryBody: $("salaryBody"),
-  periodPill: $("periodPill"),
-
-  modalCash: $("modalCash"),
-  cashClose: $("cashClose"),
-  cashCancel: $("cashCancel"),
-  cashSave: $("cashSave"),
-  cashDate: $("cashDate"),
-  cashType: $("cashType"),
-  cashReason: $("cashReason"),
-  cashAmount: $("cashAmount"),
-
-  pdfRoot: $("pdfRoot"),
-};
+function fmtDate(d) {
+  if (!d) return "—";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = d.getFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
 
 function startOfDay(d) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
+
 function endOfDay(d) {
   const x = new Date(d);
   x.setHours(23, 59, 59, 999);
   return x;
 }
 
-/** Semaine = Lundi 00:00 -> Dimanche 23:59 (timezone local) */
-function getCurrentWeekRange() {
+// Lundi 00:00 -> Dimanche 23:59:59
+function currentWeekRange() {
   const now = new Date();
-  const day = (now.getDay() + 6) % 7; // 0=lundi, 6=dimanche
+  const day = (now.getDay() + 6) % 7; // lundi=0 ... dimanche=6
   const monday = new Date(now);
   monday.setDate(now.getDate() - day);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  return { from: startOfDay(monday), to: endOfDay(sunday) };
+  return [startOfDay(monday), endOfDay(sunday)];
 }
 
-function toDateInputValue(d) {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+function safeText(v) {
+  return (v === undefined || v === null || v === "") ? "—" : String(v);
 }
 
-function parseRangeFromUI() {
-  const df = els.dateFrom.value ? new Date(els.dateFrom.value) : null;
-  const dt = els.dateTo.value ? new Date(els.dateTo.value) : null;
-  if (!df || !dt) return null;
-  return { from: startOfDay(df), to: endOfDay(dt) };
+/* ------------------------- State ------------------------- */
+let rangeFrom = null;
+let rangeTo = null;
+let searchTerm = "";
+
+let cachedSales = [];     // transactions filtered
+let cachedCashbook = [];  // cashbook filtered
+let cachedUsers = [];     // users
+
+/* ------------------------- DOM refs ------------------------- */
+const salesTbody = $("salesTbody");
+const cashbookTbody = $("cashbookTbody");
+const salaryTbody = $("salaryTbody");
+
+const kpiRevenue = $("kpiRevenue");
+const kpiProfit = $("kpiProfit");
+const kpiCount = $("kpiCount");
+const kpiExpenses = $("kpiExpenses");
+const kpiOtherIncome = $("kpiOtherIncome");
+const kpiNet = $("kpiNet");
+const periodLabel = $("periodLabel");
+
+/* ------------------------- Modal ------------------------- */
+function openModal() {
+  const m = $("cashbookModal");
+  m.style.display = "block";
+  m.setAttribute("aria-hidden", "false");
+}
+function closeModal() {
+  const m = $("cashbookModal");
+  m.style.display = "none";
+  m.setAttribute("aria-hidden", "true");
 }
 
-function txDate(tx) {
-  const d = tx?.date || tx?.createdAt;
-  if (!d) return null;
-  // Firestore Timestamp
-  if (typeof d?.toDate === "function") return d.toDate();
-  // already Date
-  if (d instanceof Date) return d;
-  // string/number fallback
-  const parsed = new Date(d);
-  return isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function cashDate(op) {
-  const d = op?.date || op?.createdAt;
-  if (!d) return null;
-  if (typeof d?.toDate === "function") return d.toDate();
-  if (d instanceof Date) return d;
-  const parsed = new Date(d);
-  return isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function getSell(tx) {
-  const v = tx.sellPrice ?? tx.sell ?? tx.price ?? 0;
-  return Number(v) || 0;
-}
-function getBuy(tx) {
-  const v = tx.buyPrice ?? tx.buy ?? 0;
-  return Number(v) || 0;
-}
-function getProfit(tx) {
-  const explicit = tx.profit;
-  if (explicit != null && !isNaN(Number(explicit))) return Number(explicit);
-  const s = getSell(tx);
-  const b = getBuy(tx);
-  return (s && b) ? (s - b) : 0;
-}
-
-function getSellerKey(tx) {
-  return tx.sellerId || tx.sellerUID || tx.sellerUid || tx.seller || tx.sellerName || tx.importedSeller || "—";
-}
-
-function isSale(tx) {
-  const t = (tx.type || "").toLowerCase();
-  // on garde large : tout ce qui ressemble à une vente / sale / transaction de vente
-  if (t.includes("sale")) return true;
-  if (t.includes("vente")) return true;
-  // si pas de type, mais présence sellPrice/price + seller -> probablement vente
-  const hasMoney = (tx.sellPrice != null) || (tx.price != null);
-  const hasSeller = !!(tx.sellerId || tx.sellerName || tx.seller);
-  return hasMoney && hasSeller;
-}
-
-function gradeRate(grade) {
-  const g = (grade || "").toLowerCase();
-  if (g === "vendeur") return 0.10;
-  if (g === "co-pdg" || g === "copdg" || g === "co pdg") return 0.12;
-  if (g === "pdg") return 0.05;
-  return 0.10; // défaut safe
-}
-
-async function loadUsersMap() {
+/* ------------------------- Data loading ------------------------- */
+async function loadUsers() {
   const snap = await getDocs(collection(db, "users"));
-  const map = new Map();
-  snap.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-  return map;
+  cachedUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-function setPeriodPill(from, to) {
-  const label = `${fmtDateFR(from)} → ${fmtDateFR(to)}`;
-  els.periodPill.innerHTML = `<span class="dot"></span> Période : <b>${esc(label)}</b>`;
+function pickSaleDate(data) {
+  // On essaie d'abord "date" (logique métier), sinon createdAt
+  return toDate(data.date) || toDate(data.createdAt) || null;
 }
 
-function setLoading(tbody, cols) {
-  tbody.innerHTML = `<tr><td colspan="${cols}" style="padding:14px; color:rgba(255,255,255,.55);">Chargement...</td></tr>`;
+function computeSaleAmounts(data) {
+  const qty = Number(data.qty ?? 1) || 1;
+
+  const sell = Number(
+    data.sellPrice ?? data.price ?? data.sell ?? 0
+  ) || 0;
+
+  const buy = Number(
+    data.buyPrice ?? data.buy ?? 0
+  ) || 0;
+
+  // Profit : si champ "profit" existe, on le prend, sinon calc simple
+  const profit = Number(data.profit ?? ((sell - buy) * qty)) || 0;
+
+  return {
+    qty,
+    sellTotal: sell * qty,
+    buyTotal: buy * qty,
+    profit
+  };
 }
 
-function setEmpty(tbody, cols, msg = "Aucun résultat.") {
-  tbody.innerHTML = `<tr><td colspan="${cols}" style="padding:14px; color:rgba(255,255,255,.55);">${esc(msg)}</td></tr>`;
-}
+async function loadTransactionsInRange() {
+  // On ne dépend PAS d'une structure d'index compliquée :
+  // -> on lit et on filtre côté client (OK vu la taille actuelle),
+  // -> si tu veux, on optimisera ensuite avec des indexes (where date >= ...)
+  const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-/**
- * Queries (range)
- * -> pour éviter les soucis d’index, on fait simple:
- *    on filtre sur "createdAt" si possible, sinon on récupère et filtre en JS.
- */
-async function fetchTransactions(from, to) {
-  // tentative query sur createdAt (si le champ existe partout)
-  // sinon on récupère tout et filtre localement.
-  let rows = [];
+  cachedSales = all.filter(x => {
+    const d = pickSaleDate(x);
+    if (!d) return false;
+    if (rangeFrom && d < rangeFrom) return false;
+    if (rangeTo && d > rangeTo) return false;
 
-  try {
-    const qy = query(
-      collection(db, "transactions"),
-      where("createdAt", ">=", Timestamp.fromDate(from)),
-      where("createdAt", "<=", Timestamp.fromDate(to)),
-      orderBy("createdAt", "desc")
-    );
-    const snap = await getDocs(qy);
-    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
-    return rows;
-  } catch (e) {
-    // fallback : full scan + filtre local
-    const snap = await getDocs(collection(db, "transactions"));
-    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
-    return rows.filter((tx) => {
-      const d = txDate(tx);
-      return d && d >= from && d <= to;
-    }).sort((a, b) => (txDate(b)?.getTime() || 0) - (txDate(a)?.getTime() || 0));
-  }
-}
-
-async function fetchCashbook(from, to) {
-  let rows = [];
-  try {
-    const qy = query(
-      collection(db, "cashbook"),
-      where("date", ">=", Timestamp.fromDate(from)),
-      where("date", "<=", Timestamp.fromDate(to)),
-      orderBy("date", "desc")
-    );
-    const snap = await getDocs(qy);
-    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
-    return rows;
-  } catch (e) {
-    const snap = await getDocs(collection(db, "cashbook"));
-    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
-    return rows.filter((op) => {
-      const d = cashDate(op);
-      return d && d >= from && d <= to;
-    }).sort((a, b) => (cashDate(b)?.getTime() || 0) - (cashDate(a)?.getTime() || 0));
-  }
-}
-
-function applySearchFilter(list, q) {
-  const s = (q || "").trim().toLowerCase();
-  if (!s) return list;
-  return list.filter((x) => {
-    const bag = [
-      x.clientName, x.client, x.model, x.vehicle, x.brand,
-      x.sellerName, x.seller, x.importedSeller, x.detail, x.notes
-    ].filter(Boolean).join(" ").toLowerCase();
-    return bag.includes(s);
+    if (searchTerm) {
+      const blob = `${x.clientName || ""} ${x.client || ""} ${x.model || ""} ${x.vehicle || ""} ${x.sellerName || ""} ${x.importedSeller || ""}`.toLowerCase();
+      if (!blob.includes(searchTerm)) return false;
+    }
+    return true;
   });
 }
 
-function renderTransactions(txs) {
-  if (!txs.length) return setEmpty(els.txBody, 7);
+async function loadCashbookInRange() {
+  const snap = await getDocs(query(collection(db, "cashbook"), orderBy("date", "desc")));
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  els.txBody.innerHTML = txs.map((tx) => {
-    const d = txDate(tx);
-    const client = tx.clientName || tx.client || "—";
-    const model = tx.model || tx.vehicle || "—";
-    const sell = money(getSell(tx));
-    const buy = money(getBuy(tx));
-    const profit = money(getProfit(tx));
-    const seller = tx.sellerName || tx.seller || tx.importedSeller || tx.sellerId || "—";
+  cachedCashbook = all.filter(x => {
+    const d = toDate(x.date) || toDate(x.createdAt) || null;
+    if (!d) return false;
+    if (rangeFrom && d < rangeFrom) return false;
+    if (rangeTo && d > rangeTo) return false;
+
+    if (searchTerm) {
+      const blob = `${x.reason || ""} ${x.type || ""}`.toLowerCase();
+      if (!blob.includes(searchTerm)) return false;
+    }
+    return true;
+  });
+}
+
+/* ------------------------- Rendering ------------------------- */
+function renderSalesTable() {
+  if (!salesTbody) return;
+  if (!cachedSales.length) {
+    salesTbody.innerHTML = `<tr><td colspan="7">Aucune vente sur la période.</td></tr>`;
+    return;
+  }
+
+  salesTbody.innerHTML = cachedSales.map(s => {
+    const d = pickSaleDate(s);
+    const a = computeSaleAmounts(s);
+    const seller = s.sellerName || s.importedSeller || s.sellerEmail || "—";
+    const client = s.clientName || s.client || "—";
+    const model = s.model || s.vehicle || "—";
 
     return `
       <tr>
-        <td style="padding:12px;">${esc(d ? fmtDateFR(d) : "—")}</td>
-        <td style="padding:12px;">${esc(client)}</td>
-        <td style="padding:12px;">${esc(model)}</td>
-        <td style="padding:12px;">${esc(sell)}</td>
-        <td style="padding:12px;">${esc(buy)}</td>
-        <td style="padding:12px; color:rgba(246,210,107,.95); font-weight:800;">${esc(profit)}</td>
-        <td style="padding:12px;">${esc(seller)}</td>
+        <td>${fmtDate(d)}</td>
+        <td>${safeText(client)}</td>
+        <td>${safeText(model)}</td>
+        <td>${money(a.sellTotal)}</td>
+        <td>${money(a.buyTotal)}</td>
+        <td>${money(a.profit)}</td>
+        <td>${safeText(seller)}</td>
       </tr>
     `;
   }).join("");
 }
 
-function renderCashbook(ops) {
-  if (!ops.length) return setEmpty(els.cashBody, 5);
+function renderCashbookTable() {
+  if (!cashbookTbody) return;
+  if (!cachedCashbook.length) {
+    cashbookTbody.innerHTML = `<tr><td colspan="5">Aucune opération manuelle sur la période.</td></tr>`;
+    return;
+  }
 
-  els.cashBody.innerHTML = ops.map((op) => {
-    const d = cashDate(op);
-    const type = (op.type || "").toLowerCase() === "income" ? "Gain" : "Dépense";
-    const reason = op.reason || op.label || op.detail || "—";
-    const amount = money(Number(op.amount || 0));
-    const isIncome = (op.type || "").toLowerCase() === "income";
+  cashbookTbody.innerHTML = cachedCashbook.map(x => {
+    const d = toDate(x.date) || toDate(x.createdAt);
+    const type = x.type === "income" ? "Gain" : "Dépense";
+    const sign = x.type === "income" ? "+" : "−";
+    const amt = Number(x.amount || 0);
 
     return `
       <tr>
-        <td style="padding:12px;">${esc(d ? fmtDateFR(d) : "—")}</td>
-        <td style="padding:12px; font-weight:800; color:${isIncome ? "rgba(71,230,166,.95)" : "rgba(255,107,107,.95)"}">${esc(type)}</td>
-        <td style="padding:12px;">${esc(reason)}</td>
-        <td style="padding:12px; font-weight:800;">${esc(amount)}</td>
-        <td style="padding:12px;">
-          <button class="btn" data-del-cash="${esc(op.id)}">Supprimer</button>
+        <td>${fmtDate(d)}</td>
+        <td>${type}</td>
+        <td>${safeText(x.reason)}</td>
+        <td>${sign} ${money(amt)}</td>
+        <td>
+          <button class="btn btn-danger" data-delcb="${x.id}">Supprimer</button>
         </td>
       </tr>
     `;
   }).join("");
 
-  // delete handlers
-  els.cashBody.querySelectorAll("[data-del-cash]").forEach((btn) => {
+  cashbookTbody.querySelectorAll("[data-delcb]").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-del-cash");
+      const id = btn.getAttribute("data-delcb");
       if (!confirm("Supprimer cette opération ?")) return;
       await deleteDoc(doc(db, "cashbook", id));
-      await refresh();
+      await refreshAll();
     });
   });
 }
 
-function renderSalaries({ txs, usersMap, from, to }) {
-  // sales only
-  const sales = txs.filter(isSale);
+function renderKpisAndSalaries() {
+  // KPIs ventes
+  let revenue = 0;
+  let profit = 0;
 
-  // totals per seller (by uid if possible)
-  const bySeller = new Map();
+  // totals vendeurs (par sellerName/email/uid)
+  const sellerTotals = new Map(); // key -> { revenue, count }
 
-  for (const tx of sales) {
-    const sellerId = tx.sellerId || tx.sellerUID || tx.sellerUid || null;
-    const key = sellerId || (tx.sellerName || tx.seller || tx.importedSeller || "—");
-    const sell = getSell(tx);
+  for (const s of cachedSales) {
+    const a = computeSaleAmounts(s);
+    revenue += a.sellTotal;
+    profit += a.profit;
 
-    const prev = bySeller.get(key) || { key, sellerId, salesCount: 0, salesSum: 0 };
-    prev.salesCount += 1;
-    prev.salesSum += sell;
-    bySeller.set(key, prev);
+    const key =
+      s.sellerId ||
+      s.sellerUID ||
+      s.sellerName ||
+      s.importedSeller ||
+      s.sellerEmail ||
+      "unknown";
+
+    const cur = sellerTotals.get(key) || { revenue: 0, count: 0 };
+    cur.revenue += a.sellTotal;
+    cur.count += 1;
+    sellerTotals.set(key, cur);
   }
 
-  // build rows from users when possible
-  const rows = [];
-  for (const [key, v] of bySeller.entries()) {
-    let u = null;
-    if (v.sellerId && usersMap.has(v.sellerId)) u = usersMap.get(v.sellerId);
+  // KPIs cashbook
+  let expenses = 0;
+  let otherIncome = 0;
+  for (const x of cachedCashbook) {
+    const amt = Number(x.amount || 0);
+    if (x.type === "income") otherIncome += amt;
+    else expenses += amt;
+  }
 
-    const name = u?.name || u?.email || (typeof key === "string" ? key : "—");
-    const grade = u?.grade || "Vendeur";
-    const rate = gradeRate(grade);
-    const commission = v.salesSum * rate;
+  // Net
+  const net = profit + otherIncome - expenses;
+
+  kpiRevenue.textContent = money(revenue);
+  kpiProfit.textContent = money(profit);
+  kpiCount.textContent = String(cachedSales.length);
+  kpiExpenses.textContent = money(expenses);
+  kpiOtherIncome.textContent = money(otherIncome);
+  kpiNet.textContent = money(net);
+
+  // Salaires
+  // commission rates:
+  const rateByGrade = {
+    "Vendeur": 0.10,
+    "Co-PDG": 0.12,
+    "PDG": 0.05
+  };
+
+  // On prépare lignes par user:
+  const rows = [];
+
+  // Total ventes pour PDG (toutes ventes période)
+  const pdgPool = revenue * rateByGrade["PDG"];
+
+  for (const u of cachedUsers) {
+    const grade = u.grade || "Vendeur";
+    const name = u.name || u.email || u.id;
+
+    if (grade === "PDG") {
+      rows.push({
+        name,
+        grade,
+        ventes: cachedSales.length,
+        commission: "5% sur tout",
+        salaire: pdgPool
+      });
+      continue;
+    }
+
+    const key1 = u.id;      // doc id = uid
+    const key2 = u.email;
+    const key3 = u.name;
+
+    const tot =
+      sellerTotals.get(key1) ||
+      sellerTotals.get(key2) ||
+      sellerTotals.get(key3) ||
+      { revenue: 0, count: 0 };
+
+    const rate = rateByGrade[grade] ?? 0.10;
+    const pay = tot.revenue * rate;
 
     rows.push({
       name,
       grade,
-      salesCount: v.salesCount,
-      commissionRate: rate,
-      salary: commission,
-      sort: v.salesSum,
+      ventes: tot.count,
+      commission: `${Math.round(rate * 100)}%`,
+      salaire: pay
     });
   }
 
-  // PDG line (5% on all sales in period) based on users.grade === "PDG"
-  const totalSales = sales.reduce((acc, tx) => acc + getSell(tx), 0);
-  const pdgs = [...usersMap.values()].filter((u) => (u.grade || "").toLowerCase() === "pdg");
+  // tri : PDG en haut, puis Co-PDG, puis vendeurs, puis salaire desc
+  const gradeOrder = { "PDG": 0, "Co-PDG": 1, "Vendeur": 2 };
+  rows.sort((a, b) => {
+    const ga = gradeOrder[a.grade] ?? 9;
+    const gb = gradeOrder[b.grade] ?? 9;
+    if (ga !== gb) return ga - gb;
+    return (b.salaire || 0) - (a.salaire || 0);
+  });
 
-  for (const pdg of pdgs) {
-    rows.push({
-      name: pdg.name || pdg.email || "PDG",
-      grade: "PDG",
-      salesCount: sales.length,
-      commissionRate: 0.05,
-      salary: totalSales * 0.05,
-      sort: totalSales + 1e15, // always top
-      isPDG: true,
-    });
+  if (!rows.length) {
+    salaryTbody.innerHTML = `<tr><td colspan="5">Aucun utilisateur.</td></tr>`;
+    return;
   }
 
-  rows.sort((a, b) => (b.sort || 0) - (a.sort || 0));
-
-  if (!rows.length) return setEmpty(els.salaryBody, 5, "Aucun salaire à calculer sur cette période.");
-
-  els.salaryBody.innerHTML = rows.map((r) => `
+  salaryTbody.innerHTML = rows.map(r => `
     <tr>
-      <td style="padding:12px; font-weight:900;">${esc(r.name)}</td>
-      <td style="padding:12px;">${esc(r.grade)}</td>
-      <td style="padding:12px;">${esc(String(r.salesCount))}</td>
-      <td style="padding:12px;">${esc(Math.round((r.commissionRate || 0) * 100) + "%")}</td>
-      <td style="padding:12px; color:rgba(246,210,107,.95); font-weight:900;">${esc(money(r.salary))}</td>
+      <td>${safeText(r.name)}</td>
+      <td>${safeText(r.grade)}</td>
+      <td>${safeText(r.ventes)}</td>
+      <td>${safeText(r.commission)}</td>
+      <td>${money(r.salaire || 0)}</td>
     </tr>
   `).join("");
-
-  setPeriodPill(from, to);
 }
 
-function updateKPIs({ txs, ops }) {
-  const sales = txs.filter(isSale);
-  const totalSales = sales.reduce((acc, tx) => acc + getSell(tx), 0);
-  const totalProfit = sales.reduce((acc, tx) => acc + getProfit(tx), 0);
-  const count = sales.length;
-
-  const expenses = ops
-    .filter((x) => (x.type || "").toLowerCase() === "expense")
-    .reduce((acc, x) => acc + (Number(x.amount) || 0), 0);
-
-  const otherIncome = ops
-    .filter((x) => (x.type || "").toLowerCase() === "income")
-    .reduce((acc, x) => acc + (Number(x.amount) || 0), 0);
-
-  const net = totalProfit + otherIncome - expenses;
-
-  els.kpiSales.textContent = money(totalSales);
-  els.kpiProfit.textContent = money(totalProfit);
-  els.kpiCount.textContent = String(count);
-  els.kpiExpenses.textContent = money(expenses);
-  els.kpiOtherIncome.textContent = money(otherIncome);
-  els.kpiNet.textContent = money(net);
+function renderPeriodLabel() {
+  const fromTxt = rangeFrom ? fmtDate(rangeFrom) : "—";
+  const toTxt = rangeTo ? fmtDate(rangeTo) : "—";
+  periodLabel.textContent = `${fromTxt} → ${toTxt}`;
 }
 
-function openCashModal() {
-  els.cashDate.value = toDateInputValue(new Date());
-  els.cashType.value = "expense";
-  els.cashReason.value = "";
-  els.cashAmount.value = "";
-  els.modalCash.style.display = "flex";
-}
-function closeCashModal() {
-  els.modalCash.style.display = "none";
-}
+/* ------------------------- Actions ------------------------- */
+async function refreshAll() {
+  // sécurité DOM
+  if (!salesTbody || !cashbookTbody || !salaryTbody) return;
 
-async function exportPDF() {
-  const { jsPDF } = window.jspdf;
-  const target = els.pdfRoot;
+  renderPeriodLabel();
 
-  // petite pause pour fonts/layout
-  await new Promise((r) => setTimeout(r, 50));
+  salesTbody.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
+  cashbookTbody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
+  salaryTbody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
 
-  const canvas = await html2canvas(target, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: null,
-    scrollY: -window.scrollY,
-  });
-
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-
-  const imgW = pageW;
-  const imgH = (canvas.height * imgW) / canvas.width;
-
-  let y = 0;
-  let heightLeft = imgH;
-
-  pdf.addImage(imgData, "PNG", 0, y, imgW, imgH);
-  heightLeft -= pageH;
-
-  while (heightLeft > 0) {
-    pdf.addPage();
-    y = - (imgH - heightLeft);
-    pdf.addImage(imgData, "PNG", 0, y, imgW, imgH);
-    heightLeft -= pageH;
-  }
-
-  pdf.save(`PDM_Comptabilite_${new Date().toISOString().slice(0,10)}.pdf`);
-}
-
-let currentRange = null;
-
-async function refresh() {
-  const range = currentRange || getCurrentWeekRange();
-  const { from, to } = range;
-
-  setLoading(els.txBody, 7);
-  setLoading(els.cashBody, 5);
-  setLoading(els.salaryBody, 5);
-
-  const [usersMap, txsRaw, opsRaw] = await Promise.all([
-    loadUsersMap(),
-    fetchTransactions(from, to),
-    fetchCashbook(from, to),
+  await Promise.all([
+    loadUsers(),
+    loadTransactionsInRange(),
+    loadCashbookInRange()
   ]);
 
-  // search filter
-  const qtxt = els.q.value || "";
-  const txs = applySearchFilter(txsRaw, qtxt);
-  const ops = applySearchFilter(opsRaw, qtxt);
-
-  renderTransactions(txs);
-  renderCashbook(ops);
-  updateKPIs({ txs, ops });
-  renderSalaries({ txs, usersMap, from, to });
+  renderSalesTable();
+  renderCashbookTable();
+  renderKpisAndSalaries();
 }
 
-function wireUI() {
-  els.btnWeek.addEventListener("click", async () => {
-    const r = getCurrentWeekRange();
-    currentRange = r;
-    els.dateFrom.value = toDateInputValue(r.from);
-    els.dateTo.value = toDateInputValue(r.to);
-    await refresh();
+/* ------------------------- Boot ------------------------- */
+function bindUI() {
+  $("btnLogout")?.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "./index.html";
   });
 
-  els.btnApply.addEventListener("click", async () => {
-    const r = parseRangeFromUI();
-    if (!r) return alert("Choisis une date de début et une date de fin.");
-    currentRange = r;
-    await refresh();
+  $("searchInput")?.addEventListener("input", (e) => {
+    searchTerm = (e.target.value || "").trim().toLowerCase();
   });
 
-  els.btnRefresh.addEventListener("click", refresh);
+  $("btnRefresh")?.addEventListener("click", refreshAll);
 
-  els.q.addEventListener("input", () => {
-    // léger debounce
-    window.clearTimeout(window.__pdmQTimer);
-    window.__pdmQTimer = window.setTimeout(refresh, 200);
+  $("btnWeek")?.addEventListener("click", async () => {
+    const [a, b] = currentWeekRange();
+    rangeFrom = a;
+    rangeTo = b;
+
+    // set inputs
+    const df = $("dateFrom");
+    const dt = $("dateTo");
+    if (df) df.value = a.toISOString().slice(0, 10);
+    if (dt) dt.value = b.toISOString().slice(0, 10);
+
+    await refreshAll();
   });
 
-  els.btnAddCash.addEventListener("click", openCashModal);
-  els.cashClose.addEventListener("click", closeCashModal);
-  els.cashCancel.addEventListener("click", closeCashModal);
-  els.modalCash.addEventListener("click", (e) => {
-    if (e.target === els.modalCash) closeCashModal();
+  $("btnApplyRange")?.addEventListener("click", async () => {
+    const df = $("dateFrom")?.value;
+    const dt = $("dateTo")?.value;
+
+    rangeFrom = df ? startOfDay(new Date(df)) : null;
+    rangeTo = dt ? endOfDay(new Date(dt)) : null;
+
+    await refreshAll();
   });
 
-  els.cashSave.addEventListener("click", async () => {
-    const dateStr = els.cashDate.value;
-    const type = els.cashType.value;
-    const reason = els.cashReason.value.trim();
-    const amount = Number(els.cashAmount.value);
+  $("btnExportPdf")?.addEventListener("click", () => {
+    // Simple & efficace : impression -> "Enregistrer en PDF"
+    window.print();
+  });
+
+  $("btnAddCashbook")?.addEventListener("click", () => {
+    // default date = today
+    const today = new Date().toISOString().slice(0, 10);
+    if ($("cbDate")) $("cbDate").value = today;
+    if ($("cbType")) $("cbType").value = "expense";
+    if ($("cbReason")) $("cbReason").value = "";
+    if ($("cbAmount")) $("cbAmount").value = "";
+    openModal();
+  });
+
+  $("btnCloseModal")?.addEventListener("click", closeModal);
+  $("btnCancelModal")?.addEventListener("click", closeModal);
+
+  // click backdrop to close
+  document.querySelectorAll("[data-close='1']").forEach(el => {
+    el.addEventListener("click", closeModal);
+  });
+
+  $("btnSaveCashbook")?.addEventListener("click", async () => {
+    const dateStr = $("cbDate")?.value;
+    const type = $("cbType")?.value;
+    const reason = ($("cbReason")?.value || "").trim();
+    const amount = Number($("cbAmount")?.value || 0);
 
     if (!dateStr) return alert("Date obligatoire.");
     if (!reason) return alert("Libellé obligatoire.");
     if (!amount || amount <= 0) return alert("Montant invalide.");
 
-    const d = new Date(dateStr);
-    await addDoc(collection(db, "cashbook"), {
-      type, // "expense" | "income"
+    const date = new Date(dateStr);
+    const payload = {
+      type: type === "income" ? "income" : "expense",
       reason,
       amount,
-      date: Timestamp.fromDate(startOfDay(d)),
+      date: Timestamp.fromDate(startOfDay(date)),
       createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
+      updatedAt: Timestamp.now()
+    };
 
-    closeCashModal();
-    await refresh();
-  });
-
-  els.btnPdf.addEventListener("click", exportPDF);
-
-  els.btnLogout.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "index.html";
+    await addDoc(collection(db, "cashbook"), payload);
+    closeModal();
+    await refreshAll();
   });
 }
 
-function initDefaultWeekUI() {
-  const r = getCurrentWeekRange();
-  currentRange = r;
-  els.dateFrom.value = toDateInputValue(r.from);
-  els.dateTo.value = toDateInputValue(r.to);
-  setPeriodPill(r.from, r.to);
+function initDefaultRange() {
+  const [a, b] = currentWeekRange();
+  rangeFrom = a;
+  rangeTo = b;
+
+  const df = $("dateFrom");
+  const dt = $("dateTo");
+  if (df) df.value = a.toISOString().slice(0, 10);
+  if (dt) dt.value = b.toISOString().slice(0, 10);
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  initDefaultWeekUI();
-  wireUI();
-  await refresh();
+document.addEventListener("DOMContentLoaded", async () => {
+  bindUI();
+  initDefaultRange();
+  await refreshAll();
 });
