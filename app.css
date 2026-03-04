@@ -1,194 +1,198 @@
-/* =========================
-   PDM Admin — App CSS (Stable)
-   Works with .app/.layout wrappers + sidebar/main like Clients
-   ========================= */
+/* ============================================================
+   PDM ADMIN — APP.CSS (FUSION STABLE)
+   - Layout stable type Clients (sidebar + main)
+   - Compatible anciennes pages (.content, .table, .cards, etc.)
+   - Modal compatible: (A) .modal fullscreen + .modal-content
+                      (B) .modal-backdrop + .modal (dialog)
+   ============================================================ */
 
-/* ---- Reset / base ---- */
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
+/* ---- Tokens ---- */
+:root{
+  --bg:#07080c;
+
+  --panel: rgba(18, 20, 28, .78);
+  --panel2: rgba(10, 11, 16, .72);
+  --card: rgba(18, 20, 28, .72);
+  --card2: rgba(12, 14, 20, .62);
+
+  --stroke: rgba(255,255,255,.10);
+  --strokeSoft: rgba(255,255,255,.06);
+  --strokeGold: rgba(215,177,90,.25);
+
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.72);
+
+  --gold: #d7b15a;
+  --gold2:#f0d58a;
+
+  --danger: rgba(240, 80, 80, 1);
+  --success: rgba(60, 200, 120, 1);
+
+  --shadow: 0 14px 50px rgba(0,0,0,.45);
+
+  --r-xl: 22px;
+  --r-lg: 16px;
+  --r-md: 12px;
+}
+
+/* ---- Reset ---- */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-  color: rgba(255,255,255,.92);
+  color: var(--text);
   background:
     radial-gradient(1200px 700px at 20% 0%, rgba(255,215,120,.10), transparent 55%),
     radial-gradient(900px 600px at 70% 35%, rgba(60,120,255,.10), transparent 55%),
     radial-gradient(1200px 900px at 30% 90%, rgba(140,80,255,.10), transparent 55%),
-    #07080c;
-  overflow-x: hidden;
+    var(--bg);
+  overflow-x:hidden;
 }
+a{ color:inherit; text-decoration:none; }
 
-/* ---- Global tokens ---- */
-:root{
-  --gold: #d7b15a;
-  --gold2: #f0d58a;
-  --bg-card: rgba(18, 20, 28, .72);
-  --bg-card-2: rgba(12, 14, 20, .62);
-  --stroke: rgba(255,255,255,.10);
-  --stroke2: rgba(215,177,90,.25);
-  --shadow: 0 14px 50px rgba(0,0,0,.45);
-  --radius-xl: 22px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
-}
-
-/* ---- Layout (supports both .app and .layout) ---- */
+/* ============================================================
+   LAYOUT (supporte .app OU .layout)
+   ============================================================ */
 .app,
 .layout{
-  min-height: 100vh;
-  display: flex;
-  gap: 18px;
-  padding: 18px;
+  min-height:100vh;
+  display:flex;
+  gap:18px;
+  padding:18px;
+  align-items:flex-start;
 }
 
-/* Sidebar */
+/* Sidebar (supporte plusieurs HTML existants) */
 .sidebar{
-  width: 260px;
+  width:260px;
   flex: 0 0 260px;
   position: sticky;
   top: 18px;
   height: calc(100vh - 36px);
   padding: 18px 14px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(18, 20, 28, .78), rgba(10, 11, 16, .72));
+  border-radius: var(--r-xl);
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
   border: 1px solid var(--stroke);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
-  overflow: hidden;
+  overflow:auto;
 }
 
-.brand{
-  margin-bottom: 14px;
-  padding: 4px 8px 14px 8px;
-}
-.brand .title{
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-.brand .subtitle{
-  opacity: .75;
-  font-size: 13px;
-  margin-top: 4px;
-}
+/* “Brand” si présent (nouveau HTML) */
+.brand{ margin-bottom:14px; padding:4px 8px 14px 8px; }
+.brand .title{ font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:14px; }
+.brand .subtitle{ opacity:.75; font-size:13px; margin-top:4px; }
 
-.nav{
-  display: grid;
-  gap: 10px;
-  margin-top: 10px;
-}
-.nav a{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  text-decoration: none;
-  color: rgba(255,255,255,.90);
+/* NAV: supporte .nav a OU anciens .sidebar a */
+.nav{ display:grid; gap:10px; margin-top:10px; }
+.nav a,
+.sidebar a{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
+  color: var(--text);
   background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.06);
+  border: 1px solid var(--strokeSoft);
   transition: transform .12s ease, border-color .12s ease, background .12s ease;
 }
-.nav a:hover{
+.nav a:hover,
+.sidebar a:hover{
   transform: translateY(-1px);
   border-color: rgba(255,255,255,.12);
   background: rgba(255,255,255,.05);
 }
-.nav a.active{
-  border-color: var(--stroke2);
+.nav a.active,
+.sidebar a.active{
+  border-color: var(--strokeGold);
   background: linear-gradient(180deg, rgba(215,177,90,.22), rgba(255,255,255,.03));
   box-shadow: 0 10px 28px rgba(0,0,0,.28);
 }
 
-.sidebar .logout{
-  margin-top: 14px;
-}
-.btn-logout{
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
+/* Bouton déconnexion: supporte .btn-logout OU anciens .sidebar button */
+.sidebar .logout{ margin-top:14px; }
+.btn-logout,
+.sidebar button{
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
   border: 1px solid rgba(215,177,90,.35);
   background: linear-gradient(180deg, rgba(215,177,90,.95), rgba(215,177,90,.78));
-  color: #17120a;
-  font-weight: 800;
-  cursor: pointer;
+  color:#17120a;
+  font-weight:800;
+  cursor:pointer;
 }
+.sidebar button:hover,
+.btn-logout:hover{ filter:brightness(1.03); }
 
-/* Main area */
-.main{
-  flex: 1;
-  min-width: 0;
-  border-radius: var(--radius-xl);
-  /* IMPORTANT: keeps content aligned like Clients */
-  padding: 8px;
+/* Main content: supporte .main/.page OU anciens .content */
+.main,
+.content{
+  flex:1;
+  min-width:0;
+  padding:8px;
+  border-radius: var(--r-xl);
 }
 .page{
   padding: 10px 10px 26px 10px;
 }
 
-/* ---- Header / titles ---- */
-.page h1{
+/* Si certaines pages mettent le contenu direct sans .page */
+.main > :first-child,
+.content > :first-child{
+  margin-top: 0;
+}
+
+/* ============================================================
+   TITRES / TEXTES
+   ============================================================ */
+h1{
   margin: 6px 0 6px 0;
   font-size: 44px;
   letter-spacing: .01em;
 }
-.page .sub{
-  margin-top: 0;
-  opacity: .75;
+h2{
+  margin: 18px 0 10px 0;
+  font-size: 22px;
 }
+.sub{ margin-top:0; opacity:.75; }
+small, .muted{ color: var(--muted); }
 
-/* ---- Cards ---- */
+/* ============================================================
+   CARDS / PANELS
+   ============================================================ */
 .card{
-  background: linear-gradient(180deg, var(--bg-card), var(--bg-card-2));
+  background: linear-gradient(180deg, var(--card), var(--card2));
   border: 1px solid var(--stroke);
-  border-radius: var(--radius-xl);
+  border-radius: var(--r-xl);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
 }
-.card.pad{ padding: 16px; }
+.card.pad{ padding:16px; }
 
-/* ---- Toolbar ---- */
-.toolbar{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+/* Ancien système .cards + .card (stats) */
+.cards{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap:14px;
 }
-.input{
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(10, 12, 18, .55);
-  color: rgba(255,255,255,.92);
-  outline: none;
-  min-width: 280px;
+.cards .card > div{
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
-.input:focus{
-  border-color: rgba(215,177,90,.45);
-  box-shadow: 0 0 0 3px rgba(215,177,90,.12);
+.cards .card h2{
+  margin:10px 0 0 0;
+  font-size:30px;
+  font-weight:900;
+  color: var(--gold2);
 }
 
-.btn{
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.04);
-  color: rgba(255,255,255,.92);
-  cursor: pointer;
-  font-weight: 700;
-}
-.btn:hover{ border-color: rgba(255,255,255,.18); }
-
-.btn-gold{
-  border-color: rgba(215,177,90,.40);
-  background: linear-gradient(180deg, rgba(215,177,90,.95), rgba(215,177,90,.78));
-  color: #17120a;
-}
-
-/* ---- Stats ---- */
+/* Stats (nouveau système) */
 .stats{
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
@@ -197,7 +201,7 @@ body {
 }
 .stat{
   padding: 14px 16px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--r-lg);
   border: 1px solid rgba(255,255,255,.08);
   background: rgba(0,0,0,.12);
 }
@@ -214,11 +218,75 @@ body {
   font-weight: 900;
 }
 
-/* ---- Table ---- */
-.table-wrap{
-  margin-top: 14px;
-  padding: 14px;
+/* ============================================================
+   TOOLBAR / INPUTS / BOUTONS
+   ============================================================ */
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
 }
+
+.input,
+input, select{
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(10, 12, 18, .55);
+  color: var(--text);
+  outline:none;
+}
+input::placeholder{ color: rgba(255,255,255,.40); }
+
+.input{ min-width: 280px; }
+.input:focus,
+input:focus,
+select:focus{
+  border-color: rgba(215,177,90,.45);
+  box-shadow: 0 0 0 3px rgba(215,177,90,.12);
+}
+
+/* Select joli (compatible) */
+select{
+  padding: 0 12px;
+  appearance: none;
+}
+select option{
+  background: #0f1424;
+  color: #ffffff;
+}
+
+.btn{
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+.btn:hover{ border-color: rgba(255,255,255,.18); }
+
+.btn-gold{
+  border-color: rgba(215,177,90,.40);
+  background: linear-gradient(180deg, rgba(215,177,90,.95), rgba(215,177,90,.78));
+  color: #17120a;
+}
+.btn-danger{
+  border-color: rgba(240, 80, 80, .30);
+  background: rgba(240, 80, 80, .12);
+}
+.btn-muted{ background: rgba(255,255,255,.03); }
+
+/* ============================================================
+   TABLES (supporte table + .table)
+   ============================================================ */
+.table-wrap{ margin-top: 14px; padding: 14px; }
+
+/* Table “simple” */
 table{
   width: 100%;
   border-collapse: collapse;
@@ -239,20 +307,51 @@ tbody td{
   border-bottom: 1px solid rgba(255,255,255,.06);
   vertical-align: middle;
 }
-tbody tr:hover{
+tbody tr:hover{ background: rgba(255,255,255,.03); }
+
+/* Table “ancienne” (.table) */
+.table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border-radius: var(--r-xl);
+  border:1px solid var(--stroke);
+  background: rgba(10,10,15,.45);
+  box-shadow: var(--shadow);
+}
+.table thead th{
+  text-align:left;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color: var(--muted);
+  padding:12px 14px;
   background: rgba(255,255,255,.03);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.table tbody td{
+  padding:12px 14px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.table tbody tr:last-child td{ border-bottom:none; }
+
+.row-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
 }
 
 /* Badges */
 .badge{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 12px;
-  border: 1px solid rgba(255,255,255,.10);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  border:1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.03);
 }
 .badge.green{
@@ -264,21 +363,11 @@ tbody tr:hover{
   background: rgba(240, 80, 80, .10);
 }
 
-/* Row actions */
-.row-actions{
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-.btn-danger{
-  border-color: rgba(240, 80, 80, .30);
-  background: rgba(240, 80, 80, .12);
-}
-.btn-muted{
-  background: rgba(255,255,255,.03);
-}
+/* ============================================================
+   MODALS — COMPAT DOUBLE SYSTEME
+   ============================================================ */
 
-/* ---- Modal (stable center) ---- */
+/* (B) Backdrop system: .modal-backdrop + .modal dialog */
 .modal-backdrop{
   position: fixed;
   inset: 0;
@@ -289,15 +378,22 @@ tbody tr:hover{
   padding: 18px;
   z-index: 9999;
 }
-.modal-backdrop.show{ display: flex; }
+/* compat: .open (ancien) et .show (nouveau) */
+.modal-backdrop.open,
+.modal-backdrop.show{ display:flex; }
 
-.modal{
+/* Quand .modal est DANS .modal-backdrop => c’est une "dialog" */
+.modal-backdrop .modal{
+  position: relative;
+  inset: auto;
+  display: block;
   width: min(720px, 96vw);
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,.12);
   background: linear-gradient(180deg, rgba(18, 20, 28, .92), rgba(10, 11, 16, .88));
   box-shadow: 0 24px 70px rgba(0,0,0,.60);
   overflow: hidden;
+  padding: 0;
 }
 .modal-head{
   display: flex;
@@ -306,60 +402,96 @@ tbody tr:hover{
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.modal-title{
-  font-weight: 900;
-  letter-spacing: .02em;
-}
+.modal-title{ font-weight: 900; letter-spacing: .02em; }
 .modal-close{
   width: 34px;
   height: 34px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.04);
-  color: rgba(255,255,255,.92);
+  color: var(--text);
   cursor: pointer;
 }
 .modal-body{ padding: 16px; }
+.modal-foot{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
 .form-grid{
-  display: grid;
+  display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 .form-grid .full{ grid-column: 1 / -1; }
-label{
-  display: block;
-  font-size: 12px;
-  opacity: .78;
-  margin-bottom: 6px;
+label{ display:block; font-size:12px; opacity:.78; margin-bottom:6px; }
+.select, .checkbox{ display:flex; align-items:center; gap:10px; }
+
+/* (A) Fullscreen modal system: .modal + .modal-content */
+.modal{
+  /* IMPORTANT:
+     - par défaut, on NE casse PAS le système backdrop
+     - ce bloc s’applique surtout quand .modal est utilisé en overlay direct (pas dans .modal-backdrop)
+  */
 }
-.select, .checkbox{
+.modal.hidden{ display:none; }
+
+/* Si la page utilise .modal comme overlay direct (fullscreen) */
+body > .modal,
+.layout > .modal,
+.app > .modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.72);
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-select{
-  height: 44px;
-  padding: 0 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(10, 12, 18, .55);
-  color: rgba(255,255,255,.92);
-  outline: none;
-}
-.modal-foot{
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 16px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  justify-content: center;
+  padding: 18px;
+  z-index: 999;
 }
 
-/* ---- Responsive ---- */
+/* contenu du fullscreen modal */
+.modal-content{
+  width: min(720px, 95vw);
+  max-height: 85vh;
+  overflow: auto;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(20,22,34,.92), rgba(12,12,18,.92));
+  border: 1px solid rgba(215,177,90,.22);
+  box-shadow: 0 22px 70px rgba(0,0,0,.70);
+  padding: 18px 18px 16px 18px;
+  backdrop-filter: blur(12px);
+}
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.close{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+}
+.close:hover{ background: rgba(255,255,255,.06); }
+.hr{ height:1px; background: rgba(255,255,255,.08); margin: 12px 0; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 980px){
   .app, .layout{ padding: 12px; gap: 12px; }
   .sidebar{ width: 230px; flex-basis: 230px; }
-  .page h1{ font-size: 36px; }
-  .stats{ grid-template-columns: 1fr; }
+  h1{ font-size: 36px; }
+  .cards, .stats{ grid-template-columns: 1fr; }
   .input{ min-width: 220px; width: 100%; }
   .form-grid{ grid-template-columns: 1fr; }
 }
