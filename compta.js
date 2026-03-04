@@ -1,91 +1,54 @@
-import { db, auth } from "./config.js";
-import { requireAdmin } from "./guard.js";
-
+import { auth, db, Timestamp } from "./config.js";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp
+  collection, getDocs, addDoc, deleteDoc, doc,
+  query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { money, esc, fmtDateFR } from "./common.js";
 
-import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+/**
+ * Collections:
+ * - transactions : ventes (AUTO)
+ * - cashbook     : dépenses + gains hors ventes (MANUEL)
+ * - users        : { name, grade: "Vendeur"|"Co-PDG"|"PDG", ... }
+ */
 
-// ---------------------- DOM
 const $ = (id) => document.getElementById(id);
 
-const txBody = $("txBody");
-const cashBody = $("cashBody");
-const payBody = $("payBody");
+const els = {
+  q: $("q"),
+  dateFrom: $("dateFrom"),
+  dateTo: $("dateTo"),
+  btnWeek: $("btnWeek"),
+  btnApply: $("btnApply"),
+  btnRefresh: $("btnRefresh"),
+  btnAddCash: $("btnAddCash"),
+  btnPdf: $("btnPdf"),
+  btnLogout: $("btnLogout"),
 
-const kpiCA = $("kpiCA");
-const kpiProfit = $("kpiProfit");
-const kpiCount = $("kpiCount");
-const kpiExpense = $("kpiExpense");
-const kpiOther = $("kpiOther");
-const kpiNet = $("kpiNet");
+  kpiSales: $("kpiSales"),
+  kpiProfit: $("kpiProfit"),
+  kpiCount: $("kpiCount"),
+  kpiExpenses: $("kpiExpenses"),
+  kpiOtherIncome: $("kpiOtherIncome"),
+  kpiNet: $("kpiNet"),
 
-const search = $("search");
-const dateStart = $("dateStart");
-const dateEnd = $("dateEnd");
-const rangeLabel = $("rangeLabel");
-const payPeriod = $("payPeriod");
+  txBody: $("txBody"),
+  cashBody: $("cashBody"),
+  salaryBody: $("salaryBody"),
+  periodPill: $("periodPill"),
 
-const btnThisWeek = $("btnThisWeek");
-const btnApply = $("btnApply");
-const btnRefresh = $("btnRefresh");
-const btnPdf = $("btnPdf");
-const btnAddCash = $("btnAddCash");
+  modalCash: $("modalCash"),
+  cashClose: $("cashClose"),
+  cashCancel: $("cashCancel"),
+  cashSave: $("cashSave"),
+  cashDate: $("cashDate"),
+  cashType: $("cashType"),
+  cashReason: $("cashReason"),
+  cashAmount: $("cashAmount"),
 
-const logoutBtn = $("logoutBtn");
-
-// Modal cashbook
-const cashModal = $("cashModal");
-const closeCashModal = $("closeCashModal");
-const cancelCash = $("cancelCash");
-const saveCash = $("saveCash");
-const cashType = $("cashType");
-const cashLabel = $("cashLabel");
-const cashAmount = $("cashAmount");
-const cashDate = $("cashDate");
-
-// ---------------------- Helpers
-function money(n) {
-  return "$" + Number(n || 0).toLocaleString("en-US");
-}
-
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-
-function toISODate(d) {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
-function parseTxDate(t) {
-  // ventes.js stocke "date" comme string YYYY-MM-DD
-  if (t?.date && typeof t.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t.date)) {
-    const [y, m, day] = t.date.split("-").map(Number);
-    return new Date(y, m - 1, day, 12, 0, 0);
-  }
-  // fallback Firestore Timestamp
-  if (t?.createdAt?.toDate) {
-    try { return t.createdAt.toDate(); } catch {}
-  }
-  return null;
-}
-
-function parseCashDate(c) {
-  if (c?.date && typeof c.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(c.date)) {
-    const [y, m, day] = c.date.split("-").map(Number);
-    return new Date(y, m - 1, day, 12, 0, 0);
-  }
-  if (c?.createdAt?.toDate) {
-    try { return c.createdAt.toDate(); } catch {}
-  }
-  return null;
-}
+  pdfRoot: $("pdfRoot"),
+};
 
 function startOfDay(d) {
   const x = new Date(d);
@@ -98,364 +61,486 @@ function endOfDay(d) {
   return x;
 }
 
+/** Semaine = Lundi 00:00 -> Dimanche 23:59 (timezone local) */
 function getCurrentWeekRange() {
-  // Lundi -> Dimanche (local)
   const now = new Date();
-  const day = (now.getDay() + 6) % 7; // 0 = lundi
+  const day = (now.getDay() + 6) % 7; // 0=lundi, 6=dimanche
   const monday = new Date(now);
   monday.setDate(now.getDate() - day);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  return [startOfDay(monday), endOfDay(sunday)];
+  return { from: startOfDay(monday), to: endOfDay(sunday) };
 }
 
-function normalize(s) {
-  return String(s || "").trim().toLowerCase();
+function toDateInputValue(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function parseRangeFromUI() {
+  const df = els.dateFrom.value ? new Date(els.dateFrom.value) : null;
+  const dt = els.dateTo.value ? new Date(els.dateTo.value) : null;
+  if (!df || !dt) return null;
+  return { from: startOfDay(df), to: endOfDay(dt) };
+}
+
+function txDate(tx) {
+  const d = tx?.date || tx?.createdAt;
+  if (!d) return null;
+  // Firestore Timestamp
+  if (typeof d?.toDate === "function") return d.toDate();
+  // already Date
+  if (d instanceof Date) return d;
+  // string/number fallback
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function cashDate(op) {
+  const d = op?.date || op?.createdAt;
+  if (!d) return null;
+  if (typeof d?.toDate === "function") return d.toDate();
+  if (d instanceof Date) return d;
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getSell(tx) {
+  const v = tx.sellPrice ?? tx.sell ?? tx.price ?? 0;
+  return Number(v) || 0;
+}
+function getBuy(tx) {
+  const v = tx.buyPrice ?? tx.buy ?? 0;
+  return Number(v) || 0;
+}
+function getProfit(tx) {
+  const explicit = tx.profit;
+  if (explicit != null && !isNaN(Number(explicit))) return Number(explicit);
+  const s = getSell(tx);
+  const b = getBuy(tx);
+  return (s && b) ? (s - b) : 0;
+}
+
+function getSellerKey(tx) {
+  return tx.sellerId || tx.sellerUID || tx.sellerUid || tx.seller || tx.sellerName || tx.importedSeller || "—";
+}
+
+function isSale(tx) {
+  const t = (tx.type || "").toLowerCase();
+  // on garde large : tout ce qui ressemble à une vente / sale / transaction de vente
+  if (t.includes("sale")) return true;
+  if (t.includes("vente")) return true;
+  // si pas de type, mais présence sellPrice/price + seller -> probablement vente
+  const hasMoney = (tx.sellPrice != null) || (tx.price != null);
+  const hasSeller = !!(tx.sellerId || tx.sellerName || tx.seller);
+  return hasMoney && hasSeller;
 }
 
 function gradeRate(grade) {
-  const g = normalize(grade);
+  const g = (grade || "").toLowerCase();
+  if (g === "vendeur") return 0.10;
   if (g === "co-pdg" || g === "copdg" || g === "co pdg") return 0.12;
-  if (g === "pdg") return 0.05; // PDG = sur tout (traité à part)
-  return 0.10; // vendeur (default)
+  if (g === "pdg") return 0.05;
+  return 0.10; // défaut safe
 }
 
-function isInRange(d, a, b) {
-  if (!d) return false;
-  return d >= a && d <= b;
+async function loadUsersMap() {
+  const snap = await getDocs(collection(db, "users"));
+  const map = new Map();
+  snap.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+  return map;
 }
 
-function openModal() { cashModal.classList.remove("hidden"); }
-function closeModal() { cashModal.classList.add("hidden"); }
+function setPeriodPill(from, to) {
+  const label = `${fmtDateFR(from)} → ${fmtDateFR(to)}`;
+  els.periodPill.innerHTML = `<span class="dot"></span> Période : <b>${esc(label)}</b>`;
+}
 
-// ---------------------- State
-let CACHE = {
-  transactions: [],
-  cashbook: [],
-  users: [],
-};
+function setLoading(tbody, cols) {
+  tbody.innerHTML = `<tr><td colspan="${cols}" style="padding:14px; color:rgba(255,255,255,.55);">Chargement...</td></tr>`;
+}
 
-let RANGE = {
-  start: null,
-  end: null,
-};
+function setEmpty(tbody, cols, msg = "Aucun résultat.") {
+  tbody.innerHTML = `<tr><td colspan="${cols}" style="padding:14px; color:rgba(255,255,255,.55);">${esc(msg)}</td></tr>`;
+}
 
-// ---------------------- Data load
-async function loadAll() {
-  txBody.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
-  cashBody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
-  payBody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
+/**
+ * Queries (range)
+ * -> pour éviter les soucis d’index, on fait simple:
+ *    on filtre sur "createdAt" si possible, sinon on récupère et filtre en JS.
+ */
+async function fetchTransactions(from, to) {
+  // tentative query sur createdAt (si le champ existe partout)
+  // sinon on récupère tout et filtre localement.
+  let rows = [];
 
-  const [txSnap, cashSnap, usersSnap] = await Promise.all([
-    getDocs(collection(db, "transactions")),
-    getDocs(collection(db, "cashbook")),
-    getDocs(collection(db, "users")),
+  try {
+    const qy = query(
+      collection(db, "transactions"),
+      where("createdAt", ">=", Timestamp.fromDate(from)),
+      where("createdAt", "<=", Timestamp.fromDate(to)),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(qy);
+    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
+    return rows;
+  } catch (e) {
+    // fallback : full scan + filtre local
+    const snap = await getDocs(collection(db, "transactions"));
+    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
+    return rows.filter((tx) => {
+      const d = txDate(tx);
+      return d && d >= from && d <= to;
+    }).sort((a, b) => (txDate(b)?.getTime() || 0) - (txDate(a)?.getTime() || 0));
+  }
+}
+
+async function fetchCashbook(from, to) {
+  let rows = [];
+  try {
+    const qy = query(
+      collection(db, "cashbook"),
+      where("date", ">=", Timestamp.fromDate(from)),
+      where("date", "<=", Timestamp.fromDate(to)),
+      orderBy("date", "desc")
+    );
+    const snap = await getDocs(qy);
+    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
+    return rows;
+  } catch (e) {
+    const snap = await getDocs(collection(db, "cashbook"));
+    snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
+    return rows.filter((op) => {
+      const d = cashDate(op);
+      return d && d >= from && d <= to;
+    }).sort((a, b) => (cashDate(b)?.getTime() || 0) - (cashDate(a)?.getTime() || 0));
+  }
+}
+
+function applySearchFilter(list, q) {
+  const s = (q || "").trim().toLowerCase();
+  if (!s) return list;
+  return list.filter((x) => {
+    const bag = [
+      x.clientName, x.client, x.model, x.vehicle, x.brand,
+      x.sellerName, x.seller, x.importedSeller, x.detail, x.notes
+    ].filter(Boolean).join(" ").toLowerCase();
+    return bag.includes(s);
+  });
+}
+
+function renderTransactions(txs) {
+  if (!txs.length) return setEmpty(els.txBody, 7);
+
+  els.txBody.innerHTML = txs.map((tx) => {
+    const d = txDate(tx);
+    const client = tx.clientName || tx.client || "—";
+    const model = tx.model || tx.vehicle || "—";
+    const sell = money(getSell(tx));
+    const buy = money(getBuy(tx));
+    const profit = money(getProfit(tx));
+    const seller = tx.sellerName || tx.seller || tx.importedSeller || tx.sellerId || "—";
+
+    return `
+      <tr>
+        <td style="padding:12px;">${esc(d ? fmtDateFR(d) : "—")}</td>
+        <td style="padding:12px;">${esc(client)}</td>
+        <td style="padding:12px;">${esc(model)}</td>
+        <td style="padding:12px;">${esc(sell)}</td>
+        <td style="padding:12px;">${esc(buy)}</td>
+        <td style="padding:12px; color:rgba(246,210,107,.95); font-weight:800;">${esc(profit)}</td>
+        <td style="padding:12px;">${esc(seller)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderCashbook(ops) {
+  if (!ops.length) return setEmpty(els.cashBody, 5);
+
+  els.cashBody.innerHTML = ops.map((op) => {
+    const d = cashDate(op);
+    const type = (op.type || "").toLowerCase() === "income" ? "Gain" : "Dépense";
+    const reason = op.reason || op.label || op.detail || "—";
+    const amount = money(Number(op.amount || 0));
+    const isIncome = (op.type || "").toLowerCase() === "income";
+
+    return `
+      <tr>
+        <td style="padding:12px;">${esc(d ? fmtDateFR(d) : "—")}</td>
+        <td style="padding:12px; font-weight:800; color:${isIncome ? "rgba(71,230,166,.95)" : "rgba(255,107,107,.95)"}">${esc(type)}</td>
+        <td style="padding:12px;">${esc(reason)}</td>
+        <td style="padding:12px; font-weight:800;">${esc(amount)}</td>
+        <td style="padding:12px;">
+          <button class="btn" data-del-cash="${esc(op.id)}">Supprimer</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  // delete handlers
+  els.cashBody.querySelectorAll("[data-del-cash]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-del-cash");
+      if (!confirm("Supprimer cette opération ?")) return;
+      await deleteDoc(doc(db, "cashbook", id));
+      await refresh();
+    });
+  });
+}
+
+function renderSalaries({ txs, usersMap, from, to }) {
+  // sales only
+  const sales = txs.filter(isSale);
+
+  // totals per seller (by uid if possible)
+  const bySeller = new Map();
+
+  for (const tx of sales) {
+    const sellerId = tx.sellerId || tx.sellerUID || tx.sellerUid || null;
+    const key = sellerId || (tx.sellerName || tx.seller || tx.importedSeller || "—");
+    const sell = getSell(tx);
+
+    const prev = bySeller.get(key) || { key, sellerId, salesCount: 0, salesSum: 0 };
+    prev.salesCount += 1;
+    prev.salesSum += sell;
+    bySeller.set(key, prev);
+  }
+
+  // build rows from users when possible
+  const rows = [];
+  for (const [key, v] of bySeller.entries()) {
+    let u = null;
+    if (v.sellerId && usersMap.has(v.sellerId)) u = usersMap.get(v.sellerId);
+
+    const name = u?.name || u?.email || (typeof key === "string" ? key : "—");
+    const grade = u?.grade || "Vendeur";
+    const rate = gradeRate(grade);
+    const commission = v.salesSum * rate;
+
+    rows.push({
+      name,
+      grade,
+      salesCount: v.salesCount,
+      commissionRate: rate,
+      salary: commission,
+      sort: v.salesSum,
+    });
+  }
+
+  // PDG line (5% on all sales in period) based on users.grade === "PDG"
+  const totalSales = sales.reduce((acc, tx) => acc + getSell(tx), 0);
+  const pdgs = [...usersMap.values()].filter((u) => (u.grade || "").toLowerCase() === "pdg");
+
+  for (const pdg of pdgs) {
+    rows.push({
+      name: pdg.name || pdg.email || "PDG",
+      grade: "PDG",
+      salesCount: sales.length,
+      commissionRate: 0.05,
+      salary: totalSales * 0.05,
+      sort: totalSales + 1e15, // always top
+      isPDG: true,
+    });
+  }
+
+  rows.sort((a, b) => (b.sort || 0) - (a.sort || 0));
+
+  if (!rows.length) return setEmpty(els.salaryBody, 5, "Aucun salaire à calculer sur cette période.");
+
+  els.salaryBody.innerHTML = rows.map((r) => `
+    <tr>
+      <td style="padding:12px; font-weight:900;">${esc(r.name)}</td>
+      <td style="padding:12px;">${esc(r.grade)}</td>
+      <td style="padding:12px;">${esc(String(r.salesCount))}</td>
+      <td style="padding:12px;">${esc(Math.round((r.commissionRate || 0) * 100) + "%")}</td>
+      <td style="padding:12px; color:rgba(246,210,107,.95); font-weight:900;">${esc(money(r.salary))}</td>
+    </tr>
+  `).join("");
+
+  setPeriodPill(from, to);
+}
+
+function updateKPIs({ txs, ops }) {
+  const sales = txs.filter(isSale);
+  const totalSales = sales.reduce((acc, tx) => acc + getSell(tx), 0);
+  const totalProfit = sales.reduce((acc, tx) => acc + getProfit(tx), 0);
+  const count = sales.length;
+
+  const expenses = ops
+    .filter((x) => (x.type || "").toLowerCase() === "expense")
+    .reduce((acc, x) => acc + (Number(x.amount) || 0), 0);
+
+  const otherIncome = ops
+    .filter((x) => (x.type || "").toLowerCase() === "income")
+    .reduce((acc, x) => acc + (Number(x.amount) || 0), 0);
+
+  const net = totalProfit + otherIncome - expenses;
+
+  els.kpiSales.textContent = money(totalSales);
+  els.kpiProfit.textContent = money(totalProfit);
+  els.kpiCount.textContent = String(count);
+  els.kpiExpenses.textContent = money(expenses);
+  els.kpiOtherIncome.textContent = money(otherIncome);
+  els.kpiNet.textContent = money(net);
+}
+
+function openCashModal() {
+  els.cashDate.value = toDateInputValue(new Date());
+  els.cashType.value = "expense";
+  els.cashReason.value = "";
+  els.cashAmount.value = "";
+  els.modalCash.style.display = "flex";
+}
+function closeCashModal() {
+  els.modalCash.style.display = "none";
+}
+
+async function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const target = els.pdfRoot;
+
+  // petite pause pour fonts/layout
+  await new Promise((r) => setTimeout(r, 50));
+
+  const canvas = await html2canvas(target, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: null,
+    scrollY: -window.scrollY,
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+
+  const imgW = pageW;
+  const imgH = (canvas.height * imgW) / canvas.width;
+
+  let y = 0;
+  let heightLeft = imgH;
+
+  pdf.addImage(imgData, "PNG", 0, y, imgW, imgH);
+  heightLeft -= pageH;
+
+  while (heightLeft > 0) {
+    pdf.addPage();
+    y = - (imgH - heightLeft);
+    pdf.addImage(imgData, "PNG", 0, y, imgW, imgH);
+    heightLeft -= pageH;
+  }
+
+  pdf.save(`PDM_Comptabilite_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+let currentRange = null;
+
+async function refresh() {
+  const range = currentRange || getCurrentWeekRange();
+  const { from, to } = range;
+
+  setLoading(els.txBody, 7);
+  setLoading(els.cashBody, 5);
+  setLoading(els.salaryBody, 5);
+
+  const [usersMap, txsRaw, opsRaw] = await Promise.all([
+    loadUsersMap(),
+    fetchTransactions(from, to),
+    fetchCashbook(from, to),
   ]);
 
-  CACHE.transactions = txSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  CACHE.cashbook = cashSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  CACHE.users = usersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  // search filter
+  const qtxt = els.q.value || "";
+  const txs = applySearchFilter(txsRaw, qtxt);
+  const ops = applySearchFilter(opsRaw, qtxt);
 
-  render();
+  renderTransactions(txs);
+  renderCashbook(ops);
+  updateKPIs({ txs, ops });
+  renderSalaries({ txs, usersMap, from, to });
 }
 
-// ---------------------- Rendering
-function render() {
-  const q = normalize(search?.value);
+function wireUI() {
+  els.btnWeek.addEventListener("click", async () => {
+    const r = getCurrentWeekRange();
+    currentRange = r;
+    els.dateFrom.value = toDateInputValue(r.from);
+    els.dateTo.value = toDateInputValue(r.to);
+    await refresh();
+  });
 
-  const a = RANGE.start;
-  const b = RANGE.end;
+  els.btnApply.addEventListener("click", async () => {
+    const r = parseRangeFromUI();
+    if (!r) return alert("Choisis une date de début et une date de fin.");
+    currentRange = r;
+    await refresh();
+  });
 
-  const rangeTxt = `${a.toLocaleDateString("fr-FR")} → ${b.toLocaleDateString("fr-FR")}`;
-  rangeLabel.textContent = `Période affichée : ${rangeTxt}`;
-  payPeriod.textContent = rangeTxt;
+  els.btnRefresh.addEventListener("click", refresh);
 
-  // Filter TX
-  let tx = CACHE.transactions
-    .map((t) => ({ ...t, _dt: parseTxDate(t) }))
-    .filter((t) => isInRange(t._dt, a, b));
+  els.q.addEventListener("input", () => {
+    // léger debounce
+    window.clearTimeout(window.__pdmQTimer);
+    window.__pdmQTimer = window.setTimeout(refresh, 200);
+  });
 
-  if (q) {
-    tx = tx.filter((t) => {
-      const hay = [
-        t.client,
-        t.model,
-        t.seller,
-      ].map(normalize).join(" ");
-      return hay.includes(q);
+  els.btnAddCash.addEventListener("click", openCashModal);
+  els.cashClose.addEventListener("click", closeCashModal);
+  els.cashCancel.addEventListener("click", closeCashModal);
+  els.modalCash.addEventListener("click", (e) => {
+    if (e.target === els.modalCash) closeCashModal();
+  });
+
+  els.cashSave.addEventListener("click", async () => {
+    const dateStr = els.cashDate.value;
+    const type = els.cashType.value;
+    const reason = els.cashReason.value.trim();
+    const amount = Number(els.cashAmount.value);
+
+    if (!dateStr) return alert("Date obligatoire.");
+    if (!reason) return alert("Libellé obligatoire.");
+    if (!amount || amount <= 0) return alert("Montant invalide.");
+
+    const d = new Date(dateStr);
+    await addDoc(collection(db, "cashbook"), {
+      type, // "expense" | "income"
+      reason,
+      amount,
+      date: Timestamp.fromDate(startOfDay(d)),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
-  }
 
-  // Filter cashbook
-  let cash = CACHE.cashbook
-    .map((c) => ({ ...c, _dt: parseCashDate(c) }))
-    .filter((c) => isInRange(c._dt, a, b));
+    closeCashModal();
+    await refresh();
+  });
 
-  if (q) {
-    cash = cash.filter((c) => {
-      const hay = [c.label, c.type].map(normalize).join(" ");
-      return hay.includes(q);
-    });
-  }
+  els.btnPdf.addEventListener("click", exportPDF);
 
-  // KPIs
-  const ca = tx.reduce((s, t) => s + Number(t.sellPrice || 0), 0);
-  const profit = tx.reduce((s, t) => s + Number(t.profit ?? (Number(t.sellPrice || 0) - Number(t.buyPrice || 0))), 0);
-  const count = tx.length;
-
-  const expense = cash
-    .filter((c) => normalize(c.type) === "expense")
-    .reduce((s, c) => s + Number(c.amount || 0), 0);
-
-  const other = cash
-    .filter((c) => normalize(c.type) === "income")
-    .reduce((s, c) => s + Number(c.amount || 0), 0);
-
-  const net = profit + other - expense;
-
-  kpiCA.textContent = money(ca);
-  kpiProfit.textContent = money(profit);
-  kpiCount.textContent = String(count);
-  kpiExpense.textContent = money(expense);
-  kpiOther.textContent = money(other);
-  kpiNet.textContent = money(net);
-
-  // TX table
-  if (tx.length === 0) {
-    txBody.innerHTML = `<tr><td colspan="7">Aucune vente sur la période</td></tr>`;
-  } else {
-    txBody.innerHTML = tx
-      .sort((x, y) => (y._dt?.getTime() || 0) - (x._dt?.getTime() || 0))
-      .map((t) => {
-        const dt = t._dt ? t._dt.toLocaleDateString("fr-FR") : "-";
-        const buy = Number(t.buyPrice || 0);
-        const sell = Number(t.sellPrice || 0);
-        const pr = Number(t.profit ?? (sell - buy));
-        return `
-          <tr>
-            <td>${dt}</td>
-            <td>${t.client || "-"}</td>
-            <td>${t.model || "-"}</td>
-            <td>${money(sell)}</td>
-            <td>${money(buy)}</td>
-            <td>${money(pr)}</td>
-            <td>${t.seller || "-"}</td>
-          </tr>
-        `;
-      })
-      .join("");
-  }
-
-  // Cashbook table
-  if (cash.length === 0) {
-    cashBody.innerHTML = `<tr><td colspan="5">Aucune opération manuelle sur la période</td></tr>`;
-  } else {
-    cashBody.innerHTML = cash
-      .sort((x, y) => (y._dt?.getTime() || 0) - (x._dt?.getTime() || 0))
-      .map((c) => {
-        const dt = c._dt ? c._dt.toLocaleDateString("fr-FR") : "-";
-        const type = normalize(c.type) === "expense" ? "Dépense" : "Gain";
-        const amt = Number(c.amount || 0);
-        return `
-          <tr>
-            <td>${dt}</td>
-            <td>${type}</td>
-            <td>${c.label || "-"}</td>
-            <td>${money(amt)}</td>
-            <td class="no-print">
-              <div class="table-actions">
-                <button class="btn btn-danger" data-del="${c.id}">Supprimer</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    cashBody.querySelectorAll("[data-del]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-del");
-        if (!confirm("Supprimer cette opération ?")) return;
-        await deleteDoc(doc(db, "cashbook", id));
-        await loadAll();
-      });
-    });
-  }
-
-  // Payroll
-  renderPayroll(tx, ca);
+  els.btnLogout.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "index.html";
+  });
 }
 
-function renderPayroll(tx, totalCA) {
-  // map users by name/email for matching seller string
-  const byKey = new Map();
-  const users = CACHE.users.map((u) => ({
-    id: u.id,
-    name: u.name || u.displayName || u.email || u.id,
-    email: u.email || "",
-    grade: u.grade || "Vendeur",
-  }));
+function initDefaultWeekUI() {
+  const r = getCurrentWeekRange();
+  currentRange = r;
+  els.dateFrom.value = toDateInputValue(r.from);
+  els.dateTo.value = toDateInputValue(r.to);
+  setPeriodPill(r.from, r.to);
+}
 
-  for (const u of users) {
-    byKey.set(normalize(u.name), u);
-    if (u.email) byKey.set(normalize(u.email), u);
-  }
-
-  // Aggregate per seller (own sales)
-  const agg = new Map(); // userId -> {user, count, ca}
-  for (const t of tx) {
-    const sellerStr = normalize(t.seller || "");
-    if (!sellerStr) continue;
-
-    const u = byKey.get(sellerStr);
-    if (!u) continue;
-
-    const key = u.id;
-    if (!agg.has(key)) agg.set(key, { user: u, count: 0, ca: 0 });
-    const a = agg.get(key);
-
-    a.count += 1;
-    a.ca += Number(t.sellPrice || 0);
-  }
-
-  // PDG line (5% on all sales)
-  const pdgUser = users.find((u) => normalize(u.grade) === "pdg") || null;
-  const pdgSalary = totalCA * 0.05;
-
-  // Build rows (exclude PDG from "own commission" rows to avoid confusion)
-  const rows = Array.from(agg.values())
-    .filter((x) => normalize(x.user.grade) !== "pdg")
-    .sort((a, b) => b.ca - a.ca)
-    .map((x) => {
-      const rate = gradeRate(x.user.grade);
-      const salary = x.ca * rate;
-      const pct = Math.round(rate * 100);
-      return `
-        <tr>
-          <td>${x.user.name}</td>
-          <td>${x.user.grade}</td>
-          <td>${x.count}</td>
-          <td>${pct}%</td>
-          <td><b>${money(salary)}</b></td>
-        </tr>
-      `;
-    });
-
-  const pdgRow = `
-    <tr>
-      <td>${pdgUser ? pdgUser.name : "PDG"}</td>
-      <td>PDG</td>
-      <td>${tx.length}</td>
-      <td>5% (global)</td>
-      <td><b>${money(pdgSalary)}</b></td>
-    </tr>
-  `;
-
-  if (rows.length === 0 && tx.length === 0) {
-    payBody.innerHTML = `<tr><td colspan="5">Aucune vente sur la période</td></tr>`;
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "index.html";
     return;
   }
 
-  payBody.innerHTML = pdgRow + rows.join("");
-}
-
-// ---------------------- Actions
-function applyRangeFromInputs() {
-  const s = dateStart.value;
-  const e = dateEnd.value;
-  if (!s || !e) return;
-
-  const ds = startOfDay(new Date(s + "T12:00:00"));
-  const de = endOfDay(new Date(e + "T12:00:00"));
-
-  RANGE.start = ds;
-  RANGE.end = de;
-
-  render();
-}
-
-function setThisWeek() {
-  const [a, b] = getCurrentWeekRange();
-  RANGE.start = a;
-  RANGE.end = b;
-
-  dateStart.value = toISODate(a);
-  dateEnd.value = toISODate(b);
-
-  render();
-}
-
-async function addCashEntry() {
-  const type = cashType.value;
-  const label = cashLabel.value.trim();
-  const amt = Number(cashAmount.value || 0);
-  const dt = cashDate.value;
-
-  if (!label) return alert("Libellé obligatoire.");
-  if (!amt || amt <= 0) return alert("Montant invalide.");
-  if (!dt) return alert("Date obligatoire.");
-
-  const user = auth.currentUser;
-  await addDoc(collection(db, "cashbook"), {
-    type, // "expense" | "income"
-    label,
-    amount: amt,
-    date: dt, // YYYY-MM-DD (simple & aligné avec transactions)
-    createdAt: serverTimestamp(),
-    createdBy: user?.uid || null,
-    createdByName: user?.displayName || user?.email || null,
-  });
-
-  closeModal();
-  cashLabel.value = "";
-  cashAmount.value = "";
-  // garde la date si tu veux (pratique) => on ne reset pas cashDate
-
-  await loadAll();
-}
-
-// ---------------------- Init
-async function init() {
-  // Admin guard
-  const ok = await requireAdmin();
-  if (!ok) return;
-
-  // default week
-  const [a, b] = getCurrentWeekRange();
-  RANGE.start = a;
-  RANGE.end = b;
-  dateStart.value = toISODate(a);
-  dateEnd.value = toISODate(b);
-
-  // listeners
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "pdm-staff.html";
-    });
-  }
-
-  if (search) search.addEventListener("input", render);
-
-  btnThisWeek?.addEventListener("click", setThisWeek);
-  btnApply?.addEventListener("click", applyRangeFromInputs);
-  btnRefresh?.addEventListener("click", loadAll);
-
-  btnPdf?.addEventListener("click", () => window.print());
-
-  btnAddCash?.addEventListener("click", () => {
-    // date par défaut = aujourd'hui (dans la plage)
-    cashDate.value = toISODate(new Date());
-    openModal();
-  });
-
-  closeCashModal?.addEventListener("click", closeModal);
-  cancelCash?.addEventListener("click", closeModal);
-  cashModal?.addEventListener("click", (e) => { if (e.target === cashModal) closeModal(); });
-
-  saveCash?.addEventListener("click", addCashEntry);
-
-  await loadAll();
-}
-
-init();
+  initDefaultWeekUI();
+  wireUI();
+  await refresh();
+});
