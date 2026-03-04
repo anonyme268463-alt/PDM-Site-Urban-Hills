@@ -1,174 +1,461 @@
-// compta.js
-import { auth, db } from "./config.js";
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { db, auth } from "./config.js";
+import { requireAdmin } from "./guard.js";
+
 import {
-  collection, addDoc, deleteDoc, doc,
-  onSnapshot, query, orderBy, serverTimestamp, Timestamp
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-const searchInput = document.getElementById("searchInput");
-const refreshBtn  = document.getElementById("refreshBtn");
-const addBtn      = document.getElementById("addBtn");
+import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-const statCA     = document.getElementById("statCA");
-const statProfit = document.getElementById("statProfit");
-const statCount  = document.getElementById("statCount");
+// ---------------------- DOM
+const $ = (id) => document.getElementById(id);
 
-const txTbody    = document.getElementById("txTable");
-const logoutBtn  = document.getElementById("logoutBtn");
+const txBody = $("txBody");
+const cashBody = $("cashBody");
+const payBody = $("payBody");
 
-// dialog
-const dlg     = document.getElementById("txDialog");
-const dTitle  = document.getElementById("dTitle");
-const dClose  = document.getElementById("dClose");
-const dCancel = document.getElementById("dCancel");
-const dSave   = document.getElementById("dSave");
-const dClient = document.getElementById("dClient");
-const dModel  = document.getElementById("dModel");
-const dBuy    = document.getElementById("dBuy");
-const dSell   = document.getElementById("dSell");
-const dDate   = document.getElementById("dDate");
+const kpiCA = $("kpiCA");
+const kpiProfit = $("kpiProfit");
+const kpiCount = $("kpiCount");
+const kpiExpense = $("kpiExpense");
+const kpiOther = $("kpiOther");
+const kpiNet = $("kpiNet");
 
-let rows = [];
-let unsub = null;
+const search = $("search");
+const dateStart = $("dateStart");
+const dateEnd = $("dateEnd");
+const rangeLabel = $("rangeLabel");
+const payPeriod = $("payPeriod");
 
-const money = (n) => {
-  const v = Number(n || 0);
-  return v.toLocaleString("en-US");
+const btnThisWeek = $("btnThisWeek");
+const btnApply = $("btnApply");
+const btnRefresh = $("btnRefresh");
+const btnPdf = $("btnPdf");
+const btnAddCash = $("btnAddCash");
+
+const logoutBtn = $("logoutBtn");
+
+// Modal cashbook
+const cashModal = $("cashModal");
+const closeCashModal = $("closeCashModal");
+const cancelCash = $("cancelCash");
+const saveCash = $("saveCash");
+const cashType = $("cashType");
+const cashLabel = $("cashLabel");
+const cashAmount = $("cashAmount");
+const cashDate = $("cashDate");
+
+// ---------------------- Helpers
+function money(n) {
+  return "$" + Number(n || 0).toLocaleString("en-US");
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function toISODate(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function parseTxDate(t) {
+  // ventes.js stocke "date" comme string YYYY-MM-DD
+  if (t?.date && typeof t.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(t.date)) {
+    const [y, m, day] = t.date.split("-").map(Number);
+    return new Date(y, m - 1, day, 12, 0, 0);
+  }
+  // fallback Firestore Timestamp
+  if (t?.createdAt?.toDate) {
+    try { return t.createdAt.toDate(); } catch {}
+  }
+  return null;
+}
+
+function parseCashDate(c) {
+  if (c?.date && typeof c.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(c.date)) {
+    const [y, m, day] = c.date.split("-").map(Number);
+    return new Date(y, m - 1, day, 12, 0, 0);
+  }
+  if (c?.createdAt?.toDate) {
+    try { return c.createdAt.toDate(); } catch {}
+  }
+  return null;
+}
+
+function startOfDay(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+function endOfDay(d) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
+
+function getCurrentWeekRange() {
+  // Lundi -> Dimanche (local)
+  const now = new Date();
+  const day = (now.getDay() + 6) % 7; // 0 = lundi
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return [startOfDay(monday), endOfDay(sunday)];
+}
+
+function normalize(s) {
+  return String(s || "").trim().toLowerCase();
+}
+
+function gradeRate(grade) {
+  const g = normalize(grade);
+  if (g === "co-pdg" || g === "copdg" || g === "co pdg") return 0.12;
+  if (g === "pdg") return 0.05; // PDG = sur tout (traité à part)
+  return 0.10; // vendeur (default)
+}
+
+function isInRange(d, a, b) {
+  if (!d) return false;
+  return d >= a && d <= b;
+}
+
+function openModal() { cashModal.classList.remove("hidden"); }
+function closeModal() { cashModal.classList.add("hidden"); }
+
+// ---------------------- State
+let CACHE = {
+  transactions: [],
+  cashbook: [],
+  users: [],
 };
-const fmt$ = (n) => `$${money(n)}`;
 
-function fmtDate(ts){
-  try{
-    if (!ts) return "—";
-    const d = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
-    return d.toLocaleDateString("fr-FR");
-  } catch { return "—"; }
+let RANGE = {
+  start: null,
+  end: null,
+};
+
+// ---------------------- Data load
+async function loadAll() {
+  txBody.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
+  cashBody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
+  payBody.innerHTML = `<tr><td colspan="5">Chargement...</td></tr>`;
+
+  const [txSnap, cashSnap, usersSnap] = await Promise.all([
+    getDocs(collection(db, "transactions")),
+    getDocs(collection(db, "cashbook")),
+    getDocs(collection(db, "users")),
+  ]);
+
+  CACHE.transactions = txSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  CACHE.cashbook = cashSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  CACHE.users = usersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  render();
 }
-function norm(s){ return (s ?? "").toString().trim().toLowerCase(); }
 
-function refreshStats() {
-  const ca = rows.reduce((a,r)=>a + (Number(r.sellPrice)||0), 0);
-  const profit = rows.reduce((a,r)=>a + ((Number(r.sellPrice)||0)-(Number(r.buyPrice)||0)), 0);
-  statCA.textContent = fmt$(ca);
-  statProfit.textContent = fmt$(profit);
-  statCount.textContent = `${rows.length}`;
+// ---------------------- Rendering
+function render() {
+  const q = normalize(search?.value);
+
+  const a = RANGE.start;
+  const b = RANGE.end;
+
+  const rangeTxt = `${a.toLocaleDateString("fr-FR")} → ${b.toLocaleDateString("fr-FR")}`;
+  rangeLabel.textContent = `Période affichée : ${rangeTxt}`;
+  payPeriod.textContent = rangeTxt;
+
+  // Filter TX
+  let tx = CACHE.transactions
+    .map((t) => ({ ...t, _dt: parseTxDate(t) }))
+    .filter((t) => isInRange(t._dt, a, b));
+
+  if (q) {
+    tx = tx.filter((t) => {
+      const hay = [
+        t.client,
+        t.model,
+        t.seller,
+      ].map(normalize).join(" ");
+      return hay.includes(q);
+    });
+  }
+
+  // Filter cashbook
+  let cash = CACHE.cashbook
+    .map((c) => ({ ...c, _dt: parseCashDate(c) }))
+    .filter((c) => isInRange(c._dt, a, b));
+
+  if (q) {
+    cash = cash.filter((c) => {
+      const hay = [c.label, c.type].map(normalize).join(" ");
+      return hay.includes(q);
+    });
+  }
+
+  // KPIs
+  const ca = tx.reduce((s, t) => s + Number(t.sellPrice || 0), 0);
+  const profit = tx.reduce((s, t) => s + Number(t.profit ?? (Number(t.sellPrice || 0) - Number(t.buyPrice || 0))), 0);
+  const count = tx.length;
+
+  const expense = cash
+    .filter((c) => normalize(c.type) === "expense")
+    .reduce((s, c) => s + Number(c.amount || 0), 0);
+
+  const other = cash
+    .filter((c) => normalize(c.type) === "income")
+    .reduce((s, c) => s + Number(c.amount || 0), 0);
+
+  const net = profit + other - expense;
+
+  kpiCA.textContent = money(ca);
+  kpiProfit.textContent = money(profit);
+  kpiCount.textContent = String(count);
+  kpiExpense.textContent = money(expense);
+  kpiOther.textContent = money(other);
+  kpiNet.textContent = money(net);
+
+  // TX table
+  if (tx.length === 0) {
+    txBody.innerHTML = `<tr><td colspan="7">Aucune vente sur la période</td></tr>`;
+  } else {
+    txBody.innerHTML = tx
+      .sort((x, y) => (y._dt?.getTime() || 0) - (x._dt?.getTime() || 0))
+      .map((t) => {
+        const dt = t._dt ? t._dt.toLocaleDateString("fr-FR") : "-";
+        const buy = Number(t.buyPrice || 0);
+        const sell = Number(t.sellPrice || 0);
+        const pr = Number(t.profit ?? (sell - buy));
+        return `
+          <tr>
+            <td>${dt}</td>
+            <td>${t.client || "-"}</td>
+            <td>${t.model || "-"}</td>
+            <td>${money(sell)}</td>
+            <td>${money(buy)}</td>
+            <td>${money(pr)}</td>
+            <td>${t.seller || "-"}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  // Cashbook table
+  if (cash.length === 0) {
+    cashBody.innerHTML = `<tr><td colspan="5">Aucune opération manuelle sur la période</td></tr>`;
+  } else {
+    cashBody.innerHTML = cash
+      .sort((x, y) => (y._dt?.getTime() || 0) - (x._dt?.getTime() || 0))
+      .map((c) => {
+        const dt = c._dt ? c._dt.toLocaleDateString("fr-FR") : "-";
+        const type = normalize(c.type) === "expense" ? "Dépense" : "Gain";
+        const amt = Number(c.amount || 0);
+        return `
+          <tr>
+            <td>${dt}</td>
+            <td>${type}</td>
+            <td>${c.label || "-"}</td>
+            <td>${money(amt)}</td>
+            <td class="no-print">
+              <div class="table-actions">
+                <button class="btn btn-danger" data-del="${c.id}">Supprimer</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    cashBody.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-del");
+        if (!confirm("Supprimer cette opération ?")) return;
+        await deleteDoc(doc(db, "cashbook", id));
+        await loadAll();
+      });
+    });
+  }
+
+  // Payroll
+  renderPayroll(tx, ca);
 }
 
-function render(list) {
-  if (!list.length) {
-    txTbody.innerHTML = `<tr><td colspan="8" class="muted">Aucune transaction.</td></tr>`;
+function renderPayroll(tx, totalCA) {
+  // map users by name/email for matching seller string
+  const byKey = new Map();
+  const users = CACHE.users.map((u) => ({
+    id: u.id,
+    name: u.name || u.displayName || u.email || u.id,
+    email: u.email || "",
+    grade: u.grade || "Vendeur",
+  }));
+
+  for (const u of users) {
+    byKey.set(normalize(u.name), u);
+    if (u.email) byKey.set(normalize(u.email), u);
+  }
+
+  // Aggregate per seller (own sales)
+  const agg = new Map(); // userId -> {user, count, ca}
+  for (const t of tx) {
+    const sellerStr = normalize(t.seller || "");
+    if (!sellerStr) continue;
+
+    const u = byKey.get(sellerStr);
+    if (!u) continue;
+
+    const key = u.id;
+    if (!agg.has(key)) agg.set(key, { user: u, count: 0, ca: 0 });
+    const a = agg.get(key);
+
+    a.count += 1;
+    a.ca += Number(t.sellPrice || 0);
+  }
+
+  // PDG line (5% on all sales)
+  const pdgUser = users.find((u) => normalize(u.grade) === "pdg") || null;
+  const pdgSalary = totalCA * 0.05;
+
+  // Build rows (exclude PDG from "own commission" rows to avoid confusion)
+  const rows = Array.from(agg.values())
+    .filter((x) => normalize(x.user.grade) !== "pdg")
+    .sort((a, b) => b.ca - a.ca)
+    .map((x) => {
+      const rate = gradeRate(x.user.grade);
+      const salary = x.ca * rate;
+      const pct = Math.round(rate * 100);
+      return `
+        <tr>
+          <td>${x.user.name}</td>
+          <td>${x.user.grade}</td>
+          <td>${x.count}</td>
+          <td>${pct}%</td>
+          <td><b>${money(salary)}</b></td>
+        </tr>
+      `;
+    });
+
+  const pdgRow = `
+    <tr>
+      <td>${pdgUser ? pdgUser.name : "PDG"}</td>
+      <td>PDG</td>
+      <td>${tx.length}</td>
+      <td>5% (global)</td>
+      <td><b>${money(pdgSalary)}</b></td>
+    </tr>
+  `;
+
+  if (rows.length === 0 && tx.length === 0) {
+    payBody.innerHTML = `<tr><td colspan="5">Aucune vente sur la période</td></tr>`;
     return;
   }
-  txTbody.innerHTML = list.map(r => {
-    const buy = Number(r.buyPrice)||0;
-    const sell = Number(r.sellPrice)||0;
-    const profit = sell - buy;
-    return `
-      <tr>
-        <td>${fmtDate(r.createdAt || r.date)}</td>
-        <td>${r.client ?? "-"}</td>
-        <td>${r.model ?? "-"}</td>
-        <td>${fmt$(buy)}</td>
-        <td>${fmt$(sell)}</td>
-        <td>${fmt$(profit)}</td>
-        <td>${r.vendorEmail ?? r.createdByEmail ?? "-"}</td>
-        <td class="td-actions">
-          <button class="btn btn-sm btn-danger" data-del="${r.id}">Supprimer</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+
+  payBody.innerHTML = pdgRow + rows.join("");
 }
 
-function applyFilter(){
-  const q = norm(searchInput.value);
-  const list = q
-    ? rows.filter(r => [r.client, r.model, r.vendorEmail, r.createdByEmail].some(x => norm(x).includes(q)))
-    : rows;
-  render(list);
-  refreshStats();
+// ---------------------- Actions
+function applyRangeFromInputs() {
+  const s = dateStart.value;
+  const e = dateEnd.value;
+  if (!s || !e) return;
+
+  const ds = startOfDay(new Date(s + "T12:00:00"));
+  const de = endOfDay(new Date(e + "T12:00:00"));
+
+  RANGE.start = ds;
+  RANGE.end = de;
+
+  render();
 }
 
-function openDialog(){
-  dTitle.textContent = "Ajouter une transaction";
-  dClient.value = "";
-  dModel.value = "";
-  dBuy.value = "";
-  dSell.value = "";
-  dDate.value = "";
-  dlg.showModal();
+function setThisWeek() {
+  const [a, b] = getCurrentWeekRange();
+  RANGE.start = a;
+  RANGE.end = b;
+
+  dateStart.value = toISODate(a);
+  dateEnd.value = toISODate(b);
+
+  render();
 }
-function closeDialog(){ try{ dlg.close(); }catch{} }
 
-searchInput.addEventListener("input", applyFilter);
-refreshBtn.addEventListener("click", ()=>{ applyFilter(); refreshStats(); });
-addBtn.addEventListener("click", openDialog);
-dClose.addEventListener("click", closeDialog);
-dCancel.addEventListener("click", closeDialog);
+async function addCashEntry() {
+  const type = cashType.value;
+  const label = cashLabel.value.trim();
+  const amt = Number(cashAmount.value || 0);
+  const dt = cashDate.value;
 
-dSave.addEventListener("click", async () => {
-  const client = (dClient.value||"").trim();
-  const model  = (dModel.value||"").trim(); // IMPORTANT: on garde le nom complet
-  const buyPrice  = Math.max(0, Number(dBuy.value||0));
-  const sellPrice = Math.max(0, Number(dSell.value||0));
+  if (!label) return alert("Libellé obligatoire.");
+  if (!amt || amt <= 0) return alert("Montant invalide.");
+  if (!dt) return alert("Date obligatoire.");
 
-  if (!client || !model) return alert("Client + Modèle requis.");
-  if (!sellPrice) return alert("SELL requis.");
-
-  const vendorEmail = auth.currentUser?.email || null;
-
-  let dateTs = null;
-  if (dDate.value) {
-    const d = new Date(dDate.value + "T12:00:00");
-    dateTs = Timestamp.fromDate(d);
-  }
-
-  try{
-    await addDoc(collection(db, "transactions"), {
-      client,
-      model,
-      buyPrice,
-      sellPrice,
-      vendorEmail,
-      createdBy: auth.currentUser?.uid || null,
-      createdAt: serverTimestamp(),
-      ...(dateTs ? { date: dateTs } : {})
-    });
-    closeDialog();
-  } catch(e){
-    console.error(e);
-    alert("Erreur lors de l'ajout.");
-  }
-});
-
-txTbody.addEventListener("click", async (e) => {
-  const id = e.target?.dataset?.del;
-  if (!id) return;
-  if (!confirm("Supprimer cette transaction ?")) return;
-  try{
-    await deleteDoc(doc(db, "transactions", id));
-  } catch(err){
-    console.error(err);
-    alert("Erreur suppression.");
-  }
-});
-
-logoutBtn?.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "pdm-staff.html";
-});
-
-function start() {
-  const qTx = query(collection(db, "transactions"), orderBy("createdAt", "desc"));
-  unsub = onSnapshot(qTx, (snap) => {
-    rows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    applyFilter();
+  const user = auth.currentUser;
+  await addDoc(collection(db, "cashbook"), {
+    type, // "expense" | "income"
+    label,
+    amount: amt,
+    date: dt, // YYYY-MM-DD (simple & aligné avec transactions)
+    createdAt: serverTimestamp(),
+    createdBy: user?.uid || null,
+    createdByName: user?.displayName || user?.email || null,
   });
-}
-function stop(){ try{unsub?.()}catch{} unsub=null; }
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) { stop(); window.location.href = "pdm-staff.html"; return; }
-  if (!unsub) start();
-});
+  closeModal();
+  cashLabel.value = "";
+  cashAmount.value = "";
+  // garde la date si tu veux (pratique) => on ne reset pas cashDate
+
+  await loadAll();
+}
+
+// ---------------------- Init
+async function init() {
+  // Admin guard
+  const ok = await requireAdmin();
+  if (!ok) return;
+
+  // default week
+  const [a, b] = getCurrentWeekRange();
+  RANGE.start = a;
+  RANGE.end = b;
+  dateStart.value = toISODate(a);
+  dateEnd.value = toISODate(b);
+
+  // listeners
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "pdm-staff.html";
+    });
+  }
+
+  if (search) search.addEventListener("input", render);
+
+  btnThisWeek?.addEventListener("click", setThisWeek);
+  btnApply?.addEventListener("click", applyRangeFromInputs);
+  btnRefresh?.addEventListener("click", loadAll);
+
+  btnPdf?.addEventListener("click", () => window.print());
+
+  btnAddCash?.addEventListener("click", () => {
+    // date par défaut = aujourd'hui (dans la plage)
+    cashDate.value = toISODate(new Date());
+    openModal();
+  });
+
+  closeCashModal?.addEventListener("click", closeModal);
+  cancelCash?.addEventListener("click", closeModal);
+  cashModal?.addEventListener("click", (e) => { if (e.target === cashModal) closeModal(); });
+
+  saveCash?.addEventListener("click", addCashEntry);
+
+  await loadAll();
+}
+
+init();
