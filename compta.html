@@ -5,228 +5,236 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDM Admin — Comptabilité</title>
 
-  <!-- Ton CSS global -->
   <link rel="stylesheet" href="./app.css" />
+
+  <!-- Fix local uniquement : empêcher la page de se coller en bas -->
+  <style>
+    /* ne touche pas au body global */
+    .content { align-items: flex-start !important; justify-content: flex-start !important; }
+    .page { align-items: flex-start !important; justify-content: flex-start !important; padding-top: 26px; }
+  </style>
 </head>
 
 <body>
-  <div class="app">
-    <!-- SIDEBAR (même structure que tes autres pages) -->
+  <div class="layout">
+    <!-- SIDEBAR (garde la tienne si tu l’as déjà identique partout) -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-title">PDM ADMIN</div>
-        <div class="brand-subtitle">Urban Hills</div>
+        <div class="brand-sub">Urban Hills</div>
       </div>
 
-      <nav class="menu">
-        <a class="menu-item" href="./dashboard.html">Dashboard</a>
-        <a class="menu-item" href="./clients.html">Clients</a>
-        <a class="menu-item" href="./stock.html">Stock</a>
-        <a class="menu-item" href="./ventes.html">Ventes</a>
-        <a class="menu-item" href="./vehicles.html">Véhicules</a>
-        <a class="menu-item" href="./partenaires.html">Partenaires</a>
-        <a class="menu-item active" href="./comptabilite.html">Comptabilité</a>
-        <a class="menu-item" href="./catalogue.html">Catalogue</a>
-        <a class="menu-item" href="./gestion.html">Gestion</a>
-
-        <button id="btnLogout" class="btn btn-gold" type="button" style="margin-top:12px;">
-          Déconnexion
-        </button>
+      <nav class="nav">
+        <a class="nav-item" href="./dashboard.html">Dashboard</a>
+        <a class="nav-item" href="./clients.html">Clients</a>
+        <a class="nav-item" href="./stock.html">Stock</a>
+        <a class="nav-item" href="./ventes.html">Ventes</a>
+        <a class="nav-item" href="./vehicles.html">Véhicules</a>
+        <a class="nav-item" href="./partners.html">Partenaires</a>
+        <a class="nav-item active" href="./compta.html">Comptabilité</a>
+        <a class="nav-item" href="./catalogue.html">Catalogue</a>
+        <a class="nav-item" href="./gestion.html">Gestion</a>
       </nav>
+
+      <button id="btnLogout" class="btn btn-gold w-full">Déconnexion</button>
     </aside>
 
     <!-- CONTENT -->
     <main class="content">
-      <header class="page-header">
-        <h1 class="page-title">Comptabilité</h1>
-        <p class="page-subtitle">Source : ventes (transactions) + opérations manuelles (cashbook)</p>
-      </header>
+      <div class="page">
 
-      <!-- FILTRES -->
-      <section class="card" style="padding:16px;">
-        <div class="row" style="gap:12px; align-items:center; flex-wrap:wrap;">
-          <input id="searchInput" class="input" type="text" placeholder="Rechercher (client, modèle, vendeur)..." style="min-width:260px; flex:1;" />
-
-          <button id="btnWeek" class="btn" type="button">Semaine en cours</button>
-
-          <div class="row" style="gap:10px; align-items:center; flex-wrap:wrap;">
-            <input id="dateFrom" class="input" type="date" />
-            <input id="dateTo" class="input" type="date" />
-            <button id="btnApplyRange" class="btn" type="button">Appliquer</button>
-            <button id="btnRefresh" class="btn" type="button">Rafraîchir</button>
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">Comptabilité</h1>
+            <div class="page-subtitle">Source : ventes (transactions) + opérations manuelles (cashbook)</div>
           </div>
 
-          <div class="row" style="gap:10px; margin-left:auto; flex-wrap:wrap;">
-            <button id="btnAddCashbook" class="btn btn-gold" type="button">+ Dépense / Gain</button>
-            <button id="btnExportPdf" class="btn" type="button">Exporter PDF</button>
+          <div class="page-actions">
+            <button id="btnWeek" class="btn">Semaine en cours</button>
+            <button id="btnPdf" class="btn">Exporter PDF</button>
+            <button id="btnAddCash" class="btn btn-gold">+ Dépense / Gain</button>
           </div>
-        </div>
-      </section>
+        </header>
 
-      <!-- KPIs -->
-      <section class="row" style="gap:14px; margin-top:14px; flex-wrap:wrap;">
-        <div class="card kpi" style="min-width:220px; flex:1;">
-          <div class="kpi-label">CA total (ventes)</div>
-          <div id="kpiRevenue" class="kpi-value">$0</div>
-        </div>
-        <div class="card kpi" style="min-width:220px; flex:1;">
-          <div class="kpi-label">Profit total (ventes)</div>
-          <div id="kpiProfit" class="kpi-value">$0</div>
-        </div>
-        <div class="card kpi" style="min-width:220px; flex:1;">
-          <div class="kpi-label">Nombre de ventes</div>
-          <div id="kpiCount" class="kpi-value">0</div>
-        </div>
-        <div class="card kpi" style="min-width:220px; flex:1;">
-          <div class="kpi-label">Dépenses (manuel)</div>
-          <div id="kpiExpenses" class="kpi-value">$0</div>
-        </div>
-        <div class="card kpi" style="min-width:220px; flex:1;">
-          <div class="kpi-label">Gains autres (manuel)</div>
-          <div id="kpiOtherIncome" class="kpi-value">$0</div>
-        </div>
-        <div class="card kpi" style="min-width:260px; flex:1;">
-          <div class="kpi-label">Résultat net (profit + gains - dépenses)</div>
-          <div id="kpiNet" class="kpi-value">$0</div>
-        </div>
-      </section>
+        <!-- FILTRES -->
+        <section class="card">
+          <div class="toolbar">
+            <input id="q" class="input" placeholder="Rechercher (client, modèle, vendeur)..." />
+            <div class="range">
+              <input id="dateFrom" class="input" type="date" />
+              <input id="dateTo" class="input" type="date" />
+              <button id="btnApply" class="btn">Appliquer</button>
+              <button id="btnRefresh" class="btn">Rafraîchir</button>
+            </div>
+          </div>
+        </section>
 
-      <!-- TABLES -->
-      <section class="row" style="gap:14px; margin-top:14px; align-items:flex-start; flex-wrap:wrap;">
-        <!-- VENTES AUTO -->
-        <div class="card" style="flex:2; min-width:520px; padding:16px;">
-          <div class="row" style="justify-content:space-between; align-items:center; flex-wrap:wrap;">
-            <h3 style="margin:0;">Transactions — Ventes (auto)</h3>
-            <span class="badge">Collection : <b>transactions</b></span>
+        <!-- KPIs -->
+        <section class="kpis">
+          <div class="kpi card">
+            <div class="kpi-label">CA total (ventes)</div>
+            <div id="kpiCa" class="kpi-value">$0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi-label">Profit total (ventes)</div>
+            <div id="kpiProfit" class="kpi-value">$0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi-label">Nombre de ventes</div>
+            <div id="kpiCount" class="kpi-value">0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi-label">Dépenses (manuel)</div>
+            <div id="kpiExpense" class="kpi-value">$0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi-label">Gains autres (manuel)</div>
+            <div id="kpiOther" class="kpi-value">$0</div>
+          </div>
+          <div class="kpi card">
+            <div class="kpi-label">Résultat net (profit + gains - dépenses)</div>
+            <div id="kpiNet" class="kpi-value">$0</div>
+          </div>
+        </section>
+
+        <section class="grid-2">
+          <!-- TABLE TRANSACTIONS -->
+          <div class="card">
+            <div class="card-title-row">
+              <div class="card-title">Transactions — Ventes (auto)</div>
+              <div class="chip">Collection : <b>transactions</b></div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Modèle</th>
+                    <th>Sell</th>
+                    <th>Buy</th>
+                    <th>Profit</th>
+                    <th>Vendeur</th>
+                  </tr>
+                </thead>
+                <tbody id="txTbody">
+                  <tr><td colspan="7" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div class="table-wrap" style="margin-top:12px;">
+          <!-- SALAIRES -->
+          <div class="card">
+            <div class="card-title-row">
+              <div>
+                <div class="card-title">Salaires vendeurs (commissions)</div>
+                <div class="muted small">Selon <b>users.grade</b> : Vendeur 10% • Co-PDG 12% • PDG 5% sur tout</div>
+              </div>
+              <div class="chip">Période : <span id="periodLabel">—</span></div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Grade</th>
+                    <th>Ventes</th>
+                    <th>Commission</th>
+                    <th>Salaire</th>
+                  </tr>
+                </thead>
+                <tbody id="salaryTbody">
+                  <tr><td colspan="5" class="muted">Chargement…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="muted small" style="margin-top:10px;">
+              📌 Le <b>PDG</b> est calculé sur <b>toutes</b> les ventes de la période filtrée (5%).
+              Compte rendu : <b>lundi matin → dimanche soir</b>.
+            </div>
+          </div>
+        </section>
+
+        <!-- CASHBOOK -->
+        <section class="card" style="margin-top:16px;">
+          <div class="card-title-row">
+            <div>
+              <div class="card-title">Opérations manuelles</div>
+              <div class="muted small">Uniquement <b>dépenses</b> + <b>gains autres</b> que les ventes</div>
+            </div>
+            <div class="chip">Collection : <b>cashbook</b></div>
+          </div>
+
+          <div class="table-wrap">
             <table class="table">
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Client</th>
-                  <th>Modèle</th>
-                  <th>Sell</th>
-                  <th>Buy</th>
-                  <th>Profit</th>
-                  <th>Vendeur</th>
+                  <th>Type</th>
+                  <th>Libellé</th>
+                  <th>Montant</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody id="salesTbody">
-                <tr><td colspan="7">Chargement...</td></tr>
+              <tbody id="cashTbody">
+                <tr><td colspan="5" class="muted">Chargement…</td></tr>
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
-        <!-- SALAIRES -->
-        <div class="card" style="flex:1; min-width:420px; padding:16px;">
-          <div class="row" style="justify-content:space-between; align-items:center; flex-wrap:wrap;">
-            <h3 style="margin:0;">Salaires vendeurs (commissions)</h3>
-          </div>
-          <p style="opacity:.8; margin:8px 0 10px;">
-            Selon <b>users.grade</b> : Vendeur 10% • Co-PDG 12% • PDG 5% sur tout
-          </p>
-          <div class="row" style="gap:10px; align-items:center; flex-wrap:wrap;">
-            <span class="badge">Période : <b id="periodLabel">—</b></span>
-          </div>
+        <!-- MODAL CASHBOOK -->
+        <div id="cashModal" class="modal hidden">
+          <div class="modal-backdrop" data-close="1"></div>
+          <div class="modal-card">
+            <div class="modal-head">
+              <div class="modal-title">Ajouter une opération</div>
+              <button class="icon-btn" data-close="1">✕</button>
+            </div>
 
-          <div class="table-wrap" style="margin-top:12px;">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Grade</th>
-                  <th>Ventes</th>
-                  <th>Commission</th>
-                  <th>Salaire</th>
-                </tr>
-              </thead>
-              <tbody id="salaryTbody">
-                <tr><td colspan="5">Chargement...</td></tr>
-              </tbody>
-            </table>
-          </div>
+            <div class="modal-body">
+              <div class="form-grid">
+                <label class="label">
+                  Date
+                  <input id="cashDate" class="input" type="date" />
+                </label>
 
-          <p style="opacity:.8; margin-top:10px;">
-            📌 Le PDG est calculé sur <b>toutes</b> les ventes de la période filtrée (5%).
-          </p>
-        </div>
-      </section>
+                <label class="label">
+                  Type
+                  <select id="cashType" class="input">
+                    <option value="expense">Dépense</option>
+                    <option value="income">Gain (autre que ventes)</option>
+                  </select>
+                </label>
 
-      <!-- CASHBOOK -->
-      <section class="card" style="margin-top:14px; padding:16px;">
-        <div class="row" style="justify-content:space-between; align-items:center; flex-wrap:wrap;">
-          <h3 style="margin:0;">Opérations manuelles</h3>
-          <span class="badge">Collection : <b>cashbook</b></span>
-        </div>
-        <p style="opacity:.8; margin:8px 0 10px;">
-          Uniquement <b>dépenses</b> + <b>gains autres que les ventes</b>.
-        </p>
+                <label class="label">
+                  Libellé
+                  <input id="cashReason" class="input" placeholder="Ex: Salaire, Facture, Partenariat..." />
+                </label>
 
-        <div class="table-wrap" style="margin-top:12px;">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Libellé</th>
-                <th>Montant</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="cashbookTbody">
-              <tr><td colspan="5">Chargement...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+                <label class="label">
+                  Montant
+                  <input id="cashAmount" class="input" type="number" step="1" placeholder="Ex: 25000" />
+                </label>
+              </div>
+            </div>
 
-      <!-- MODAL CASHBOOK -->
-      <div id="cashbookModal" class="modal" aria-hidden="true" style="display:none;">
-        <div class="modal-backdrop" data-close="1"></div>
-        <div class="modal-card">
-          <div class="row" style="justify-content:space-between; align-items:center;">
-            <h3 style="margin:0;">Ajouter une opération</h3>
-            <button class="btn" type="button" id="btnCloseModal">✕</button>
-          </div>
-
-          <div style="margin-top:12px; display:grid; gap:10px;">
-            <label>
-              <div class="label">Date</div>
-              <input id="cbDate" class="input" type="date" />
-            </label>
-
-            <label>
-              <div class="label">Type</div>
-              <select id="cbType" class="input">
-                <option value="expense">Dépense</option>
-                <option value="income">Gain (hors ventes)</option>
-              </select>
-            </label>
-
-            <label>
-              <div class="label">Libellé</div>
-              <input id="cbReason" class="input" type="text" placeholder="Ex: Loyer, Prime, Réparation..." />
-            </label>
-
-            <label>
-              <div class="label">Montant</div>
-              <input id="cbAmount" class="input" type="number" min="0" step="1" placeholder="Ex: 25000" />
-            </label>
-
-            <div class="row" style="gap:10px; justify-content:flex-end; margin-top:6px;">
-              <button id="btnCancelModal" class="btn" type="button">Annuler</button>
-              <button id="btnSaveCashbook" class="btn btn-gold" type="button">Enregistrer</button>
+            <div class="modal-foot">
+              <button id="cashCancel" class="btn">Annuler</button>
+              <button id="cashSave" class="btn btn-gold">Enregistrer</button>
             </div>
           </div>
         </div>
-      </div>
 
+      </div>
     </main>
   </div>
 
+  <script type="module" src="./guard.js"></script>
   <script type="module" src="./compta.js"></script>
 </body>
 </html>
