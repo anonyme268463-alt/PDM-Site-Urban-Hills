@@ -5,124 +5,130 @@
   <title>PDM Admin - Véhicules</title>
   <link rel="icon" href="favicon.png">
   <link rel="stylesheet" href="app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module" src="vehicles.js"></script>
 </head>
 <body>
 
-<div class="layout">
-
+<div class="app-container">
   <aside class="sidebar">
-    <h2>PDM ADMIN</h2>
-
-    <a href="dashboard.html">Dashboard</a>
-    <a href="clients.html">Clients</a>
-    <a href="stock.html">Stock</a>
-    <a href="ventes.html">Ventes</a>
-    <a class="active" href="vehicles.html">Véhicules</a>
-    <a href="partenariats.html">Partenaires</a>
-    <a href="compta.html">Comptabilité</a>
-    <a href="catalogue.html">Catalogue</a>
-    <a href="gestion.html">Gestion</a>
-
-    <button id="logoutBtn">Déconnexion</button>
+    <div class="sidebar-brand">
+      <div class="brand-title">PDM <span>ADMIN</span></div>
+      <div class="brand-sub">Urban Hills</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-link" href="dashboard.html"><span>Dashboard</span></a>
+      <a class="nav-link" href="clients.html"><span>Clients</span></a>
+      <a class="nav-link" href="stock.html"><span>Stock</span></a>
+      <a class="nav-link" href="ventes.html"><span>Ventes</span></a>
+      <a class="nav-link active" href="vehicles.html"><span>Véhicules</span></a>
+      <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
+      <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
+      <a class="nav-link" href="catalogue.html"><span>Catalogue</span></a>
+      <a class="nav-link" href="gestion.html"><span>Gestion</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+    </div>
   </aside>
 
-  <main class="content">
-    <h1>Véhicules</h1>
-    <p style="opacity:.8;margin-top:-6px;">Collection : <b>vehicles</b> (référentiel interne)</p>
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="page-info">
+        <h1>Véhicules</h1>
+        <p>Référentiel interne des véhicules (collection: vehicles)</p>
+      </div>
+      <div class="top-bar-actions flex-row">
+        <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
+        <button id="addBtn" class="btn btn-gold">+ Nouveau Véhicule</button>
+      </div>
+    </header>
 
-    <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center;">
-      <input id="search" type="text" placeholder="Rechercher (marque, modèle, catégorie)..." />
-      <button id="refreshBtn" class="btn">Rafraîchir</button>
-      <button id="addBtn" class="btn btn-gold">+ Véhicule</button>
+    <div class="content-body">
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <div class="card-title">Total véhicules</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Catégories</div>
+          <div class="stat-value" id="statCats">0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Ajoutés ce mois</div>
+          <div class="stat-value" id="statMonth">0</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <input id="search" type="text" class="input" placeholder="Rechercher par marque, modèle, catégorie...">
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Marque</th>
+                <th>Modèle</th>
+                <th>Catégorie</th>
+                <th>Prix (Buy)</th>
+                <th>Prix (Sell)</th>
+                <th>Créé le</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr><td colspan="7" class="muted">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-
-    <div class="cards" style="margin-bottom:14px;">
-      <div class="card">
-        <div>Total véhicules</div>
-        <h2 id="statTotal">0</h2>
-      </div>
-      <div class="card">
-        <div>Catégories</div>
-        <h2 id="statCats">0</h2>
-      </div>
-      <div class="card">
-        <div>Ajoutés ce mois</div>
-        <h2 id="statMonth">0</h2>
-      </div>
-    </div>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Marque</th>
-          <th>Modèle</th>
-          <th>Catégorie</th>
-          <th>Price</th>
-          <th>Sell price</th>
-          <th>Créé</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="rows">
-        <tr><td colspan="7">Chargement...</td></tr>
-      </tbody>
-    </table>
   </main>
-
 </div>
 
-<!-- MODAL -->
-<div id="vehModal" class="modal hidden">
-  <div class="modal-content">
+<!-- Modal véhicule -->
+<div id="vehModal" class="modal-overlay hidden">
+  <div class="modal-container">
     <div class="modal-header">
-      <div class="modal-title" id="vmTitle">Véhicule</div>
-      <div class="close" id="vmClose">X</div>
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2 id="vmTitle">Véhicule</h2>
+        <button class="btn btn-outline btn-sm" id="vmClose">✕</button>
+      </div>
     </div>
-
-    <div class="hr"></div>
-
-    <div class="card" style="margin-bottom:12px;">
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:220px;">
-          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Marque</div>
-          <input id="vmBrand" type="text" placeholder="Pfister">
+    <div class="modal-body">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+          <label>Marque</label>
+          <input id="vmBrand" type="text" class="input" placeholder="Pfister">
         </div>
-
-        <div style="flex:1; min-width:220px;">
-          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Modèle</div>
-          <input id="vmModel" type="text" placeholder="Comet S2">
+        <div class="form-group">
+          <label>Modèle</label>
+          <input id="vmModel" type="text" class="input" placeholder="Comet S2">
         </div>
-
-        <div style="flex:1; min-width:220px;">
-          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Catégorie</div>
-          <input id="vmCategory" type="text" placeholder="Sport">
+        <div class="form-group">
+          <label>Catégorie</label>
+          <input id="vmCategory" type="text" class="input" placeholder="Sport">
         </div>
-
-        <div style="flex:1; min-width:220px;">
-          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Price</div>
-          <input id="vmPrice" type="number" min="0" step="1" placeholder="0">
+        <div class="form-group">
+          <label>Prix de base (Buy)</label>
+          <input id="vmPrice" type="number" class="input" placeholder="0">
         </div>
-
-        <div style="flex:1; min-width:220px;">
-          <div style="font-size:12px; opacity:.8; margin-bottom:6px;">Sell price</div>
-          <input id="vmSellPrice" type="number" min="0" step="1" placeholder="0">
+        <div class="form-group">
+          <label>Prix conseillé (Sell)</label>
+          <input id="vmSellPrice" type="number" class="input" placeholder="0">
         </div>
       </div>
-
-      <div style="margin-top:10px; font-size:12px; opacity:.75;">
+      <div style="margin-top:10px; font-size:11px; opacity:.5;">
         ID: <span id="vmId">-</span>
       </div>
     </div>
-
-    <div class="hr"></div>
-
-    <div style="display:flex; justify-content:flex-end; gap:10px;">
-      <button id="vmCancel" class="btn">Annuler</button>
-      <button id="vmDelete" class="btn btn-danger">Supprimer</button>
+    <div class="modal-footer">
+      <button id="vmDelete" class="btn btn-danger" style="margin-right: auto;">Supprimer</button>
+      <button id="vmCancel" class="btn btn-outline">Annuler</button>
       <button id="vmSave" class="btn btn-gold">Enregistrer</button>
     </div>
-
   </div>
 </div>
 

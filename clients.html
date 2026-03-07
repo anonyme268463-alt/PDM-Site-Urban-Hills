@@ -5,157 +5,174 @@
   <title>PDM Admin - Clients</title>
   <link rel="icon" href="favicon.png">
   <link rel="stylesheet" href="app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module" src="clients.js"></script>
 </head>
 <body>
 
-<div class="layout">
-
+<div class="app-container">
   <aside class="sidebar">
-    <h2>PDM ADMIN</h2>
-
-    <a href="dashboard.html">Dashboard</a>
-    <a class="active" href="clients.html">Clients</a>
-    <a href="stock.html">Stock</a>
-    <a href="ventes.html">Ventes</a>
-    <a href="vehicles.html">Vehicules</a>
-    <a href="partenariats.html">Partenaires</a>
-    <a href="compta.html">Comptabilite</a>
-    <a href="catalogue.html">Catalogue</a>
-    <a href="gestion.html">Gestion</a>
-
-    <button id="logoutBtn">Deconnexion</button>
+    <div class="sidebar-brand">
+      <div class="brand-title">PDM <span>ADMIN</span></div>
+      <div class="brand-sub">Urban Hills</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-link" href="dashboard.html"><span>Dashboard</span></a>
+      <a class="nav-link active" href="clients.html"><span>Clients</span></a>
+      <a class="nav-link" href="stock.html"><span>Stock</span></a>
+      <a class="nav-link" href="ventes.html"><span>Ventes</span></a>
+      <a class="nav-link" href="vehicles.html"><span>Véhicules</span></a>
+      <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
+      <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
+      <a class="nav-link" href="catalogue.html"><span>Catalogue</span></a>
+      <a class="nav-link" href="gestion.html"><span>Gestion</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+    </div>
   </aside>
 
-  <main class="content">
-    <h1>Gestion Clients</h1>
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="page-info">
+        <h1>Gestion Clients</h1>
+        <p>Base de données et historique des clients</p>
+      </div>
+      <div class="top-bar-actions">
+        <button id="addClientBtn" class="btn btn-gold">+ Nouveau Client</button>
+      </div>
+    </header>
 
-    <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center;">
-      <input id="search" type="text" placeholder="Rechercher par nom ou telephone" style="flex:1;">
-      <button id="addClientBtn" class="btn btn-gold">+ Client</button>
+    <div class="content-body">
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <input id="search" type="text" class="input" placeholder="Rechercher par nom ou téléphone...">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Téléphone</th>
+                <th>Permis</th>
+                <th>Voiture</th>
+                <th>Moto</th>
+                <th>Camion</th>
+                <th>Achats</th>
+                <th>Total</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTable">
+              <tr><td colspan="9" class="muted">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Telephone</th>
-          <th>Permis</th>
-          <th>Voiture</th>
-          <th>Moto</th>
-          <th>Camion</th>
-          <th>Achats</th>
-          <th>Total</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="clientsTable">
-        <tr><td colspan="9">Chargement...</td></tr>
-      </tbody>
-    </table>
   </main>
-
 </div>
 
-<!-- Modal fiche client (existant) -->
-<div id="clientModal" class="modal hidden">
-  <div class="modal-content">
+<!-- Modal fiche client -->
+<div id="clientModal" class="modal-overlay hidden">
+  <div class="modal-container">
     <div class="modal-header">
-      <div class="modal-title" id="mTitle">Fiche client</div>
-      <div class="close" id="closeModal">X</div>
-    </div>
-
-    <div class="hr"></div>
-
-    <div class="cards">
-      <div class="card">
-        <div>Total depense</div>
-        <h2 id="mTotal">$0</h2>
-      </div>
-      <div class="card">
-        <div>Profit genere</div>
-        <h2 id="mProfit">$0</h2>
-      </div>
-      <div class="card">
-        <div>Nombre achats</div>
-        <h2 id="mCount">0</h2>
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2 id="mTitle">Fiche client</h2>
+        <button class="btn btn-outline btn-sm" id="closeModal">✕</button>
       </div>
     </div>
-
-    <div class="hr"></div>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Modele</th>
-          <th>Achat</th>
-          <th>Vente</th>
-          <th>Profit</th>
-        </tr>
-      </thead>
-      <tbody id="mSales">
-        <tr><td colspan="5">Chargement...</td></tr>
-      </tbody>
-    </table>
-
+    <div class="modal-body">
+      <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="card stat-card">
+          <div class="card-title">Total dépensé</div>
+          <div class="stat-value" id="mTotal" style="font-size: 24px;">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Profit généré</div>
+          <div class="stat-value" id="mProfit" style="font-size: 24px;">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Achats</div>
+          <div class="stat-value" id="mCount" style="font-size: 24px;">0</div>
+        </div>
+      </div>
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Modèle</th>
+              <th>Achat</th>
+              <th>Vente</th>
+              <th>Profit</th>
+            </tr>
+          </thead>
+          <tbody id="mSales">
+            <tr><td colspan="5" class="muted">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Modal ajout client (NOUVEAU) -->
-<div id="addClientModal" class="modal hidden">
-  <div class="modal-content">
+<!-- Modal ajout client -->
+<div id="addClientModal" class="modal-overlay hidden">
+  <div class="modal-container" style="max-width: 500px;">
     <div class="modal-header">
-      <div class="modal-title">Ajouter un client</div>
-      <div class="close" id="addClientClose">X</div>
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2>Ajouter un client</h2>
+        <button class="btn btn-outline btn-sm" id="addClientClose">✕</button>
+      </div>
     </div>
-
-    <div class="hr"></div>
-
-    <div class="card" style="margin-bottom:12px;">
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-        <div>
-          <div style="margin-bottom:6px; opacity:.85;">Nom *</div>
-          <input id="cName" type="text" placeholder="Ex: Antonio Moretti">
-        </div>
-        <div>
-          <div style="margin-bottom:6px; opacity:.85;">Téléphone</div>
-          <input id="cPhone" type="text" placeholder="Ex: (0)896055">
-        </div>
-
-        <div>
-          <div style="margin-bottom:6px; opacity:.85;">Permis</div>
-          <select id="cLicense">
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
-          </select>
-        </div>
-
-        <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-          <label style="display:flex; gap:8px; align-items:center;">
-            <input id="cCar" type="checkbox">
-            <span>Voiture</span>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nom Complet *</label>
+        <input id="cName" type="text" class="input" placeholder="Antonio Moretti">
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input id="cPhone" type="text" class="input" placeholder="(0)896055">
+      </div>
+      <div class="form-group">
+        <label>Permis de conduire</label>
+        <select id="cLicense" class="input">
+          <option value="Oui">Oui</option>
+          <option value="Non">Non</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Catégories de permis</label>
+        <div class="flex-row" style="margin-top: 10px;">
+          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+            <input id="cCar" type="checkbox"> <span>Voiture</span>
           </label>
-          <label style="display:flex; gap:8px; align-items:center;">
-            <input id="cMoto" type="checkbox">
-            <span>Moto</span>
+          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+            <input id="cMoto" type="checkbox"> <span>Moto</span>
           </label>
-          <label style="display:flex; gap:8px; align-items:center;">
-            <input id="cTruck" type="checkbox">
-            <span>Camion</span>
+          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+            <input id="cTruck" type="checkbox"> <span>Camion</span>
           </label>
         </div>
       </div>
-
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
-        <button id="cCancel" class="btn">Annuler</button>
-        <button id="cSave" class="btn btn-gold">Enregistrer</button>
-      </div>
-
-      <div id="cError" style="margin-top:10px; color:#ff9b9b; display:none;"></div>
+      <div id="cError" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="cCancel" class="btn btn-outline">Annuler</button>
+      <button id="cSave" class="btn btn-gold">Enregistrer</button>
     </div>
   </div>
 </div>
+
+<script>
+  // Simple modal toggle helper for clients.js integration if needed
+  // Note: clients.js already handles classList.remove('hidden')
+  // We need to update clients.js or use CSS to map .hidden to opacity 0/pointer-events none
+</script>
 
 </body>
 </html>
