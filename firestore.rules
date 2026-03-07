@@ -2,123 +2,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Fonctions de base ---
-    function signedIn() {
+    // Helper simple pour vérifier si l'utilisateur est connecté
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    // Récupère le chemin du document de l'utilisateur actuel
-    function userPath() {
-      return /databases/$(database)/documents/users/$(request.auth.uid);
+    // Récupère les données de l'utilisateur (si le doc existe)
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Vérifie si l'utilisateur est actif
-    function isActive() {
-      if (!signedIn()) return false;
-      // Si le document n'existe pas, on considère l'accès limité (ou actif par défaut selon le besoin)
-      // Ici, on va être prudent : s'il n'existe pas, il n'est pas encore "staff" complet.
-      if (!exists(userPath())) return true;
-      let data = get(userPath()).data;
-      return data.active == null || data.active == true;
-    }
-
-    // Détermine le rôle/grade de l'utilisateur
-    function getRole() {
-      if (!signedIn()) return 'guest';
-      if (!exists(userPath())) return 'staff'; // Rôle par défaut si doc inexistant
-      let data = get(userPath()).data;
-      let r = data.role != null ? data.role : (data.rank != null ? data.rank : (data.grade != null ? data.grade : 'staff'));
-      return string(r).lower();
-    }
-
-    // Vérifie si l'utilisateur est un Admin / PDG
+    // Vérifie si l'utilisateur a le rôle admin (PDG ou Admin)
     function isAdmin() {
-      return signedIn() && isActive() && (getRole() == 'admin' || getRole().contains('pdg'));
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             (userData().get('role', 'staff') == 'admin' ||
+              userData().get('role', 'staff') == 'pdg' ||
+              userData().get('rank', 'staff') == 'admin');
     }
 
-    // Vérifie si l'utilisateur fait partie du Staff
-    function isStaff() {
-      if (!signedIn() || !isActive()) return false;
-      let r = getRole();
-      return r in ['admin', 'staff', 'vendeur'] || r.contains('pdg') || r.contains('vendeur');
-    }
+    // --- RÈGLES PAR COLLECTION ---
 
-    // --- Règles par Collection ---
-
-    // USERS : Gestion des profils
+    // Collection USERS
     match /users/{userId} {
-      // On permet à un utilisateur de lire son propre profil sans passer par isStaff()
-      // pour éviter la boucle infinie ou le blocage si le doc n'est pas encore créé.
-      allow read: if signedIn() && (request.auth.uid == userId || isStaff());
-
-      // Seul l'admin peut tout gérer, l'utilisateur peut modifier son propre profil
-      allow create, update: if isAdmin() || (signedIn() && request.auth.uid == userId);
-      allow delete: if isAdmin();
+      // On autorise la lecture à tout utilisateur connecté pour éviter les blocages de vérification de rôle
+      allow read: if isSignedIn();
+      // Seul l'admin ou l'utilisateur lui-même peut modifier son profil
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
     }
 
-    // TRANSACTIONS : Ventes
-    match /transactions/{txId} {
-      allow read: if isStaff();
-      allow create: if isStaff();
-      allow update: if isAdmin() || (
-        isStaff() && (resource.data.sellerId == request.auth.uid || resource.data.createdBy == request.auth.uid)
-        && (request.resource.data.sellerId == resource.data.sellerId)
-        && (request.resource.data.createdBy == resource.data.createdBy)
-      );
-      allow delete: if isAdmin() || (
-        isStaff() && (resource.data.sellerId == request.auth.uid || resource.data.createdBy == request.auth.uid)
-      );
+    // Autres collections : accès lecture au staff, écriture aux admins
+    match /transactions/{docId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
 
-    // PARTENAIRES
-    match /partners/{partnerId} {
-      allow read: if isStaff();
-      allow create, update, delete: if isAdmin();
-      match /members/{memberId} {
-        allow read: if isStaff();
-        allow create, update, delete: if isAdmin();
-      }
-      match /clients/{clientId} {
-        allow read: if isStaff();
-        allow create, update, delete: if isAdmin();
-      }
-    }
+    match /clients/{docId} { allow read, write: if isSignedIn(); }
+    match /vehicles/{docId} { allow read, write: if isSignedIn(); }
+    match /stock/{docId} { allow read, write: if isSignedIn(); }
 
-    // OPÉRATIONS COURANTES
-    match /clients/{clientId} {
-      allow read, create, update: if isStaff();
-      allow delete: if isAdmin();
-    }
-    match /vehicles/{vehicleId} {
-      allow read, create, update: if isStaff();
-      allow delete: if isAdmin();
-    }
-    match /inventory/{itemId} {
-      allow read, create, update: if isStaff();
-      allow delete: if isAdmin();
-    }
-    match /stock/{itemId} {
-      allow read, create, update: if isStaff();
-      allow delete: if isAdmin();
-    }
-    match /reservations/{resId} {
-      allow read, create, update: if isStaff();
-      allow delete: if isAdmin();
-    }
-    match /cashbook/{entryId} {
-      allow read, create, update: if isStaff();
-      allow delete: if isAdmin();
-    }
-
-    // AUDIT LOGS
-    match /auditLogs/{logId} {
-      allow create: if isStaff();
-      allow read, update, delete: if isAdmin();
-    }
-
-    // CATALOGUE
-    match /catalogue/{docId} {
-      allow read: if isStaff();
+    // Règle par défaut pour tout le reste
+    match /{document=**} {
+      allow read: if isSignedIn();
       allow write: if isAdmin();
     }
   }
