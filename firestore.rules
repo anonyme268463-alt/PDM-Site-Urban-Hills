@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Fonctions de base ---
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Récupère les données de l'utilisateur connecté
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Vérifie si l'utilisateur est actif (si le champ n'existe pas, on considère qu'il est actif par défaut)
+    function isActive() {
+      let data = getUserData();
+      return data.active == null || data.active == true;
+    }
+
+    // Détermine le rôle/grade de l'utilisateur (supporte plusieurs dénominations)
+    function getRole() {
+      let data = getUserData();
+      let r = data.role != null ? data.role : (data.rank != null ? data.rank : (data.grade != null ? data.grade : 'staff'));
+      return string(r).lower();
+    }
+
+    // Vérifie si l'utilisateur est un Admin / PDG
+    function isAdmin() {
+      return signedIn() && isActive() && (getRole() == 'admin' || getRole().contains('pdg'));
+    }
+
+    // Vérifie si l'utilisateur fait partie du Staff
+    function isStaff() {
+      return signedIn() && isActive() && (
+        getRole() in ['admin', 'staff', 'vendeur'] ||
+        getRole().contains('pdg') ||
+        getRole().contains('vendeur')
+      );
+    }
+
+    // --- Règles par Collection ---
+
+    // USERS : Gestion des profils
+    match /users/{userId} {
+      // Tout le staff peut lire les profils (pour afficher les noms des vendeurs par exemple)
+      allow read: if isStaff();
+      // Un utilisateur peut modifier ses propres infos de base, mais seul l'admin peut tout gérer
+      allow create, update: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow delete: if isAdmin();
+    }
+
+    // TRANSACTIONS : Ventes
+    match /transactions/{txId} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+
+      // Un staff peut modifier ses propres ventes s'il ne change pas l'auteur
+      // L'admin peut tout modifier / supprimer
+      allow update: if isAdmin() || (
+        isStaff() && (resource.data.sellerId == request.auth.uid || resource.data.createdBy == request.auth.uid)
+        && (request.resource.data.sellerId == resource.data.sellerId)
+        && (request.resource.data.createdBy == resource.data.createdBy)
+      );
+      allow delete: if isAdmin() || (
+        isStaff() && (resource.data.sellerId == request.auth.uid || resource.data.createdBy == request.auth.uid)
+      );
+    }
+
+    // PARTENAIRES : Entreprises et membres
+    match /partners/{partnerId} {
+      allow read: if isStaff();
+      // Seuls les admins gèrent la liste des partenaires
+      allow create, update, delete: if isAdmin();
+
+      match /members/{memberId} {
+        allow read: if isStaff();
+        allow create, update, delete: if isAdmin();
+      }
+
+      match /clients/{clientId} {
+        allow read: if isStaff();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // OPÉRATIONS COURANTES : Clients, Véhicules, Stock, Réservations, Cashbook
+    match /clients/{clientId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+    match /vehicles/{vehicleId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+    match /inventory/{itemId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+    match /stock/{itemId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+    match /reservations/{resId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+    match /cashbook/{entryId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // AUDIT LOGS : Traces d'activité
+    match /auditLogs/{logId} {
+      allow create: if isStaff();
+      allow read, update, delete: if isAdmin();
+    }
+
+    // CATALOGUE (Configuration des véhicules)
+    match /catalogue/{docId} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+  }
+}
