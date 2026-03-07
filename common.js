@@ -49,3 +49,17 @@ export function getWeekRange(now = new Date()) {
 
   return { from: monday, to: sunday };
 }
+
+export function normRole(r) {
+  const s = String(r || "").toLowerCase().trim();
+  if (s.includes("admin")) return "admin";
+  return "staff";
+}
+
+export function toBool(v, def = false) {
+  if (v === undefined || v === null) return def;
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v !== 0;
+  const s = String(v).toLowerCase();
+  return s === "true" || s === "1" || s === "yes" || s === "oui" || s === "actif";
+}

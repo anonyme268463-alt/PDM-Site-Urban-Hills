@@ -57,10 +57,10 @@ let editingUid = null;
    Helpers
 --------------------------- */
 function showModal() {
-  backdrop.classList.add("show");
+  backdrop.classList.remove("hidden");
 }
 function hideModal() {
-  backdrop.classList.remove("show");
+  backdrop.classList.add("hidden");
 }
 function setLoadingRow(msg = "CHARGEMENT...") {
   usersTbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">${escapeHtml(msg)}</td></tr>`;
@@ -249,7 +249,7 @@ async function toggleActive(uid) {
 --------------------------- */
 logoutBtn?.addEventListener("click", async () => {
   try { await signOut(auth); } catch {}
-  window.location.href = "index.html";
+  window.location.href = "pdm-staff.html";
 });
 
 refreshBtn?.addEventListener("click", fetchUsers);
@@ -266,7 +266,7 @@ saveBtn?.addEventListener("click", saveUser);
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = "index.html";
+    window.location.href = "pdm-staff.html";
     return;
   }
 

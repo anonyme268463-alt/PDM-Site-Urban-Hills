@@ -415,7 +415,7 @@ function exportPdf() {
 /** Events */
 btnLogout?.addEventListener("click", async () => {
   await signOut(auth);
-  window.location.href = "./index.html";
+  window.location.href = "pdm-staff.html";
 });
 
 btnWeek?.addEventListener("click", async () => {

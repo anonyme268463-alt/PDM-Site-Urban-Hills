@@ -6,123 +6,133 @@
   <title>PDM Admin - Ventes</title>
   <link rel="icon" href="favicon.png">
   <link rel="stylesheet" href="app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module" src="ventes.js"></script>
 </head>
 <body>
 
-<div class="layout">
+<div class="app-container">
   <aside class="sidebar">
-    <h2>PDM ADMIN</h2>
-
-    <a href="dashboard.html">Dashboard</a>
-    <a href="clients.html">Clients</a>
-    <a href="stock.html">Stock</a>
-    <a class="active" href="ventes.html">Ventes</a>
-    <a href="vehicles.html">Vehicules</a>
-    <a href="partenariats.html">Partenaires</a>
-    <a href="compta.html">Comptabilite</a>
-    <a href="catalogue.html">Catalogue</a>
-    <a href="gestion.html">Gestion</a>
-
-    <button id="logoutBtn">Deconnexion</button>
+    <div class="sidebar-brand">
+      <div class="brand-title">PDM <span>ADMIN</span></div>
+      <div class="brand-sub">Urban Hills</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-link" href="dashboard.html"><span>Dashboard</span></a>
+      <a class="nav-link" href="clients.html"><span>Clients</span></a>
+      <a class="nav-link" href="stock.html"><span>Stock</span></a>
+      <a class="nav-link active" href="ventes.html"><span>Ventes</span></a>
+      <a class="nav-link" href="vehicles.html"><span>Véhicules</span></a>
+      <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
+      <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
+      <a class="nav-link" href="catalogue.html"><span>Catalogue</span></a>
+      <a class="nav-link" href="gestion.html"><span>Gestion</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+    </div>
   </aside>
 
-  <main class="content">
-    <h1>Ventes</h1>
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="page-info">
+        <h1>Ventes</h1>
+        <p>Historique et suivi des transactions</p>
+      </div>
+      <div class="top-bar-actions flex-row">
+        <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
+        <button id="addBtn" class="btn btn-gold">+ Nouvelle Vente</button>
+      </div>
+    </header>
 
-    <div class="cards" style="grid-template-columns: repeat(3, minmax(220px, 1fr));">
-      <div class="card">
-        <div>CA total</div>
-        <h2 id="kpiCA">$0</h2>
+    <div class="content-body">
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <div class="card-title">CA total</div>
+          <div class="stat-value" id="kpiCA">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Profit total</div>
+          <div class="stat-value" id="kpiProfit">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Nombre de ventes</div>
+          <div class="stat-value" id="kpiCount">0</div>
+        </div>
       </div>
-      <div class="card">
-        <div>Profit total</div>
-        <h2 id="kpiProfit">$0</h2>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <input id="search" type="text" class="input" placeholder="Rechercher client ou modèle...">
       </div>
+
       <div class="card">
-        <div>Nombre de ventes</div>
-        <h2 id="kpiCount">0</h2>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Modèle</th>
+                <th>Buy</th>
+                <th>Sell</th>
+                <th>Profit</th>
+                <th>Vendeur</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="txTable">
+              <tr><td colspan="8" class="muted">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-
-    <div class="card" style="margin-top:14px; margin-bottom:14px;">
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <input id="search" type="text" placeholder="Rechercher client ou modele..." style="max-width:420px;">
-        <button class="btn btn-gold" id="addBtn">Ajouter une vente</button>
-        <button class="btn" id="refreshBtn">Rafraichir</button>
-      </div>
-    </div>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Client</th>
-          <th>Modele</th>
-          <th>Buy</th>
-          <th>Sell</th>
-          <th>Profit</th>
-          <th>Vendeur</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="txTable">
-        <tr><td colspan="8">Chargement...</td></tr>
-      </tbody>
-    </table>
   </main>
 </div>
 
-<div id="txModal" class="modal hidden">
-  <div class="modal-content">
+<div id="txModal" class="modal-overlay hidden">
+  <div class="modal-container">
     <div class="modal-header">
-      <div class="modal-title" id="mTitle">Ajouter une vente</div>
-      <div class="close" id="closeModal">X</div>
-    </div>
-
-    <div class="hr"></div>
-
-    <div class="cards" style="grid-template-columns: repeat(2, minmax(220px,1fr));">
-      <div class="card">
-        <div>Date</div>
-        <input id="fDate" type="date">
-      </div>
-
-      <div class="card">
-        <div>Client</div>
-        <select id="fClient"></select>
-      </div>
-
-      <div class="card">
-        <div>Modele</div>
-        <input id="fModel" type="text" placeholder="Ex: Toros">
-      </div>
-
-      <div class="card">
-        <div>Detail</div>
-        <input id="fDetail" type="text" placeholder="Ex: Vente directe">
-      </div>
-
-      <div class="card">
-        <div>Buy price</div>
-        <input id="fBuy" type="number" min="0" step="1" placeholder="90000">
-      </div>
-
-      <div class="card">
-        <div>Sell price</div>
-        <input id="fSell" type="number" min="0" step="1" placeholder="180000">
-      </div>
-
-      <div class="card" style="grid-column: 1 / -1;">
-        <div>Notes</div>
-        <input id="fNotes" type="text" placeholder="...">
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2 id="mTitle">Ajouter une vente</h2>
+        <button class="btn btn-outline btn-sm" id="closeModal">✕</button>
       </div>
     </div>
-
-    <div class="hr"></div>
-
-    <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
-      <button class="btn" id="cancelBtn">Annuler</button>
+    <div class="modal-body">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+          <label>Date</label>
+          <input id="fDate" type="date" class="input">
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <select id="fClient" class="input"></select>
+        </div>
+        <div class="form-group">
+          <label>Modèle</label>
+          <input id="fModel" type="text" class="input" placeholder="Ex: Toros" list="modelsList">
+          <datalist id="modelsList"></datalist>
+        </div>
+        <div class="form-group">
+          <label>Détail</label>
+          <input id="fDetail" type="text" class="input" placeholder="Ex: Vente directe">
+        </div>
+        <div class="form-group">
+          <label>Prix d'achat (Buy)</label>
+          <input id="fBuy" type="number" class="input" placeholder="90000">
+        </div>
+        <div class="form-group">
+          <label>Prix de vente (Sell)</label>
+          <input id="fSell" type="number" class="input" placeholder="180000">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Notes</label>
+          <textarea id="fNotes" class="input" placeholder="..." rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cancelBtn">Annuler</button>
       <button class="btn btn-gold" id="saveBtn">Enregistrer</button>
     </div>
   </div>

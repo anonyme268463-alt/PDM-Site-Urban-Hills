@@ -21,7 +21,7 @@ const resTbody   = document.getElementById("resTable");
 const logoutBtn  = document.getElementById("logoutBtn");
 
 // Dialog (modal)
-const dlg         = document.getElementById("stockDialog");
+const dlg         = document.getElementById("stockDialogBackdrop");
 const dTitle      = document.getElementById("dTitle");
 const dClose      = document.getElementById("dClose");
 const dCancel     = document.getElementById("dCancel");
@@ -57,18 +57,18 @@ function openDialog(kind, row=null) {
   dQty.value   = (row?.qty ?? 1);
 
   if (kind === "res") {
-    dClientWrap.style.display = "";
+    dClientWrap.style.display = "block";
     dClient.value = row?.client ?? "";
   } else {
     dClientWrap.style.display = "none";
     dClient.value = "";
   }
 
-  dlg.showModal();
+  dlg.classList.remove("hidden");
 }
 
 function closeDialog() {
-  try { dlg.close(); } catch {}
+  dlg.classList.add("hidden");
   editTarget = null;
 }
 
@@ -90,8 +90,8 @@ function renderStock(list) {
       <td>${r.model ?? "-"}</td>
       <td>${r.qty ?? 0}</td>
       <td>${fmtDate(r.createdAt)}</td>
-      <td class="td-actions">
-        <button class="btn btn-sm" data-action="edit" data-kind="stock" data-id="${r.id}">Modifier</button>
+      <td style="text-align: right;">
+        <button class="btn btn-sm btn-outline" data-action="edit" data-kind="stock" data-id="${r.id}">Modifier</button>
         <button class="btn btn-sm btn-danger" data-action="del" data-kind="stock" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
@@ -109,10 +109,10 @@ function renderRes(list) {
       <td>${r.model ?? "-"}</td>
       <td>${r.client ?? "-"}</td>
       <td>${r.qty ?? 0}</td>
-      <td><span class="pill">${r.status ?? "RÉSERVÉ"}</span></td>
+      <td><span class="badge badge-info">${r.status ?? "RÉSERVÉ"}</span></td>
       <td>${fmtDate(r.createdAt)}</td>
-      <td class="td-actions">
-        <button class="btn btn-sm" data-action="edit" data-kind="res" data-id="${r.id}">Modifier</button>
+      <td style="text-align: right;">
+        <button class="btn btn-sm btn-outline" data-action="edit" data-kind="res" data-id="${r.id}">Modifier</button>
         <button class="btn btn-sm btn-danger" data-action="del" data-kind="res" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
