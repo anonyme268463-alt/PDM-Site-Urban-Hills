@@ -41,23 +41,91 @@
           <h1>Gestion Catalogue</h1>
           <p>Édition des véhicules affichés sur le site public (Admin-only)</p>
         </div>
+        <button id="addVehicleBtn" class="btn btn-gold">Ajouter un véhicule</button>
       </header>
 
       <div class="content-body" id="pageRoot">
         <div class="card">
           <div class="card-header">
-            <div class="card-title">En développement</div>
+            <div class="card-title">Liste des véhicules</div>
           </div>
-          <p class="muted">
-            Cette page permettra bientôt de gérer l'affichage public des véhicules.
-            Le système est déjà sécurisé pour les administrateurs uniquement.
-          </p>
-          <div style="margin-top: 20px;">
-             <button class="btn btn-outline" disabled>Bientôt disponible</button>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Marque / Modèle</th>
+                  <th>Type / Classe</th>
+                  <th>Prix</th>
+                  <th>Places / Vitesse</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="vehiclesTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- MODAL: ADD/EDIT VEHICLE -->
+  <div id="vehicleModal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 id="modalTitle">Ajouter un véhicule</h2>
+      </div>
+      <div class="modal-body">
+        <form id="vehicleForm">
+          <input type="hidden" id="vehicleId" />
+          <div class="flex-row">
+            <div class="form-group w-full">
+              <label>Marque</label>
+              <input type="text" id="brand" class="input" placeholder="ex: Pegassi" required />
+            </div>
+            <div class="form-group w-full">
+              <label>Modèle</label>
+              <input type="text" id="model" class="input" placeholder="ex: Zentorno" required />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="form-group w-full">
+              <label>Type</label>
+              <input type="text" id="type" class="input" placeholder="ex: Super" required />
+            </div>
+            <div class="form-group w-full">
+              <label>Classe</label>
+              <input type="text" id="classe" class="input" placeholder="ex: S" required />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="form-group w-full">
+              <label>Prix (€)</label>
+              <input type="number" id="price" class="input" placeholder="0" required />
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="form-group w-full">
+              <label>Places</label>
+              <input type="number" id="places" class="input" placeholder="2" required />
+            </div>
+            <div class="form-group w-full">
+              <label>Vitesse Max (km/h)</label>
+              <input type="number" id="vitessemax" class="input" placeholder="300" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>URL Image</label>
+            <input type="url" id="urlimagevehicule" class="input" placeholder="https://..." required />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="closeModalBtn" class="btn btn-outline">Annuler</button>
+        <button id="saveVehicleBtn" class="btn btn-gold">Enregistrer</button>
+      </div>
+    </div>
   </div>
 </body>
 </html>
