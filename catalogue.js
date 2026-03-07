@@ -42,13 +42,17 @@ async function loadVehicles() {
   if (!vehiclesTableBody) return;
   vehiclesTableBody.innerHTML = `<tr><td colspan="5" class="muted">Chargement...</td></tr>`;
   try {
-    const q = query(collection(db, "vehiclescatalogue"), orderBy("type"), orderBy("brand"));
+    // Simplified query to avoid requiring a composite index immediately.
+    const q = query(collection(db, "vehiclescatalogue"), orderBy("type"));
     const snap = await getDocs(q);
     vehiclesTableBody.innerHTML = "";
 
-    snap.forEach(docSnap => {
-      const v = docSnap.data();
-      const id = docSnap.id;
+    const docs = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+    // Sort by brand in memory to provide a clean list without extra Firestore indexes.
+    docs.sort((a, b) => a.type.localeCompare(b.type) || a.brand.localeCompare(b.brand));
+
+    docs.forEach(v => {
+      const id = v.id;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>

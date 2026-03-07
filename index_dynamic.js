@@ -61,7 +61,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const dayIndex = Math.floor(Date.now() / 86400000) % list.length;
         const v = list[dayIndex];
 
-        dailySelection.querySelector(".car-preview-main img").src = v.urlimagevehicule;
+        const img = dailySelection.querySelector(".car-preview-main img");
+        img.src = v.urlimagevehicule;
+        img.onerror = () => { img.src = "https://via.placeholder.com/600x300.png?text=Image+non+disponible"; };
+
         dailySelection.querySelector(".car-preview-badge").textContent = v.brand;
         dailySelection.querySelector(".car-preview-price strong").textContent = `€ ${v.price.toLocaleString()}`;
 
@@ -142,7 +145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="car-stock">Type : ${v.type}</div>
                 </div>
                 <div class="car-image">
-                    <img src="${v.urlimagevehicule}" alt="${v.brand} ${v.model}" loading="lazy">
+                    <img src="${v.urlimagevehicule}" alt="${v.brand} ${v.model}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x300.png?text=Image+non+disponible'">
                 </div>
                 <div class="car-infos">
                     <div class="car-price">
