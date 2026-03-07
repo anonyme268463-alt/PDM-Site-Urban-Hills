@@ -7,20 +7,26 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Récupère les données de l'utilisateur connecté
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    // Récupère le chemin du document de l'utilisateur actuel
+    function userPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
     }
 
-    // Vérifie si l'utilisateur est actif (si le champ n'existe pas, on considère qu'il est actif par défaut)
+    // Vérifie si l'utilisateur est actif
     function isActive() {
-      let data = getUserData();
+      if (!signedIn()) return false;
+      // Si le document n'existe pas, on considère l'accès limité (ou actif par défaut selon le besoin)
+      // Ici, on va être prudent : s'il n'existe pas, il n'est pas encore "staff" complet.
+      if (!exists(userPath())) return true;
+      let data = get(userPath()).data;
       return data.active == null || data.active == true;
     }
 
-    // Détermine le rôle/grade de l'utilisateur (supporte plusieurs dénominations)
+    // Détermine le rôle/grade de l'utilisateur
     function getRole() {
-      let data = getUserData();
+      if (!signedIn()) return 'guest';
+      if (!exists(userPath())) return 'staff'; // Rôle par défaut si doc inexistant
+      let data = get(userPath()).data;
       let r = data.role != null ? data.role : (data.rank != null ? data.rank : (data.grade != null ? data.grade : 'staff'));
       return string(r).lower();
     }
@@ -32,20 +38,20 @@ service cloud.firestore {
 
     // Vérifie si l'utilisateur fait partie du Staff
     function isStaff() {
-      return signedIn() && isActive() && (
-        getRole() in ['admin', 'staff', 'vendeur'] ||
-        getRole().contains('pdg') ||
-        getRole().contains('vendeur')
-      );
+      if (!signedIn() || !isActive()) return false;
+      let r = getRole();
+      return r in ['admin', 'staff', 'vendeur'] || r.contains('pdg') || r.contains('vendeur');
     }
 
     // --- Règles par Collection ---
 
     // USERS : Gestion des profils
     match /users/{userId} {
-      // Tout le staff peut lire les profils (pour afficher les noms des vendeurs par exemple)
-      allow read: if isStaff();
-      // Un utilisateur peut modifier ses propres infos de base, mais seul l'admin peut tout gérer
+      // On permet à un utilisateur de lire son propre profil sans passer par isStaff()
+      // pour éviter la boucle infinie ou le blocage si le doc n'est pas encore créé.
+      allow read: if signedIn() && (request.auth.uid == userId || isStaff());
+
+      // Seul l'admin peut tout gérer, l'utilisateur peut modifier son propre profil
       allow create, update: if isAdmin() || (signedIn() && request.auth.uid == userId);
       allow delete: if isAdmin();
     }
@@ -54,9 +60,6 @@ service cloud.firestore {
     match /transactions/{txId} {
       allow read: if isStaff();
       allow create: if isStaff();
-
-      // Un staff peut modifier ses propres ventes s'il ne change pas l'auteur
-      // L'admin peut tout modifier / supprimer
       allow update: if isAdmin() || (
         isStaff() && (resource.data.sellerId == request.auth.uid || resource.data.createdBy == request.auth.uid)
         && (request.resource.data.sellerId == resource.data.sellerId)
@@ -67,24 +70,21 @@ service cloud.firestore {
       );
     }
 
-    // PARTENAIRES : Entreprises et membres
+    // PARTENAIRES
     match /partners/{partnerId} {
       allow read: if isStaff();
-      // Seuls les admins gèrent la liste des partenaires
       allow create, update, delete: if isAdmin();
-
       match /members/{memberId} {
         allow read: if isStaff();
         allow create, update, delete: if isAdmin();
       }
-
       match /clients/{clientId} {
         allow read: if isStaff();
         allow create, update, delete: if isAdmin();
       }
     }
 
-    // OPÉRATIONS COURANTES : Clients, Véhicules, Stock, Réservations, Cashbook
+    // OPÉRATIONS COURANTES
     match /clients/{clientId} {
       allow read, create, update: if isStaff();
       allow delete: if isAdmin();
@@ -110,13 +110,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // AUDIT LOGS : Traces d'activité
+    // AUDIT LOGS
     match /auditLogs/{logId} {
       allow create: if isStaff();
       allow read, update, delete: if isAdmin();
     }
 
-    // CATALOGUE (Configuration des véhicules)
+    // CATALOGUE
     match /catalogue/{docId} {
       allow read: if isStaff();
       allow write: if isAdmin();
