@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper simple pour vérifier si l'utilisateur est connecté
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Récupère les données de l'utilisateur (si le doc existe)
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Vérifie si l'utilisateur a le rôle admin (PDG ou Admin)
+    function isAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             (userData().get('role', 'staff') == 'admin' ||
+              userData().get('role', 'staff') == 'pdg' ||
+              userData().get('rank', 'staff') == 'admin');
+    }
+
+    // --- RÈGLES PAR COLLECTION ---
+
+    // Collection USERS
+    match /users/{userId} {
+      // On autorise la lecture à tout utilisateur connecté pour éviter les blocages de vérification de rôle
+      allow read: if isSignedIn();
+      // Seul l'admin ou l'utilisateur lui-même peut modifier son profil
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // Autres collections : accès lecture au staff, écriture aux admins
+    match /transactions/{docId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /clients/{docId} { allow read, write: if isSignedIn(); }
+    match /vehicles/{docId} { allow read, write: if isSignedIn(); }
+    match /stock/{docId} { allow read, write: if isSignedIn(); }
+
+    // Règle par défaut pour tout le reste
+    match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
