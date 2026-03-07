@@ -1,0 +1,4252 @@
+[
+  {
+    "brand": "Benefactor",
+    "model": "Panto",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/panto.webp",
+    "price": 3200,
+    "places": 2,
+    "vitessemax": 150,
+    "classe": "C"
+  },
+  {
+    "brand": "Maxwell",
+    "model": "Abso",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/asbo.webp",
+    "price": 4000,
+    "places": 2,
+    "vitessemax": 130,
+    "classe": "C"
+  },
+  {
+    "brand": "Weeny",
+    "model": "Issi Classic",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/issi3.webp",
+    "price": 5000,
+    "places": 2,
+    "vitessemax": 135,
+    "classe": "C"
+  },
+  {
+    "brand": "BF",
+    "model": "Club",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/club.webp",
+    "price": 8000,
+    "places": 2,
+    "vitessemax": 175,
+    "classe": "B"
+  },
+  {
+    "brand": "Karin",
+    "model": "Dilettante",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dilettante.webp",
+    "price": 9000,
+    "places": 2,
+    "vitessemax": 140,
+    "classe": "D"
+  },
+  {
+    "brand": "BF",
+    "model": "Weevil",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/weevil.webp",
+    "price": 9000,
+    "places": 2,
+    "vitessemax": 125,
+    "classe": "C"
+  },
+  {
+    "brand": "Weeny",
+    "model": "Issi",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/issi2.webp",
+    "price": 9100,
+    "places": 2,
+    "vitessemax": 160,
+    "classe": "B"
+  },
+  {
+    "brand": "Declasse",
+    "model": "Rhapsody",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rhapsody.webp",
+    "price": 10000,
+    "places": 2,
+    "vitessemax": 160,
+    "classe": "D"
+  },
+  {
+    "brand": "Grotti",
+    "model": "Brioso 300",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/brioso2.webp",
+    "price": 12000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Dinka",
+    "model": "Blista Kanjo",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/kanjo.webp",
+    "price": 12000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Dinka",
+    "model": "Blista",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/blista.webp",
+    "price": 13000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Dinka",
+    "model": "Blista Compact",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/blista2.webp",
+    "price": 18950,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Grotti",
+    "model": "Brioso R/A",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/brioso.webp",
+    "price": 20000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Dinka",
+    "model": "Blista Go Go Monkey",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/blista3.webp",
+    "price": 22000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Karin",
+    "model": "Boor",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/boor.webp",
+    "price": 23000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Bollokan",
+    "model": "Prairie",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/prairie.webp",
+    "price": 30000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Grotti",
+    "model": "Brioso Fulmin",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/briosofulmin.webp",
+    "price": 30000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Bordeaux",
+    "model": "Vivant",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vivant.webp",
+    "price": 40000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Weeny",
+    "model": "Issi Sport",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/issi7.webp",
+    "price": 60000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "S"
+  },
+  {
+    "brand": "Grotti",
+    "model": "Brioso 300 Widebody",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/brioso3.webp",
+    "price": 70000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Bollokan",
+    "model": "Iris Z",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/irisz.webp",
+    "price": 85000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "BF",
+    "model": "Club XR",
+    "type": "Compact",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/clubxr.webp",
+    "price": 88000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Regina",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/regina.webp",
+    "price": 7000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "D"
+  },
+  {
+    "brand": "Declasse",
+    "model": "Asea",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/asea.webp",
+    "price": 8000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Vulcar",
+    "model": "Ingot",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ingot.webp",
+    "price": 8000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "D"
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Glendale",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/glendale.webp",
+    "price": 8200,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Vulcar",
+    "model": "Warrener",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/warrener.webp",
+    "price": 8600,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "D"
+  },
+  {
+    "brand": "Albany",
+    "model": "Emperor",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/emperor.webp",
+    "price": 10000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Karin",
+    "model": "Asterope",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/asterope.webp",
+    "price": 11000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Albany",
+    "model": "Primo",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/primo.webp",
+    "price": 11000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "D"
+  },
+  {
+    "brand": "Karin",
+    "model": "Intruder",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/intruder.webp",
+    "price": 11250,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Albany",
+    "model": "Washington",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/washington.webp",
+    "price": 12000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Glendale Custom",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/glendale2.webp",
+    "price": 12000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Declasse",
+    "model": "Premier",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/premier.webp",
+    "price": 12000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Declasse",
+    "model": "Impaler",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/impaler.webp",
+    "price": 13000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Albany",
+    "model": "Primo Custom",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/primo2.webp",
+    "price": 14500,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Zirconium",
+    "model": "Stratum",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stratum.webp",
+    "price": 15000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "D"
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Schafter",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/schafter2.webp",
+    "price": 16000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Hades",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hades.webp",
+    "price": 16000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Willard",
+    "model": "Eudora",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/eudora.webp",
+    "price": 17000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Enus",
+    "model": "Super Diamond",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/superd.webp",
+    "price": 17000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Admiral",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/admiral.webp",
+    "price": 18000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Vapid",
+    "model": "Stanier",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stanier.webp",
+    "price": 19000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Cheval",
+    "model": "Fugitive",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fugitive.webp",
+    "price": 20000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Cheval",
+    "model": "Surge",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/surge.webp",
+    "price": 20000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Karin",
+    "model": "Asterope GZ",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/asterope2.webp",
+    "price": 21000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Obey",
+    "model": "Tailgater",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tailgater.webp",
+    "price": 22000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Enus",
+    "model": "Cognoscenti 55",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cog55.webp",
+    "price": 22000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Übermacht",
+    "model": "Oracle",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/oracle.webp",
+    "price": 22000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Enus",
+    "model": "Cognoscenti",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cognoscenti.webp",
+    "price": 22500,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Schrauber",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/schrauber.webp",
+    "price": 25000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Vulcar",
+    "model": "Warrener HKR",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/warrener2.webp",
+    "price": 30000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tahoma GT",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tahomagt.webp",
+    "price": 32000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Vulcan",
+    "model": "Starlight",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/starlight.webp",
+    "price": 45000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Obey",
+    "model": "Tailgater S",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tailgater2.webp",
+    "price": 51000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Enus",
+    "model": "Stafford",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stafford.webp",
+    "price": 80000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Übermacht",
+    "model": "Rhinehart",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rhinehart.webp",
+    "price": 105000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Cinquemila",
+    "model": "Lampadati",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cinquemila.webp",
+    "price": 125000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "S2",
+    "model": "Cabriolet Comet",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/comet7.webp",
+    "price": 140000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Gallivanter",
+    "model": "Baller ST",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/baller7.webp",
+    "price": 145000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "B"
+  },
+  {
+    "brand": "Pfister",
+    "model": "Astron",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/astron.webp",
+    "price": 150000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Enus",
+    "model": "Sapphire",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sapphire.webp",
+    "price": 180000,
+    "places": 2,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "I-Wagen",
+    "model": "Obey",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/obey.webp",
+    "price": 225000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Enus",
+    "model": "Deity",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/deity.webp",
+    "price": 320000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Enus",
+    "model": "Jubilee",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/jubilee.webp",
+    "price": 350000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "A"
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Stretch",
+    "type": "Sedans",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stretch.webp",
+    "price": 550000,
+    "places": 4,
+    "vitessemax": 0,
+    "classe": "C"
+  },
+  {
+    "brand": "Karin",
+    "model": "Beejay XL",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bjxl.webp",
+    "price": 19000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Landstalker",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/landstalker.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Emperor",
+    "model": "Habanero",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/habanero.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Canis",
+    "model": "Seminole",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/seminole.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Canis",
+    "model": "Seminole Frontier",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/seminole2.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Cavalcade",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cavalcade.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Radius",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/radi.webp",
+    "price": 23000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "XLS",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/xls.webp",
+    "price": 23000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Dorado",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dorado.webp",
+    "price": 24000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Enus",
+    "model": "Huntley S",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/huntley.webp",
+    "price": 24500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "Rocoto",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rocoto.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Gresley",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gresley.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Cavalcade II",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cavalcade2.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Fathom",
+    "model": "FQ2",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fq2.webp",
+    "price": 25500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Landstalker XL",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/landstalker2.webp",
+    "price": 26000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Gallivanter",
+    "model": "Baller",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/baller.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Dubsta",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dubsta.webp",
+    "price": 29000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Serrano",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/serrano.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Dubsta Luxury",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dubsta2.webp",
+    "price": 33000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Gallivanter",
+    "model": "Baller II",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/baller2.webp",
+    "price": 35000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Contender",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/contender.webp",
+    "price": 42000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Gallivanter",
+    "model": "Baller LE",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/baller3.webp",
+    "price": 43000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Granger",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/granger.webp",
+    "price": 45000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Aleutian",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/aleutian.webp",
+    "price": 45000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Granger 3600LX",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/granger2.webp",
+    "price": 47000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Gallivanter",
+    "model": "Baller LE LWB",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/baller4.webp",
+    "price": 47000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Gallivanter",
+    "model": "Baller ST-D",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/baller8.webp",
+    "price": 52000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Novak",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/novak.webp",
+    "price": 60000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Vivanite",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vivanite.webp",
+    "price": 75000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacht",
+    "model": "Rebla GTS",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rebla.webp",
+    "price": 100000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Coil",
+    "model": "LOD 4",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/lod4.webp",
+    "price": 110000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Cavalcade XL",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cavalcade3.webp",
+    "price": 125000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Gresley STX",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gresleystx.webp",
+    "price": 140000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Toros",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/toros.webp",
+    "price": 180000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Mammoth",
+    "model": "Patriot",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/patriot.webp",
+    "price": 250000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Mammoth",
+    "model": "Patriot stretch",
+    "type": "SUVs",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stretch.webp",
+    "price": 310000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tahoma coupe",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tahoma.webp",
+    "price": 16000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Futo",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/futo.webp",
+    "price": 17500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacht",
+    "model": "Zion",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zion.webp",
+    "price": 22000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Kanjo SJ",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/kanjosj.webp",
+    "price": 24000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacth",
+    "model": "Sentinel",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sentinel.webp",
+    "price": 26000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacth",
+    "model": "Sentinel XS",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sentinel.webp",
+    "price": 28000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Previon",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/previon.webp",
+    "price": 29000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Enus",
+    "model": "Cognoscenti Cabrio",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cogcabrio.webp",
+    "price": 30000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Fanthom",
+    "model": "FR36",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fr36.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacth",
+    "model": "Zion Cabrio",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zion2.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "Jackal",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/jackal.webp",
+    "price": 34000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Felon",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/felon.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Felon GT",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/felon2.webp",
+    "price": 45000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Enus",
+    "model": "WIndsor Drop",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/windsor2.webp",
+    "price": 59000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Exemplar",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/exemplar.webp",
+    "price": 62000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacth",
+    "model": "Sentinel Classic",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sentinel3.webp",
+    "price": 70000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "F620",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/f620.webp",
+    "price": 72000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Coil",
+    "model": "Eon",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/eon.webp",
+    "price": 110000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacth",
+    "model": "Sentinel G",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sentinelg.webp",
+    "price": 115000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Classique",
+    "model": "Broadway",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/broadway.webp",
+    "price": 130000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Champion",
+    "type": "Coupes",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/champion.webp",
+    "price": 360000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Chino",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/chino.webp",
+    "price": 8000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Chino Luxe",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/chino2.webp",
+    "price": 12000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Manana",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/manana.webp",
+    "price": 12800,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Voodoo",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/voodoo.webp",
+    "price": 13000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Clique Wagon",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/clique2.webp",
+    "price": 15000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Slam Van",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/slamvan.webp",
+    "price": 16000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Willard",
+    "model": "Faction",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/faction.webp",
+    "price": 17000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Slam Van Custom",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/slamvan3.webp",
+    "price": 17000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Greenwood",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/greenwood.webp",
+    "price": 18000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Willard",
+    "model": "Faction Rider",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/faction2.webp",
+    "price": 19000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Yosemite",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/yosemite.webp",
+    "price": 19500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Cheval",
+    "model": "Picador",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/picador.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Clique",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/clique.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ratloader2",
+    "model": "Ratloader",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ratloader.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Virgo",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/virgo.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Lurcher",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/lurcher.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dundreary",
+    "model": "Virgo Custom Classic",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/virgo2.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Virgo",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/virgo.webp",
+    "price": 22000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Buccaneer",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/buccaneer.webp",
+    "price": 22500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Imponte",
+    "model": "Dukes",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dukes.webp",
+    "price": 23500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Blade",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/blade.webp",
+    "price": 23500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Manana Custom",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/manana2.webp",
+    "price": 24000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Buccaneer Rider",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/buccaneer2.webp",
+    "price": 24500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Impaler LX",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/impaler6.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tulip M-100",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tulip2.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Imponte",
+    "model": "Ruiner",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ruiner.webp",
+    "price": 29000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Vamos",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vamos.webp",
+    "price": 30000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Stallion",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stalion.webp",
+    "price": 33000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tampa",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tampa.webp",
+    "price": 34000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Gauntlet",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gauntlet.webp",
+    "price": 34000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Classic Gaunltet",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gauntlet3.webp",
+    "price": 37000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Sabre GT Turbo",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sabregt.webp",
+    "price": 37000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Impaler",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/impaler.webp",
+    "price": 38000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Vigero",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vigero.webp",
+    "price": 39500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Drift Tampa",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/drifttampa.webp",
+    "price": 40000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Stallion Burgershot",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stalion2.webp",
+    "price": 40000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Imponte",
+    "model": "Ruiner ZZ-8",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ruiner4.webp",
+    "price": 41000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Sabre GT Turbo Custom",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sabregt2.webp",
+    "price": 42000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Imponte",
+    "model": "Phoenix",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/phoenix.webp",
+    "price": 42000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Ellie",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ellie.webp",
+    "price": 42500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Dominator",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominator.webp",
+    "price": 45000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Imponte",
+    "model": "Beater Dukes",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dukes3.webp",
+    "price": 45000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Gauntlet Classic Custom",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gauntlet5.webp",
+    "price": 46000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "PiBwasser",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominator2.webp",
+    "price": 50000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Yosemite Drift",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/driftyosemite.webp",
+    "price": 55000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Dominator ASP",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominator7.webp",
+    "price": 56000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Schyster",
+    "model": "Deviant",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/deviant.webp",
+    "price": 70000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Redwood Gauntlet",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gauntlet2.webp",
+    "price": 70000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Imponte",
+    "model": "Nightshade",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/nightshade.webp",
+    "price": 70000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Dominator GTX",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominator3.webp",
+    "price": 75000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Dominator GTT",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominator8.webp",
+    "price": 80000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Gauntlet Hellfire",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gauntlet4.webp",
+    "price": 80000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tulip",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tulip.webp",
+    "price": 80000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Buffalo EVX",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/buffalo5.webp",
+    "price": 86000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Hotknife",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hotknife.webp",
+    "price": 90000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Hustler",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hustler.webp",
+    "price": 95000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Vigero ZX",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vigero2.webp",
+    "price": 96000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Buffalo STX",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/buffalo4.webp",
+    "price": 120000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Brigham",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/brigham.webp",
+    "price": 149000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Dominator GT",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominator9.webp",
+    "price": 174000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Invetero",
+    "model": "Coquette BlackFin",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/coquette3.webp",
+    "price": 180000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Vigero ZX Convertible",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vigero3.webp",
+    "price": 181000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Hermes",
+    "type": "Muscle",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hermes.webp",
+    "price": 199000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Rune",
+    "model": "Cheburek",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cheburek.webp",
+    "price": 7000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Peyote",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/peyote.webp",
+    "price": 12000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vulcar",
+    "model": "Fagaloa",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fagaloa.webp",
+    "price": 13000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Weeny",
+    "model": "Dynasty",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dynasty.webp",
+    "price": 13500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vulcar",
+    "model": "Nebula",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/nebula.webp",
+    "price": 14000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Retinue",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/retinue.webp",
+    "price": 18300,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tornado",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tornado.webp",
+    "price": 18500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tornado Custom",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tornado5.webp",
+    "price": 19000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Tornado Convertible",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tornado2.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Michelli GT",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/michelli.webp",
+    "price": 23000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Pigalle",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/pigalle.webp",
+    "price": 23000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacht",
+    "model": "Zion Classic",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zion3.webp",
+    "price": 23000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Komoda GT",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/komodagt.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Savestra",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/savestra.webp",
+    "price": 31000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maxwell",
+    "model": "Sidewinder",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sidewinder.webp",
+    "price": 38000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Peyote Gasser",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/peyote2.webp",
+    "price": 40000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Casco",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/casco.webp",
+    "price": 44000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Peyote Custom",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/peyote3.webp",
+    "price": 48000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Rapid GT Classic",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rapidgt3.webp",
+    "price": 65000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Tundra",
+    "model": "Raidillon",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/raidillon.webp",
+    "price": 68000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "Comet Classic",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cometclassic.webp",
+    "price": 70000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Stinger",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stinger.webp",
+    "price": 71000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "190Z",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/z190.webp",
+    "price": 78000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Torero",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/torero.webp",
+    "price": 84000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Stinger GT",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stingergt.webp",
+    "price": 89000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Monroe",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/monroe.webp",
+    "price": 115000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Stirling GT",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/feltzer3.webp",
+    "price": 115000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "GT500",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gt500.webp",
+    "price": 130000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Mamba",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/mamba.webp",
+    "price": 140000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Invetero",
+    "model": "Coquette Classic",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/coquette2.webp",
+    "price": 165000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Turismo Classic",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/turismo2.webp",
+    "price": 170000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Roosevelt",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/btype.webp",
+    "price": 180000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Roosevelt Valor",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/btype3.webp",
+    "price": 190000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Viseris",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/viseris.webp",
+    "price": 210000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "Swinger",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/swinger.webp",
+    "price": 221000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Infernus Classic",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/infernus2.webp",
+    "price": 245000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Truffade",
+    "model": "Z-Type",
+    "type": "Sport-Classics",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ztype.webp",
+    "price": 270000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Penumbra",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/penumbra.webp",
+    "price": 22000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Futo GTX",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/driftfuto.webp",
+    "price": 26000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Penumbra FF",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/penumbra2.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Schwartzer",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/schwarzer.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Buffalo",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/buffalo.webp",
+    "price": 28000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "ZR350",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zr350.webp",
+    "price": 31000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Remus",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/remus.webp",
+    "price": 31500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Buffalo S",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/buffalo2.webp",
+    "price": 33000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Schafter V12",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/schafter3.webp",
+    "price": 35000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Weeny",
+    "model": "Issi Rally",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/issi8.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Calico GTF",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/calico.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "RT3000",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rt3000.webp",
+    "price": 39000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Flash GT",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/flashgt.webp",
+    "price": 48000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Sultan",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sultan.webp",
+    "price": 50000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "Alpha",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/alpha.webp",
+    "price": 53000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Sultan Custom",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sultan2.webp",
+    "price": 55000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Sultan Classic Custom",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sultan3.webp",
+    "price": 56000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Komoda",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/komoda.webp",
+    "price": 62000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Sugoi",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sugoi.webp",
+    "price": 62000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Tropos Rallye",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tropos.webp",
+    "price": 65000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Bestia GTS",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bestiagts.webp",
+    "price": 67000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Wow",
+    "model": "Omnis",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/omnis.webp",
+    "price": 68000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Verlierer",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/verlierer2.webp",
+    "price": 68000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Toundra",
+    "model": "Panthere",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/panthere.webp",
+    "price": 69000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "GB 200",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gb200.webp",
+    "price": 71000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Kuruma",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/kuruma.webp",
+    "price": 72000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Elegy RH8",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/elegy2.webp",
+    "price": 72000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "300R",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/r300.webp",
+    "price": 73000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Jester Classic",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/jester3.webp",
+    "price": 76000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Elegy Retro Custom",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/elegy.webp",
+    "price": 76000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Sultan RS",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sultanrs.webp",
+    "price": 76500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Solace VI",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/solacevi.webp",
+    "price": 78000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "Argento 7F",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/argento7f.webp",
+    "price": 80000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Rapid GT",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rapidgt.webp",
+    "price": 86000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Sultan RSX",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sultanrsx.webp",
+    "price": 88000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "Pariah",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/pariah.webp",
+    "price": 90000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Hijak",
+    "model": "Khamelion",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/khamelion.webp",
+    "price": 90000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Rapid GT Convertible",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rapidgt2.webp",
+    "price": 92000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Feltzer",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/feltzer2.webp",
+    "price": 97000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Banshee",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/banshee.webp",
+    "price": 106000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Massacro",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/massacro.webp",
+    "price": 130000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Jester",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/jester.webp",
+    "price": 132250,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Surano",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/surano.webp",
+    "price": 135000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Överflöd",
+    "model": "Imorgon",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/imorgon.webp",
+    "price": 135000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Enus",
+    "model": "Paragon",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/paragon.webp",
+    "price": 140000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Seven-70",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/seven70.webp",
+    "price": 140000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Euros",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/euros.webp",
+    "price": 140000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Invetero",
+    "model": "Coquette",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/coquette.webp",
+    "price": 145000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "Lynx",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/lynx.webp",
+    "price": 150000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Massacro Racecar",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/massacro2.webp",
+    "price": 152000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Carbonizzare",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/carbonizzare.webp",
+    "price": 155000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Albany",
+    "model": "V-STR",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vstr.webp",
+    "price": 155000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacht",
+    "model": "Cypher",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cypher.webp",
+    "price": 155000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "8F Drafter",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/drafter.webp",
+    "price": 160000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dewbauchee",
+    "model": "Specter",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/specter.webp",
+    "price": 160000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "Jugular",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/jugular.webp",
+    "price": 165000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Emperor",
+    "model": "Vectre",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vectre.webp",
+    "price": 174000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Jester RR",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/driftjester.webp",
+    "price": 190000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Dominator GSX",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dominatorgsx.webp",
+    "price": 195000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Cheetah Classic",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cheetah2.webp",
+    "price": 195000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "9F",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ninef.webp",
+    "price": 210000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Furore GT",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/furoregt.webp",
+    "price": 210000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Jester Racecar",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/jester2.webp",
+    "price": 210000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "9F Cabrio",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ninef2.webp",
+    "price": 225000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vysser",
+    "model": "Neo",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/neo.webp",
+    "price": 230000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Itali GTO Stinger TT",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stingertt.webp",
+    "price": 238000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "10F",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tenf.webp",
+    "price": 240000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "Neon",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/neon.webp",
+    "price": 240000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "10F Widebody",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tenf2.webp",
+    "price": 260000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "Growler",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/growler.webp",
+    "price": 265000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "Comet SR",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/comet5.webp",
+    "price": 320000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Schlagen GT",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/schlagen.webp",
+    "price": 374000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Corsita",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/corsita.webp",
+    "price": 380000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "Comet",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/comet2.webp",
+    "price": 390000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Progen",
+    "model": "Itali GTO",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/italigto.webp",
+    "price": 410000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Progen",
+    "model": "Itali RSX",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/italirsx.webp",
+    "price": 510000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Invetero",
+    "model": "Coquette D10",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/coquette4.webp",
+    "price": 540000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Hijak",
+    "model": "Ruston",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ruston.webp",
+    "price": 760000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "SM722",
+    "type": "Sport",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sm722.webp",
+    "price": 842000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Milano",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/milano.webp",
+    "price": 145000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Harman",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/harman.webp",
+    "price": 154000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "Dinka",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dinka.webp",
+    "price": 190000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Nexus RR",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/nexusrr.webp",
+    "price": 230000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Bullet",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bullet.webp",
+    "price": 240000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Schlagen SP",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/schlagensp.webp",
+    "price": 280000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Obey",
+    "model": "Ten FR",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tenfr.webp",
+    "price": 285000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Banshee 900R",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/banshee2.webp",
+    "price": 290000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Empero",
+    "model": "Ronin",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ronin.webp",
+    "price": 290000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Vacca",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vacca.webp",
+    "price": 290000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Progen",
+    "model": "GP1",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gp1.webp",
+    "price": 370000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Reaper",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/reaper.webp",
+    "price": 370000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Übermacth",
+    "model": "SC1",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sc1.webp",
+    "price": 380000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Torero XO",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/torero2.webp",
+    "price": 420000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "Virtue",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/virtue.webp",
+    "price": 420000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Coil",
+    "model": "Voltic",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/voltic.webp",
+    "price": 430000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Tempesta",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tempesta.webp",
+    "price": 524000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Infernus",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/infernus.webp",
+    "price": 580000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "FMJ",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fmj.webp",
+    "price": 590000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Lampadati",
+    "model": "Tigon",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tigon.webp",
+    "price": 610000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Cheetah",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cheetah.webp",
+    "price": 640000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Osiris",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/osiris.webp",
+    "price": 680000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Progen",
+    "model": "T20",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/t20.webp",
+    "price": 680000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Ocelot",
+    "model": "XA-21",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/xa21.webp",
+    "price": 720000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Turismo R",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/turismor.webp",
+    "price": 780000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Överflöd",
+    "model": "Entity XF",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/entityxf.webp",
+    "price": 800000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Progen",
+    "model": "Itali GTB Custom",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/italigtb2.webp",
+    "price": 830000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Truffade",
+    "model": "Thrax",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/thrax.webp",
+    "price": 890000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Överflöd",
+    "model": "Zeno",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zeno.webp",
+    "price": 920000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Överflöd",
+    "model": "Entity MT",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/entity2.webp",
+    "price": 940000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Turismo Omaggio",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/turismo3.webp",
+    "price": 940000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pfister",
+    "model": "811",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/pfister811.webp",
+    "price": 945000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Progen",
+    "model": "Emerus",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/emerus.webp",
+    "price": 1040000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Benefactor",
+    "model": "Krieger",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/krieger.webp",
+    "price": 1080000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Zorrusso",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zorrusso.webp",
+    "price": 1090000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Tezeract",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tezeract.webp",
+    "price": 1170000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Cheval",
+    "model": "Taipan",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/taipan.webp",
+    "price": 1200000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Grotti",
+    "model": "Furia",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/furia.webp",
+    "price": 1280000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Ignus",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ignus.webp",
+    "price": 1540000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Överflöd",
+    "model": "Tyrant",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/tyrant.webp",
+    "price": 1680000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Zentorno",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zentorno.webp",
+    "price": 1700000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Truffade",
+    "model": "Adder",
+    "type": "Super",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/adder.webp",
+    "price": 1800000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Faggio",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/faggio2.webp",
+    "price": 2500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Faggio Sport",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/faggio.webp",
+    "price": 2900,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Enduro",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/enduro.webp",
+    "price": 5500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Sanchez",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sanchez2.webp",
+    "price": 7500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Manchez",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/manchez.webp",
+    "price": 8300,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Sanchez Livery",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sanchez.webp",
+    "price": 8500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "FCR 1000",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fcr.webp",
+    "price": 9000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Esskey",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/esskey.webp",
+    "price": 12000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Shitzu",
+    "model": "Vader",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vader.webp",
+    "price": 12000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Wolfsbane",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/wolfsbane.webp",
+    "price": 14000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Shitzu",
+    "model": "PCJ-600",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/pcj.webp",
+    "price": 15000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "LCC",
+    "model": "Hexer",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hexer.webp",
+    "price": 16000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "FCR 1000 Custom",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/fcr2.webp",
+    "price": 19000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Vindicator",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vindicator.webp",
+    "price": 19000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Principe",
+    "model": "Nemesis",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/nemesis.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "LCC",
+    "model": "Avarus",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/avarus.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibastu",
+    "model": "Super Sanchez",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/supersanchez.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Powersurge",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/powersurge.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Nagasaki",
+    "model": "Chimera",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/chimera.webp",
+    "price": 21000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "WMC",
+    "model": "Bagger",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bagger.webp",
+    "price": 22000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Nagasaki",
+    "model": "BF400",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bf400.webp",
+    "price": 22000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Thrust",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/thrust.webp",
+    "price": 22000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Daemon Custom",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/daemon2.webp",
+    "price": 23000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Principe",
+    "model": "Lectro",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/lectro.webp",
+    "price": 24000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Reever",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/reever.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Ruffian",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/ruffian.webp",
+    "price": 25000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "LLC",
+    "model": "Innovation",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/innovation.webp",
+    "price": 26500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Zombie Chopper",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zombieb.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Principe",
+    "model": "Diablous",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/diablous.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Nagasaki",
+    "model": "BF900",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bf900.webp",
+    "price": 27500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Shitzu",
+    "model": "Defiler",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/defiler.webp",
+    "price": 28000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Zombie Bobber",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/zombiea.webp",
+    "price": 28000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Akuma",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/akuma.webp",
+    "price": 29000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Vortex",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vortex.webp",
+    "price": 31000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Nagasaki",
+    "model": "Carbon RS",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/carbonrs.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "WMC",
+    "model": "Nightblade",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/nightblade.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Gargoyle",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gargoyle.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Nagasaki",
+    "model": "Shinobi",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/shinobi.webp",
+    "price": 34000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Shitzu",
+    "model": "Hakuchou",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hakuchou.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Pegassi",
+    "model": "Bati 801",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bati.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Dinka",
+    "model": "Double-T",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/double.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Principe",
+    "model": "Diablous Custom",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/diablous2.webp",
+    "price": 38000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "WMC",
+    "model": "Sovereign",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sovereign.webp",
+    "price": 39000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Western",
+    "model": "Cliffhanger",
+    "type": "Motorcyles",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/cliffhanger.webp",
+    "price": 39500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "blazer",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/blazer.webp",
+    "price": 7500,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "blazer Sport",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/blazer4.webp",
+    "price": 9250,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Canis",
+    "model": "Kalahari",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/kalahari.webp",
+    "price": 14000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "BF Injection",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bfinjection.webp",
+    "price": 18000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Canis",
+    "model": "Mesa",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/mesa.webp",
+    "price": 19000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Rebel",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rebel.webp",
+    "price": 20000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Rancher XL",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rancherxl.webp",
+    "price": 24000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Hellion",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/hellion.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Yosemite Rancher",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/yosemite3.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Sandking SWB",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sandking2.webp",
+    "price": 38000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Riata",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/riata.webp",
+    "price": 38000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Karin",
+    "model": "Everon",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/everon.webp",
+    "price": 44000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Sandking XL",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sandking.webp",
+    "price": 45000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Maibatsu",
+    "model": "MonstroCiti",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/monstrociti.webp",
+    "price": 48000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Caracara",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/caracara.webp",
+    "price": 54000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Nagasaki",
+    "model": "Outlaw",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/outlaw.webp",
+    "price": 58000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bordeaux",
+    "model": "Vivant GRB",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/vivantgrb.webp",
+    "price": 69000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Bison HF",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/bisonhf.webp",
+    "price": 95000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Annis",
+    "model": "Dubsta 6x6",
+    "type": "Off-Roads",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/dubsta3.webp",
+    "price": 260000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Minivan",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/minivan.webp",
+    "price": 27000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Youga Classic",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/youga2.webp",
+    "price": 31000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Youga",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/youga.webp",
+    "price": 31000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Zirconium",
+    "model": "Journey II",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/journey2.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Minivan Custom",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/minivan2.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Moonbeam",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/moonbeam.webp",
+    "price": 32000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Moonbeam Custom",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/moonbeam2.webp",
+    "price": 35000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "BF",
+    "model": "Surfer Custom",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/surfer3.webp",
+    "price": 36000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Declasse",
+    "model": "Burrito Custom",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/gburrito2.webp",
+    "price": 39000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "BF",
+    "model": "Surfer",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/surfer.webp",
+    "price": 40000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Rumpo Custom",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/rumpo3.webp",
+    "price": 48000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bravado",
+    "model": "Esperta",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/esperta.webp",
+    "price": 55000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Vapid",
+    "model": "Speedo Custom",
+    "type": "VAN",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/speedo4.webp",
+    "price": 238000,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "Bison",
+    "model": "Stx",
+    "type": "Entreprise",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/stx.webp",
+    "price": 0,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "LSC",
+    "model": "Sierra AT4",
+    "type": "Entreprise",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sierraat4.webp",
+    "price": 0,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "GB",
+    "model": "Box Boy",
+    "type": "Entreprise",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/boxboy.webp",
+    "price": 0,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "GB",
+    "model": "Voyager B",
+    "type": "Entreprise",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/voyagerb.webp",
+    "price": 0,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  },
+  {
+    "brand": "LSC",
+    "model": "Sierra Towing",
+    "type": "Entreprise",
+    "urlimagevehicule": "https://docs.fivem.net/vehicles/sierratowing.webp",
+    "price": 0,
+    "places": 0,
+    "vitessemax": 0,
+    "classe": ""
+  }
+]
