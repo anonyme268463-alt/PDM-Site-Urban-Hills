@@ -1,7 +1,7 @@
 import { db, auth } from "./config.js";
 import {
   collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc,
-  serverTimestamp
+  serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
@@ -28,7 +28,6 @@ const fBuy = document.getElementById("fBuy");
 const fSell = document.getElementById("fSell");
 const fNotes = document.getElementById("fNotes");
 
-// (optionnel) si tu as un <datalist id="modelsList"></datalist> dans ventes.html
 const modelsList = document.getElementById("modelsList");
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -48,7 +47,9 @@ let CACHE = {
   clients: [],
   tx: [],
   vehicles: [],
-  modelAlias: new Map(), // "R/A" -> "Brioso R/A"
+  vehiclesCatalogue: [],
+  partners: [],
+  modelAlias: new Map(), // "R/A" -> Vehicle Object
   me: null,
   role: "staff"
 };
@@ -62,51 +63,41 @@ function normKey(s){
     .toUpperCase();
 }
 
-// construit une table d’alias depuis vehicles
 function buildModelAlias(){
   CACHE.modelAlias = new Map();
+  const list = CACHE.vehiclesCatalogue?.length ? CACHE.vehiclesCatalogue : CACHE.vehicles;
 
-  for(const v of CACHE.vehicles){
+  for(const v of list){
     const full = (v.model || "").trim();
     if(!full) continue;
 
-    // clé full
-    CACHE.modelAlias.set(normKey(full), full);
+    CACHE.modelAlias.set(normKey(full), v);
 
-    // alias = dernier “mot” après espace (ex: "Brioso R/A" -> "R/A")
     const parts = full.split(" ");
     if(parts.length >= 2){
       const last = parts[parts.length - 1];
       if(last && last.length >= 2){
-        CACHE.modelAlias.set(normKey(last), full);
+        CACHE.modelAlias.set(normKey(last), v);
       }
     }
-
-    // alias supplémentaire : si le modèle contient " / " ou "/" on garde aussi la partie après espace
-    // (ex: "Brioso R/A" déjà couvert)
   }
 }
 
 function resolveModelDisplay(inputModel){
   const key = normKey(inputModel);
-  if(!key) return "-";
-  // 1) match direct
+  if(!key) return null;
   if(CACHE.modelAlias.has(key)) return CACHE.modelAlias.get(key);
-  // 2) fallback : essayer “contient”
-  // (utile si tx.model="RA" ou variantes)
-  for(const [k, full] of CACHE.modelAlias.entries()){
-    if(k.includes(key) || key.includes(k)) return full;
+  for(const [k, v] of CACHE.modelAlias.entries()){
+    if(k.includes(key) || key.includes(k)) return v;
   }
-  return inputModel || "-";
+  return null;
 }
 
-// (optionnel) propose les modèles en auto-complétion
 function buildModelDatalist(){
   if(!modelsList) return;
+  const list = CACHE.vehiclesCatalogue?.length ? CACHE.vehiclesCatalogue : CACHE.vehicles;
   const uniq = Array.from(new Set(
-    CACHE.vehicles
-      .map(v => (v.model || "").trim())
-      .filter(Boolean)
+    list.map(v => (v.model || "").trim()).filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b, "fr"));
   modelsList.innerHTML = uniq.map(m => `<option value="${m}"></option>`).join("");
 }
@@ -129,19 +120,27 @@ async function load(){
 
   await loadMe();
 
-  const [clientsSnap, txSnap, vehiclesSnap] = await Promise.all([
+  const [clientsSnap, txSnap, vehiclesSnap, catalogueSnap, partnersSnap] = await Promise.all([
     getDocs(collection(db,"clients")),
     getDocs(collection(db,"transactions")),
-    getDocs(collection(db,"vehicles"))
+    getDocs(collection(db,"vehicles")),
+    getDocs(collection(db,"vehiclescatalogue")),
+    getDocs(collection(db,"partners"))
   ]);
 
   CACHE.clients = clientsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.tx = txSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+  CACHE.vehiclesCatalogue = catalogueSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+  CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+
+  for (const p of CACHE.partners) {
+    const ms = await getDocs(collection(db, "partners", p.id, "members"));
+    p.members = ms.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
 
   buildModelAlias();
   buildModelDatalist();
-
   buildClientSelect();
   render();
 }
@@ -155,6 +154,40 @@ function buildClientSelect(){
     );
   fClient.innerHTML = opts.join("");
 }
+
+async function getClientDiscount(clientId) {
+  if (!clientId) return 0;
+  for (const p of CACHE.partners) {
+    if (!p.active) continue;
+    const m = p.members?.find(member => member.clientId === clientId);
+    if (m) return Number(m.rate || 0);
+  }
+  return 0;
+}
+
+async function autoPrice() {
+  const modelStr = fModel.value.trim();
+  const clientId = fClient.value;
+  if (!modelStr) return;
+
+  const vInfo = resolveModelDisplay(modelStr);
+  if (!vInfo) return;
+
+  const cataloguePrice = Number(vInfo.price || 0);
+  const buyPrice = Math.floor(cataloguePrice * 0.5);
+
+  const discountRate = await getClientDiscount(clientId);
+  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+
+  fBuy.value = buyPrice;
+  fSell.value = sellPrice;
+  if (discountRate > 0) {
+    fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
+  }
+}
+
+fModel.addEventListener("change", autoPrice);
+fClient.addEventListener("change", autoPrice);
 
 function canEdit(tx){
   const uid = auth.currentUser?.uid;
@@ -173,11 +206,13 @@ function render(){
         (CACHE.clients.find(c => c.id === t.clientId)?.name) ||
         "-";
 
+      const vInfo = resolveModelDisplay(t.model);
+
       return {
         ...t,
         _clientName: clientName,
         _profit: Number(t.sellPrice||0) - Number(t.buyPrice||0),
-        _modelDisplay: resolveModelDisplay(t.model)
+        _modelDisplay: vInfo ? `${vInfo.brand} ${vInfo.model}` : t.model
       };
     })
     .filter(t => {
@@ -287,7 +322,8 @@ async function save(){
   if(!fModel.value.trim()){ alert("Entre un modele."); return; }
 
   const modelRaw = fModel.value.trim();
-  const modelNormalized = resolveModelDisplay(modelRaw); // <-- stocke le nom complet si possible
+  const vInfo = resolveModelDisplay(modelRaw);
+  const modelNormalized = vInfo ? `${vInfo.brand} ${vInfo.model}` : modelRaw;
 
   const payload = {
     clientId,

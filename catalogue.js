@@ -16,6 +16,8 @@ const addVehicleBtn = document.getElementById("addVehicleBtn");
 const closeModalBtn = document.getElementById("closeModalBtn");
 const saveVehicleBtn = document.getElementById("saveVehicleBtn");
 const exportCsvBtn = document.getElementById("exportCsvBtn");
+const importCsvBtn = document.getElementById("importCsvBtn");
+const importCsvInput = document.getElementById("importCsvInput");
 const imageSourceType = document.getElementById("imageSourceType");
 const urlInput = document.getElementById("urlimagevehicule");
 const fileInput = document.getElementById("fileimagevehicule");
@@ -215,6 +217,47 @@ function exportToCSV() {
   document.body.removeChild(link);
 }
 
+async function importCSV(file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const text = e.target.result;
+    const lines = text.split("\n");
+    // Skip header
+    const dataRows = lines.slice(1);
+
+    let count = 0;
+    for (const row of dataRows) {
+      if (!row.trim()) continue;
+      // Basic CSV splitting (doesn't handle commas in quotes)
+      const cols = row.split(",");
+      if (cols.length < 8) continue;
+
+      const vehicle = {
+        brand: cols[0].trim(),
+        model: cols[1].trim(),
+        type: cols[2].trim(),
+        classe: cols[3].trim(),
+        price: Number(cols[4].trim()),
+        places: Number(cols[5].trim()),
+        vitessemax: Number(cols[6].trim()),
+        urlimagevehicule: cols[7].trim(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await addDoc(collection(db, "vehiclescatalogue"), vehicle);
+        count++;
+      } catch (err) {
+        console.error("Error importing vehicle:", vehicle.model, err);
+      }
+    }
+    alert(`${count} véhicules importés avec succès.`);
+    loadVehicles();
+  };
+  reader.readAsText(file);
+}
+
 // 3. Events
 logoutBtn?.addEventListener("click", async () => {
   await signOut(auth);
@@ -239,6 +282,12 @@ addVehicleBtn?.addEventListener("click", () => openModal());
 closeModalBtn?.addEventListener("click", () => vehicleModal.classList.add("hidden"));
 saveVehicleBtn?.addEventListener("click", saveVehicle);
 exportCsvBtn?.addEventListener("click", exportToCSV);
+importCsvBtn?.addEventListener("click", () => importCsvInput.click());
+importCsvInput?.addEventListener("change", (e) => {
+  if (e.target.files.length > 0) {
+    importCSV(e.target.files[0]);
+  }
+});
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "pdm-staff.html"; return; }
