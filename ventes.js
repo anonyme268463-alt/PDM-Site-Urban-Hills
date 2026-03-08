@@ -26,6 +26,8 @@ const fModel = document.getElementById("fModel");
 const fDetail = document.getElementById("fDetail");
 const fBuy = document.getElementById("fBuy");
 const fSell = document.getElementById("fSell");
+const fDiscountRate = document.getElementById("fDiscountRate");
+const fCatalogPrice = document.getElementById("fCatalogPrice");
 const fNotes = document.getElementById("fNotes");
 
 const modelsList = document.getElementById("modelsList");
@@ -168,10 +170,18 @@ async function getClientDiscount(clientId) {
 async function autoPrice() {
   const modelStr = fModel.value.trim();
   const clientId = fClient.value;
-  if (!modelStr) return;
+  if (!modelStr) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    return;
+  }
 
   const vInfo = resolveModelDisplay(modelStr);
-  if (!vInfo) return;
+  if (!vInfo) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    return;
+  }
 
   const cataloguePrice = Number(vInfo.price || 0);
   const buyPrice = Math.floor(cataloguePrice * 0.5);
@@ -179,6 +189,8 @@ async function autoPrice() {
   const discountRate = await getClientDiscount(clientId);
   const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
 
+  fCatalogPrice.value = cataloguePrice;
+  fDiscountRate.value = discountRate;
   fBuy.value = buyPrice;
   fSell.value = sellPrice;
   if (discountRate > 0) {
@@ -278,6 +290,8 @@ function openAdd(){
   fDetail.value = "";
   fBuy.value = "";
   fSell.value = "";
+  fDiscountRate.value = "";
+  fCatalogPrice.value = "";
   fNotes.value = "";
 
   modal.classList.remove("hidden");
@@ -299,6 +313,17 @@ function openEdit(id){
   fDetail.value = t.detail || "";
   fBuy.value = String(t.buyPrice || "");
   fSell.value = String(t.sellPrice || "");
+
+  const vInfo = resolveModelDisplay(t.model);
+  if (vInfo) {
+    fCatalogPrice.value = Number(vInfo.price || 0);
+    const rate = t.sellPrice && vInfo.price ? Math.round((1 - (t.sellPrice / vInfo.price)) * 100) : 0;
+    fDiscountRate.value = rate;
+  } else {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+  }
+
   fNotes.value = t.notes || "";
 
   modal.classList.remove("hidden");
