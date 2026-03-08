@@ -1,9 +1,10 @@
 // catalogue.js (admin-only)
-import { auth, db } from "./config.js";
+import { auth, db, storage } from "./config.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
 const pageRoot = document.getElementById("pageRoot");
@@ -14,6 +15,13 @@ const modalTitle = document.getElementById("modalTitle");
 const addVehicleBtn = document.getElementById("addVehicleBtn");
 const closeModalBtn = document.getElementById("closeModalBtn");
 const saveVehicleBtn = document.getElementById("saveVehicleBtn");
+const exportCsvBtn = document.getElementById("exportCsvBtn");
+const imageSourceType = document.getElementById("imageSourceType");
+const urlInput = document.getElementById("urlimagevehicule");
+const fileInput = document.getElementById("fileimagevehicule");
+const uploadStatus = document.getElementById("uploadStatus");
+
+let currentVehicles = [];
 
 // 1. Permissions & Auth
 async function requireAdmin(user){
@@ -47,11 +55,11 @@ async function loadVehicles() {
     const snap = await getDocs(q);
     vehiclesTableBody.innerHTML = "";
 
-    const docs = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+    currentVehicles = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
     // Sort by brand in memory to provide a clean list without extra Firestore indexes.
-    docs.sort((a, b) => a.type.localeCompare(b.type) || a.brand.localeCompare(b.brand));
+    currentVehicles.sort((a, b) => a.type.localeCompare(b.type) || a.brand.localeCompare(b.brand));
 
-    docs.forEach(v => {
+    currentVehicles.forEach(v => {
       const id = v.id;
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -97,6 +105,14 @@ async function openModal(id = null) {
   document.getElementById("vehicleId").value = id || "";
   modalTitle.textContent = id ? "Modifier le véhicule" : "Ajouter un véhicule";
 
+  // Reset image toggles
+  imageSourceType.value = "url";
+  urlInput.classList.remove("hidden");
+  fileInput.classList.add("hidden");
+  urlInput.required = true;
+  fileInput.required = false;
+  uploadStatus.textContent = "";
+
   if (id) {
     const snap = await getDoc(doc(db, "vehiclescatalogue", id));
     if (snap.exists()) {
@@ -116,6 +132,22 @@ async function openModal(id = null) {
 
 async function saveVehicle() {
   const id = document.getElementById("vehicleId").value;
+  let imageUrl = urlInput.value;
+
+  if (imageSourceType.value === "file" && fileInput.files.length > 0) {
+    try {
+      uploadStatus.textContent = "Téléchargement de l'image...";
+      const file = fileInput.files[0];
+      const storageRef = ref(storage, `vehicles/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      imageUrl = await getDownloadURL(snapshot.ref);
+      uploadStatus.textContent = "Image téléchargée avec succès !";
+    } catch (e) {
+      alert("Erreur lors du téléchargement de l'image : " + e.message);
+      return;
+    }
+  }
+
   const data = {
     brand: document.getElementById("brand").value,
     model: document.getElementById("model").value,
@@ -124,7 +156,7 @@ async function saveVehicle() {
     price: Number(document.getElementById("price").value),
     places: Number(document.getElementById("places").value),
     vitessemax: Number(document.getElementById("vitessemax").value),
-    urlimagevehicule: document.getElementById("urlimagevehicule").value,
+    urlimagevehicule: imageUrl,
     updatedAt: new Date().toISOString()
   };
 
@@ -152,15 +184,61 @@ async function deleteVehicle(id) {
   }
 }
 
+function exportToCSV() {
+  if (currentVehicles.length === 0) {
+    alert("Aucune donnée à exporter.");
+    return;
+  }
+
+  const headers = ["Marque", "Modèle", "Type", "Classe", "Prix", "Places", "Vitesse Max", "URL Image"];
+  const rows = currentVehicles.map(v => [
+    v.brand,
+    v.model,
+    v.type,
+    v.classe || "",
+    v.price,
+    v.places,
+    v.vitessemax,
+    v.urlimagevehicule
+  ]);
+
+  let csvContent = "data:text/csv;charset=utf-8,"
+    + headers.join(",") + "\n"
+    + rows.map(e => e.join(",")).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `pdm_catalogue_${new Date().toLocaleDateString()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 // 3. Events
 logoutBtn?.addEventListener("click", async () => {
   await signOut(auth);
   window.location.href = "pdm-staff.html";
 });
 
+imageSourceType?.addEventListener("change", (e) => {
+  if (e.target.value === "url") {
+    urlInput.classList.remove("hidden");
+    fileInput.classList.add("hidden");
+    urlInput.required = true;
+    fileInput.required = false;
+  } else {
+    urlInput.classList.add("hidden");
+    fileInput.classList.remove("hidden");
+    urlInput.required = false;
+    fileInput.required = true;
+  }
+});
+
 addVehicleBtn?.addEventListener("click", () => openModal());
 closeModalBtn?.addEventListener("click", () => vehicleModal.classList.add("hidden"));
 saveVehicleBtn?.addEventListener("click", saveVehicle);
+exportCsvBtn?.addEventListener("click", exportToCSV);
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "pdm-staff.html"; return; }
