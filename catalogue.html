@@ -41,7 +41,10 @@
           <h1>Gestion Catalogue</h1>
           <p>Édition des véhicules affichés sur le site public (Admin-only)</p>
         </div>
-        <button id="addVehicleBtn" class="btn btn-gold">Ajouter un véhicule</button>
+        <div class="header-actions">
+          <button id="exportCsvBtn" class="btn btn-outline">Exporter CSV</button>
+          <button id="addVehicleBtn" class="btn btn-gold">Ajouter un véhicule</button>
+        </div>
       </header>
 
       <div class="content-body" id="pageRoot">
@@ -116,8 +119,16 @@
             </div>
           </div>
           <div class="form-group">
-            <label>URL Image</label>
-            <input type="url" id="urlimagevehicule" class="input" placeholder="https://..." required />
+            <label>Image du véhicule</label>
+            <div class="flex-row">
+              <select id="imageSourceType" class="input" style="width: auto;">
+                <option value="url">URL</option>
+                <option value="file">Fichier (PNG/JPG)</option>
+              </select>
+              <input type="url" id="urlimagevehicule" class="input w-full" placeholder="https://..." required />
+              <input type="file" id="fileimagevehicule" class="input w-full hidden" accept="image/png, image/jpeg" />
+            </div>
+            <div id="uploadStatus" class="brand-sub" style="margin-top: 5px; font-size: 0.8em;"></div>
           </div>
         </form>
       </div>
