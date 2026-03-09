@@ -3,6 +3,7 @@ import {
   collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { logAction } from "./logger.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -196,11 +197,13 @@ async function editMember(memberId){
   if (Number.isNaN(rate) || rate < 0) return alert("Taux invalide.");
 
   await updateDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", memberId), {
+    // log: PARTENAIRE_MEMBRE_MODIF
     fullName: fullName.trim(),
     clientId: clientId.trim() || null,
     rate,
     updatedAt: serverTimestamp(),
   });
+  await logAction("PARTENAIRE_MEMBRE_MODIF", `Modif membre ${memberId} du partenaire ${OPEN_PARTNER_ID}`);
 
   await loadPartners(); // refresh count
   await loadMembers(OPEN_PARTNER_ID);
@@ -209,7 +212,8 @@ async function editMember(memberId){
 async function deleteMember(memberId){
   if(!confirm("Supprimer ce client du partenaire ?")) return;
   await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", memberId));
-  await loadPartners();
+  await logAction("PARTENAIRE_MEMBRE_SUPPR", `Suppression membre ${memberId} du partenaire ${OPEN_PARTNER_ID}`);
+    await loadPartners();
   await loadMembers(OPEN_PARTNER_ID);
 }
 
@@ -224,6 +228,7 @@ pmSave?.addEventListener("click", async ()=>{
     active: pmActive.checked,
     updatedAt: serverTimestamp(),
   });
+  await logAction("PARTENAIRE_MODIF", `Modif partenaire ${OPEN_PARTNER_ID}`);
 
   await loadPartners();
   const p = PARTNERS.find(x => x.id === OPEN_PARTNER_ID);
@@ -234,7 +239,8 @@ pmDelete?.addEventListener("click", async ()=>{
   if(!OPEN_PARTNER_ID) return;
   if(!confirm("Supprimer ce partenaire ?")) return;
   await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID));
-  closeModal();
+  await logAction("PARTENAIRE_SUPPR", `Suppression partenaire ${OPEN_PARTNER_ID}`);
+    closeModal();
   await loadPartners();
 });
 
@@ -249,6 +255,7 @@ addPartnerBtn?.addEventListener("click", async ()=>{
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  await logAction("PARTENAIRE_AJOUT", `Ajout partenaire`);
 
   await loadPartners();
 });
@@ -271,6 +278,7 @@ addMemberBtn?.addEventListener("click", async ()=>{
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+  await logAction("PARTENAIRE_MEMBRE_AJOUT", `Ajout membre au partenaire ${OPEN_PARTNER_ID}`);
 
   await loadPartners();
   await loadMembers(OPEN_PARTNER_ID);

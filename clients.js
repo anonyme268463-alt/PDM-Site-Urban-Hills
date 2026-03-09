@@ -8,6 +8,7 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { logAction } from "./logger.js";
 
 const tbody = document.getElementById("clientsTable");
 const search = document.getElementById("search");
@@ -269,6 +270,7 @@ if (cSave) {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      await logAction("CLIENT_AJOUT", `Ajout client: ${name}`);
 
       closeAddClient();
       await load();
@@ -345,6 +347,7 @@ if (editCSave) {
         truck: !!editCTruck.checked,
         updatedAt: serverTimestamp(),
       });
+      await logAction("CLIENT_MODIF", `Modif client ${id}: ${name}`);
 
       closeEditClient();
       await load();
