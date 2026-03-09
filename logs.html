@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDM Admin — Logs</title>
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="app.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" src="logs.js"></script>
+</head>
+
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-title">PDM <span>ADMIN</span></div>
+        <div class="brand-sub">Urban Hills</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-link" href="dashboard.html"><span>Dashboard</span></a>
+        <a class="nav-link" href="clients.html"><span>Clients</span></a>
+        <a class="nav-link" href="stock.html"><span>Stock</span></a>
+        <a class="nav-link" href="ventes.html"><span>Ventes</span></a>
+        <a class="nav-link" href="vehicles.html"><span>Véhicules</span></a>
+        <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
+        <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
+        <a class="nav-link" href="catalogue.html"><span>Catalogue</span></a>
+        <a class="nav-link" href="gestion.html"><span>Gestion</span></a>
+        <a class="nav-link active" href="logs.html"><span>Logs</span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="page-info">
+          <h1>Logs d'activité</h1>
+          <p>Historique des actions effectuées sur le site (Admin-only)</p>
+        </div>
+        <div class="header-actions">
+          <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
+        </div>
+      </header>
+
+      <div class="content-body" id="pageRoot">
+        <div class="card">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div class="card-title">Flux d'activité</div>
+            <input type="text" id="logSearch" class="input" placeholder="Rechercher par acteur, action ou détail..." style="max-width: 300px; margin-bottom: 0;">
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Acteur</th>
+                  <th>Action</th>
+                  <th>Détails</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody">
+                <tr><td colspan="4" class="muted">Chargement...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

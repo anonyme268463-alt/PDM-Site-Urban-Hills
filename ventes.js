@@ -4,6 +4,7 @@ import {
   serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { logAction } from "./logger.js";
 
 const txTable = document.getElementById("txTable");
 const search = document.getElementById("search");
@@ -159,13 +160,26 @@ function buildClientSelect(){
 
 async function getClientDiscount(clientId) {
   if (!clientId) return 0;
+
+  const client = CACHE.clients.find(c => c.id === clientId);
+  const clientNameNorm = client?.name ? client.name.trim().toLowerCase() : "";
   const targetId = String(clientId).trim().toLowerCase();
+
   for (const p of CACHE.partners) {
     if (!p.active) continue;
+
     const m = p.members?.find(member => {
-      if (!member.clientId) return false;
-      return String(member.clientId).trim().toLowerCase() === targetId;
+      // Match by clientId
+      if (member.clientId && String(member.clientId).trim().toLowerCase() === targetId) {
+        return true;
+      }
+      // Fallback: Match by fullName (case insensitive)
+      if (clientNameNorm && member.fullName && member.fullName.trim().toLowerCase() === clientNameNorm) {
+        return true;
+      }
+      return false;
     });
+
     if (m) return Number(m.rate || 0);
   }
   return 0;
@@ -371,8 +385,10 @@ async function save(){
   if(!editingId){
     payload.createdAt = serverTimestamp();
     await addDoc(collection(db,"transactions"), payload);
+    await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
   } else {
     await updateDoc(doc(db,"transactions", editingId), payload);
+    await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
   }
 
   close();
@@ -386,6 +402,7 @@ async function removeTx(id){
 
   if(!confirm("Supprimer cette vente ?")) return;
   await deleteDoc(doc(db,"transactions", id));
+  await logAction("VENTE_SUPPR", `Suppression vente ${id} (${t.model} - ${t.clientName})`);
   await load();
 }
 

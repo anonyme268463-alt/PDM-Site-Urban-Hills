@@ -5,6 +5,7 @@ import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+import { logAction } from "./logger.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
 const pageRoot = document.getElementById("pageRoot");
@@ -179,9 +180,11 @@ async function saveVehicle() {
   try {
     if (id) {
       await updateDoc(doc(db, "vehiclescatalogue", id), data);
+      await logAction("CATALOGUE_MODIF", `Modif véhicule ${id}: ${data.brand} ${data.model}`);
     } else {
       data.createdAt = new Date().toISOString();
       await addDoc(collection(db, "vehiclescatalogue"), data);
+      await logAction("CATALOGUE_AJOUT", `Ajout véhicule: ${data.brand} ${data.model}`);
     }
     vehicleModal.classList.add("hidden");
     loadVehicles();
@@ -194,6 +197,7 @@ async function deleteVehicle(id) {
   if (!confirm("Supprimer ce véhicule du catalogue ?")) return;
   try {
     await deleteDoc(doc(db, "vehiclescatalogue", id));
+    await logAction("CATALOGUE_SUPPR", `Suppression véhicule ${id}`);
     loadVehicles();
   } catch (e) {
     alert("Erreur lors de la suppression : " + e.message);
