@@ -168,11 +168,54 @@
   </div>
 </div>
 
-<script>
-  // Simple modal toggle helper for clients.js integration if needed
-  // Note: clients.js already handles classList.remove('hidden')
-  // We need to update clients.js or use CSS to map .hidden to opacity 0/pointer-events none
-</script>
+<!-- Modal modification client -->
+<div id="editClientModal" class="modal-overlay hidden">
+  <div class="modal-container" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2>Modifier le client</h2>
+        <button class="btn btn-outline btn-sm" id="editClientClose">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editClientId">
+      <div class="form-group">
+        <label>Nom Complet *</label>
+        <input id="editCName" type="text" class="input">
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input id="editCPhone" type="text" class="input">
+      </div>
+      <div class="form-group">
+        <label>Permis de conduire</label>
+        <select id="editCLicense" class="input">
+          <option value="Oui">Oui</option>
+          <option value="Non">Non</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Catégories de permis</label>
+        <div class="flex-row" style="margin-top: 10px;">
+          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+            <input id="editCCar" type="checkbox"> <span>Voiture</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+            <input id="editCMoto" type="checkbox"> <span>Moto</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
+            <input id="editCTruck" type="checkbox"> <span>Camion</span>
+          </label>
+        </div>
+      </div>
+      <div id="editCError" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="editCCancel" class="btn btn-outline">Annuler</button>
+      <button id="editCSave" class="btn btn-gold">Mettre à jour</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

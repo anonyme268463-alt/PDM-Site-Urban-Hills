@@ -164,13 +164,13 @@ function renderMembers(){
   membersTable.innerHTML = OPEN_MEMBERS.map(m => `
     <tr>
       <td>${esc(m.displayName || "-")}</td>
-      <td>${esc(m.clientId || "-")}</td>
+      <td><span style="font-family: monospace; color: var(--accent-gold-soft);">${esc(m.clientId || "-")}</span></td>
       <td>${esc(m.rate ?? 0)}</td>
       <td>${fmtDate(m.createdAt)}</td>
       <td>${fmtDate(m.updatedAt)}</td>
       <td style="text-align:right;">
-        <button class="btn" data-edit="${m.id}">Modifier</button>
-        <button class="btn btn-danger" data-del="${m.id}">Supprimer</button>
+        <button class="btn btn-outline btn-sm" data-edit="${m.id}">Modifier</button>
+        <button class="btn btn-danger btn-sm" data-del="${m.id}">Supprimer</button>
       </td>
     </tr>
   `).join("");

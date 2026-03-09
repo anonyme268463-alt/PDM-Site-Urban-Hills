@@ -65,18 +65,14 @@ function parseDateInputs() {
 }
 
 function txDate(tx) {
-  // priorités : date -> createdAt -> updatedAt
   const d = tx.date || tx.createdAt || tx.updatedAt;
   if (!d) return null;
-  // Firestore Timestamp
   if (typeof d?.toDate === "function") return d.toDate();
-  // JS date or string
   const dd = new Date(d);
   return isNaN(dd.getTime()) ? null : dd;
 }
 
 function moneyBase(tx) {
-  // Commission sur profit si possible, sinon (sell-buy), sinon sell
   const profit =
     Number.isFinite(tx.profit) ? tx.profit :
     (Number.isFinite(tx.sellPrice) && Number.isFinite(tx.buyPrice) ? (tx.sellPrice - tx.buyPrice) : NaN);
@@ -149,12 +145,10 @@ function renderCashbook(list) {
 }
 
 function renderKpis() {
-  // ventes
   const ca = txRows.reduce((s, tx) => s + (Number.isFinite(tx.sellPrice) ? tx.sellPrice : Number.isFinite(tx.price) ? tx.price : 0), 0);
   const profit = txRows.reduce((s, tx) => s + moneyBase(tx), 0);
   const count = txRows.length;
 
-  // cashbook
   const expense = cashRows.filter(x => x.type === "expense").reduce((s, x) => s + Number(x.amount || 0), 0);
   const other = cashRows.filter(x => x.type === "income").reduce((s, x) => s + Number(x.amount || 0), 0);
 
@@ -171,7 +165,7 @@ function renderKpis() {
 function gradeRate(grade) {
   const g = String(grade || "").toLowerCase();
   if (g.includes("co") && g.includes("pdg")) return 0.12;
-  if (g.includes("pdg")) return 0.05;
+  if (g.includes("pdg") || g.includes("patron") || g.includes("admin")) return 0.05;
   return 0.10; // vendeur
 }
 
@@ -181,8 +175,7 @@ function renderSalaries() {
     return;
   }
 
-  // index ventes par sellerId ou sellerName/email
-  const map = new Map(); // key -> {count,sumBase}
+  const map = new Map();
   for (const tx of txRows) {
     const key = tx.sellerId || tx.sellerName || tx.importedSeller || tx.vendeur || "";
     if (!key) continue;
@@ -196,14 +189,14 @@ function renderSalaries() {
 
   const rows = usersRows.map(u => {
     const name = u.name || u.email || u.__id;
-    const grade = u.grade || "Vendeur";
+    const grade = u.grade || u.role || u.rank || "Vendeur";
     const rate = gradeRate(grade);
 
-    // PDG : 5% sur tout, pas seulement ses ventes
     let count = 0;
     let base = 0;
 
-    if (String(grade).toLowerCase().includes("pdg") && !String(grade).toLowerCase().includes("co")) {
+    const lowerGrade = String(grade).toLowerCase();
+    if ((lowerGrade.includes("pdg") || lowerGrade.includes("patron") || lowerGrade.includes("admin")) && !lowerGrade.includes("co")) {
       count = txRows.length;
       base = totalBaseAll;
     } else {
@@ -212,7 +205,6 @@ function renderSalaries() {
       for (const k of keyCandidates) {
         if (map.has(k)) { found = map.get(k); break; }
       }
-      // fallback: match sellerName contains email/name
       if (!found) {
         const key2 = [...map.keys()].find(k => norm(k) === norm(u.email) || norm(k) === norm(u.name));
         if (key2) found = map.get(key2);
@@ -229,7 +221,6 @@ function renderSalaries() {
     };
   });
 
-  // tri : salaire desc
   rows.sort((a, b) => (b.salary - a.salary));
 
   salaryTbody.innerHTML = rows.map(r => `
@@ -253,8 +244,6 @@ async function loadTransactions() {
   const fromTs = Timestamp.fromDate(range.from);
   const toTs = Timestamp.fromDate(range.to);
 
-  // On filtre sur createdAt si présent
-  // Si certains docs n'ont pas createdAt, ils ne remonteront pas (mais c’est OK si ta base est propre)
   const qy = query(
     collection(db, "transactions"),
     where("createdAt", ">=", fromTs),
@@ -265,7 +254,6 @@ async function loadTransactions() {
   const snap = await getDocs(qy);
   const raw = snap.docs.map(d => ({ __id: d.id, ...d.data() }));
 
-  // compute normalized numeric fields
   txRows = raw.map(x => {
     const sellPrice = Number(x.sellPrice ?? x.price ?? 0);
     const buyPrice = Number(x.buyPrice ?? 0);
@@ -304,7 +292,6 @@ function applySearchFilter() {
   });
 
   renderTransactions(txFiltered);
-  // KPIs & salaires doivent rester sur la période entière (pas la recherche)
   renderKpis();
   renderSalaries();
 }
@@ -346,7 +333,7 @@ async function saveCash() {
 
   await addDoc(collection(db, "cashbook"), {
     date: Timestamp.fromDate(d),
-    type: cashType.value,              // expense | income
+    type: cashType.value,
     reason,
     amount,
     createdAt: Timestamp.fromDate(new Date()),
@@ -360,7 +347,6 @@ async function saveCash() {
 
 /** PDF export (sans lib) */
 function exportPdf() {
-  // Crée une version “printable” simple
   const html = `
   <html>
   <head>
@@ -452,7 +438,7 @@ btnPdf?.addEventListener("click", exportPdf);
 
 /** Init */
 onAuthStateChanged(auth, async (u) => {
-  if (!u) return; // guard.js gère normalement déjà
+  if (!u) return;
   currentUser = u;
 
   setRange(getWeekRange(new Date()));
