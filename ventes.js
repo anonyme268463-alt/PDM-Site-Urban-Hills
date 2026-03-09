@@ -159,9 +159,13 @@ function buildClientSelect(){
 
 async function getClientDiscount(clientId) {
   if (!clientId) return 0;
+  const targetId = String(clientId).trim().toLowerCase();
   for (const p of CACHE.partners) {
     if (!p.active) continue;
-    const m = p.members?.find(member => member.clientId === clientId);
+    const m = p.members?.find(member => {
+      if (!member.clientId) return false;
+      return String(member.clientId).trim().toLowerCase() === targetId;
+    });
     if (m) return Number(m.rate || 0);
   }
   return 0;
