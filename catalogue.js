@@ -31,9 +31,10 @@ async function requireAdmin(user){
   const snap = await getDoc(ref);
   if(!snap.exists()) return false;
   const data = snap.data();
-  const role = String(data.role || data.rank || "staff").toLowerCase();
+  const role = String(data.role || "staff").toLowerCase();
+  const rank = String(data.rank || "staff").toLowerCase();
   const admins = ["admin", "pdg", "patron", "direction"];
-  return admins.includes(role);
+  return admins.includes(role) || admins.includes(rank);
 }
 
 function deny(){

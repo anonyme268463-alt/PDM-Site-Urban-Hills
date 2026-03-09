@@ -25,8 +25,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     let allVehicles = [];
 
     try {
-        const snap = await getDocs(collection(db, "vehiclescatalogue"));
+        const colRef = collection(db, "vehiclescatalogue");
+        const snap = await getDocs(colRef);
         allVehicles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (allVehicles.length === 0) {
+            console.warn("No vehicles found in 'vehiclescatalogue' collection.");
+        }
 
         // Prepare data for filtering
         allVehicles.forEach(v => {
@@ -50,8 +55,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         applyFilters();
 
     } catch (e) {
-        console.error("Error loading vehicles:", e);
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--accent-red);">Erreur lors du chargement des véhicules.</div>';
+        console.error("Error loading vehicles from 'vehiclescatalogue':", e);
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--accent-red);">
+                Erreur lors du chargement des véhicules.<br>
+                <small style="color: var(--text-muted);">${e.message}</small>
+            </div>
+        `;
     }
 
     function renderDailySelection(vehicles) {

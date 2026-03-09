@@ -2,70 +2,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper simple pour vérifier si l'utilisateur est connecté
+    // Helper: Is the user authenticated?
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Récupère les données de l'utilisateur (si le doc existe)
-    function userData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // Vérifie si l'utilisateur a le rôle admin (PDG ou Admin)
-    function isAdmin() {
+    // Helper: Does the user have an administrative role?
+    function hasAdminRole() {
       return isSignedIn() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             (userData().get('role', 'staff') == 'admin' ||
-              userData().get('role', 'staff') == 'pdg' ||
-              userData().get('rank', 'staff') == 'admin');
+             (
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction'] ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction']
+             );
     }
 
-    // --- RÈGLES PAR COLLECTION ---
+    // --- COLLECTIONS ---
 
-    // Collection USERS
+    // Users: Auth users can read, only admins or owner can write.
     match /users/{userId} {
-      // On autorise la lecture à tout utilisateur connecté pour éviter les blocages de vérification de rôle
       allow read: if isSignedIn();
-      // Seul l'admin ou l'utilisateur lui-même peut modifier son profil
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if hasAdminRole() || (isSignedIn() && request.auth.uid == userId);
     }
 
-    // Autres collections : accès lecture au staff, écriture aux admins
+    // Catalogue: Publicly readable, admin-only write.
+    match /vehiclescatalogue/{docId} {
+      allow read: if true;
+      allow write: if hasAdminRole();
+    }
+
+    // Transactions, Clients, Vehicles, Stock: Readable/Writable by staff (signed in), Deletable by admin.
     match /transactions/{docId} {
       allow read, create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update, delete: if hasAdminRole();
     }
 
     match /clients/{docId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow read, create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
     }
+
     match /vehicles/{docId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow read, create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
     }
+
     match /stock/{docId} {
-      allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
-      allow delete: if isAdmin();
+      allow read, create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
     }
 
-    // Catalogue des véhicules
-    match /vehiclescatalogue/{docId} {
-      // Lecture publique pour le site
-      allow read: if true;
-      // Écriture réservée aux rôles de direction/gestion
-      allow write: if request.auth != null &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'pdg', 'Patron', 'Direction']);
-    }
-
-    // Règle par défaut pour tout le reste
+    // Default: Authenticated read, Admin write.
     match /{document=**} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow write: if hasAdminRole();
     }
   }
 }
