@@ -22,6 +22,7 @@ const imageSourceType = document.getElementById("imageSourceType");
 const urlInput = document.getElementById("urlimagevehicule");
 const fileInput = document.getElementById("fileimagevehicule");
 const uploadStatus = document.getElementById("uploadStatus");
+const catalogueSearch = document.getElementById("catalogueSearch");
 
 let currentVehicles = [];
 
@@ -56,16 +57,33 @@ async function loadVehicles() {
     // Simplified query to avoid requiring a composite index immediately.
     const q = query(collection(db, "vehiclescatalogue"), orderBy("type"));
     const snap = await getDocs(q);
-    vehiclesTableBody.innerHTML = "";
 
     currentVehicles = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
     // Sort by brand in memory to provide a clean list without extra Firestore indexes.
     currentVehicles.sort((a, b) => a.type.localeCompare(b.type) || a.brand.localeCompare(b.brand));
 
-    currentVehicles.forEach(v => {
-      const id = v.id;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
+    renderVehicles();
+  } catch (e) {
+    console.error(e);
+    vehiclesTableBody.innerHTML = `<tr><td colspan="5" class="red">Erreur lors du chargement.</td></tr>`;
+  }
+}
+
+function renderVehicles() {
+  if (!vehiclesTableBody) return;
+  const qStr = (catalogueSearch?.value || "").toLowerCase().trim();
+
+  const filtered = currentVehicles.filter(v => {
+    return v.brand.toLowerCase().includes(qStr) ||
+           v.model.toLowerCase().includes(qStr) ||
+           v.type.toLowerCase().includes(qStr);
+  });
+
+  vehiclesTableBody.innerHTML = "";
+  filtered.forEach(v => {
+    const id = v.id;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
         <td>
           <div style="font-weight:600">${v.brand}</div>
           <div class="muted">${v.model}</div>
@@ -86,21 +104,16 @@ async function loadVehicles() {
           </div>
         </td>
       `;
-      vehiclesTableBody.appendChild(tr);
-    });
+    vehiclesTableBody.appendChild(tr);
+  });
 
-    // Attach events
-    document.querySelectorAll(".edit-btn").forEach(btn => {
-      btn.onclick = () => openModal(btn.dataset.id);
-    });
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-      btn.onclick = () => deleteVehicle(btn.dataset.id);
-    });
-
-  } catch (e) {
-    console.error(e);
-    vehiclesTableBody.innerHTML = `<tr><td colspan="5" class="red">Erreur lors du chargement.</td></tr>`;
-  }
+  // Attach events
+  document.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.onclick = () => openModal(btn.dataset.id);
+  });
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.onclick = () => deleteVehicle(btn.dataset.id);
+  });
 }
 
 async function openModal(id = null) {
@@ -279,6 +292,7 @@ imageSourceType?.addEventListener("change", (e) => {
   }
 });
 
+catalogueSearch?.addEventListener("input", renderVehicles);
 addVehicleBtn?.addEventListener("click", () => openModal());
 closeModalBtn?.addEventListener("click", () => vehicleModal.classList.add("hidden"));
 saveVehicleBtn?.addEventListener("click", saveVehicle);
