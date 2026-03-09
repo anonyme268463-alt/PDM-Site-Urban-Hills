@@ -3,6 +3,8 @@ import {
   collection,
   getDocs,
   addDoc,
+  updateDoc,
+  doc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
@@ -10,7 +12,7 @@ import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-aut
 const tbody = document.getElementById("clientsTable");
 const search = document.getElementById("search");
 
-// Fiche client (existant)
+// Fiche client
 const modal = document.getElementById("clientModal");
 const closeModal = document.getElementById("closeModal");
 
@@ -20,7 +22,7 @@ const mProfit = document.getElementById("mProfit");
 const mCount = document.getElementById("mCount");
 const mSales = document.getElementById("mSales");
 
-// Ajout client (nouveau)
+// Ajout client
 const addClientBtn = document.getElementById("addClientBtn");
 const addClientModal = document.getElementById("addClientModal");
 const addClientClose = document.getElementById("addClientClose");
@@ -34,6 +36,20 @@ const cTruck = document.getElementById("cTruck");
 const cSave = document.getElementById("cSave");
 const cCancel = document.getElementById("cCancel");
 const cError = document.getElementById("cError");
+
+// Modification client
+const editClientModal = document.getElementById("editClientModal");
+const editClientClose = document.getElementById("editClientClose");
+const editClientId = document.getElementById("editClientId");
+const editCName = document.getElementById("editCName");
+const editCPhone = document.getElementById("editCPhone");
+const editCLicense = document.getElementById("editCLicense");
+const editCCar = document.getElementById("editCCar");
+const editCMoto = document.getElementById("editCMoto");
+const editCTruck = document.getElementById("editCTruck");
+const editCSave = document.getElementById("editCSave");
+const editCCancel = document.getElementById("editCCancel");
+const editCError = document.getElementById("editCError");
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
@@ -113,7 +129,10 @@ function render() {
           <td>${checkIcon(c.truck)}</td>
           <td>${count}</td>
           <td>${money(total)}</td>
-          <td><button class="btn btn-gold" data-open="${c.id}">Voir</button></td>
+          <td style="text-align: right;">
+            <button class="btn btn-gold btn-sm" data-open="${c.id}">Voir</button>
+            <button class="btn btn-outline btn-sm" data-edit="${c.id}">Modifier</button>
+          </td>
         </tr>
       `;
     })
@@ -121,6 +140,10 @@ function render() {
 
   tbody.querySelectorAll("[data-open]").forEach((btn) => {
     btn.addEventListener("click", () => openClient(btn.getAttribute("data-open")));
+  });
+
+  tbody.querySelectorAll("[data-edit]").forEach((btn) => {
+    btn.addEventListener("click", () => openEditClient(btn.getAttribute("data-edit")));
   });
 }
 
@@ -239,7 +262,7 @@ if (cSave) {
       await addDoc(collection(db, "clients"), {
         name,
         phone,
-        license: cLicense?.value || "Oui", // "Oui"/"Non" comme ton affichage
+        license: cLicense?.value || "Oui",
         car: !!cCar?.checked,
         moto: !!cMoto?.checked,
         truck: !!cTruck?.checked,
@@ -256,6 +279,82 @@ if (cSave) {
       if (cSave) {
         cSave.disabled = false;
         cSave.textContent = "Enregistrer";
+      }
+    }
+  });
+}
+
+/* ---------- MODIFICATION CLIENT ---------- */
+
+function showEditErr(msg) {
+  if (!editCError) return;
+  editCError.textContent = msg;
+  editCError.style.display = msg ? "block" : "none";
+}
+
+function openEditClient(id) {
+  const c = CACHE.clients.find(x => x.id === id);
+  if (!c) return;
+
+  editClientId.value = id;
+  editCName.value = c.name || "";
+  editCPhone.value = c.phone || "";
+  editCLicense.value = c.license === false ? "Non" : "Oui";
+  editCCar.checked = !!c.car;
+  editCMoto.checked = !!c.moto;
+  editCTruck.checked = !!c.truck;
+
+  showEditErr("");
+  editClientModal.classList.remove("hidden");
+}
+
+function closeEditClient() {
+  editClientModal.classList.add("hidden");
+}
+
+if (editClientClose) editClientClose.addEventListener("click", closeEditClient);
+if (editCCancel) editCCancel.addEventListener("click", closeEditClient);
+if (editClientModal) {
+  editClientModal.addEventListener("click", (e) => {
+    if (e.target === editClientModal) closeEditClient();
+  });
+}
+
+if (editCSave) {
+  editCSave.addEventListener("click", async () => {
+    try {
+      showEditErr("");
+      const id = editClientId.value;
+      const name = editCName.value.trim();
+      const phone = editCPhone.value.trim();
+
+      if (!name) {
+        showEditErr("Le nom est obligatoire.");
+        return;
+      }
+
+      editCSave.disabled = true;
+      editCSave.textContent = "Mise à jour...";
+
+      await updateDoc(doc(db, "clients", id), {
+        name,
+        phone,
+        license: editCLicense.value,
+        car: !!editCCar.checked,
+        moto: !!editCMoto.checked,
+        truck: !!editCTruck.checked,
+        updatedAt: serverTimestamp(),
+      });
+
+      closeEditClient();
+      await load();
+    } catch (e) {
+      console.error(e);
+      showEditErr("Erreur lors de la modification.");
+    } finally {
+      if (editCSave) {
+        editCSave.disabled = false;
+        editCSave.textContent = "Mettre à jour";
       }
     }
   });
