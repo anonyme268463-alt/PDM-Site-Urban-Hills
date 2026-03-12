@@ -1,7 +1,7 @@
 import { db, auth } from "./config.js";
 import {
   collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc,
-  serverTimestamp, query, orderBy
+  serverTimestamp, query, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
@@ -174,7 +174,9 @@ async function getClientDiscount(clientId) {
         return true;
       }
       // Fallback: Match by fullName (case insensitive)
-      if (clientNameNorm && member.fullName && member.fullName.trim().toLowerCase() === clientNameNorm) {
+      // Only match if both clientNameNorm and member.fullName are not empty
+      const memberNameNorm = (member.fullName || "").trim().toLowerCase();
+      if (clientNameNorm && memberNameNorm && memberNameNorm === clientNameNorm) {
         return true;
       }
       return false;
@@ -335,7 +337,12 @@ function openEdit(id){
   const vInfo = resolveModelDisplay(t.model);
   if (vInfo) {
     fCatalogPrice.value = Number(vInfo.price || 0);
-    const rate = t.sellPrice && vInfo.price ? Math.round((1 - (t.sellPrice / vInfo.price)) * 100) : 0;
+    let rate = 0;
+    if (t.sellPrice && vInfo.price) {
+      rate = Math.round((1 - (t.sellPrice / vInfo.price)) * 100);
+      // Avoid negative rates (e.g., if sold for more than catalog price)
+      if (rate < 0) rate = 0;
+    }
     fDiscountRate.value = rate;
   } else {
     fCatalogPrice.value = "";
@@ -368,6 +375,9 @@ async function save(){
   const vInfo = resolveModelDisplay(modelRaw);
   const modelNormalized = vInfo ? `${vInfo.brand} ${vInfo.model}` : modelRaw;
 
+  const selectedDate = fDate.value ? new Date(fDate.value) : new Date();
+  const createdAt = Timestamp.fromDate(selectedDate);
+
   const payload = {
     clientId,
     clientName,
@@ -380,10 +390,10 @@ async function save(){
     sellerName: CACHE.me?.name || "Vendeur",
     createdBy: uid,
     updatedAt: serverTimestamp(),
+    createdAt
   };
 
   if(!editingId){
-    payload.createdAt = serverTimestamp();
     await addDoc(collection(db,"transactions"), payload);
     await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
   } else {
