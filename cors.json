@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://site-pdm-uhrp.netlify.app"],
+    "method": ["GET", "POST", "PUT", "DELETE"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]
