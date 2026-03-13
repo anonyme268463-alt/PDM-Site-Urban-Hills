@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["https://site-pdm-uhrp.netlify.app"],
+    "origin": ["https://anonyme268463-alt.github.io"],
     "method": ["GET", "POST", "PUT", "DELETE"],
     "responseHeader": ["Content-Type"],
     "maxAgeSeconds": 3600
