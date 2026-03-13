@@ -34,7 +34,10 @@ service cloud.firestore {
     // Transactions, Clients, Vehicles, Stock: Readable/Writable by staff (signed in), Deletable by admin.
     match /transactions/{docId} {
       allow read, create: if isSignedIn();
-      allow update, delete: if hasAdminRole();
+      allow update: if hasAdminRole() ||
+                       (resource.data.sellerId == request.auth.uid) ||
+                       (resource.data.createdBy == request.auth.uid);
+      allow delete: if hasAdminRole();
     }
 
     match /clients/{docId} {
@@ -50,6 +53,12 @@ service cloud.firestore {
     match /stock/{docId} {
       allow read, create, update: if isSignedIn();
       allow delete: if hasAdminRole();
+    }
+
+    // Logs: readable by admin, create by anyone signed in
+    match /logs/{docId} {
+      allow read: if hasAdminRole();
+      allow create: if isSignedIn();
     }
 
     // Default: Authenticated read, Admin write.
