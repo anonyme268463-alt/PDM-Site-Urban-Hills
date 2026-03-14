@@ -1,8 +1,16 @@
 [
   {
-    "origin": ["https://anonyme268463-alt.github.io"],
-    "method": ["GET", "POST", "PUT", "DELETE"],
-    "responseHeader": ["Content-Type"],
+    "origin": [
+      "https://anonyme268463-alt.github.io",
+      "http://localhost:8000",
+      "http://127.0.0.1:8000"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "x-goog-resumable"
+    ],
     "maxAgeSeconds": 3600
   }
 ]
