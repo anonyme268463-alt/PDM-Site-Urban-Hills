@@ -29,6 +29,8 @@ const fBuy = document.getElementById("fBuy");
 const fSell = document.getElementById("fSell");
 const fDiscountRate = document.getElementById("fDiscountRate");
 const fCatalogPrice = document.getElementById("fCatalogPrice");
+const fSeller = document.getElementById("fSeller");
+const sellerGroup = document.getElementById("sellerGroup");
 const fNotes = document.getElementById("fNotes");
 
 const modelsList = document.getElementById("modelsList");
@@ -52,6 +54,7 @@ let CACHE = {
   vehicles: [],
   vehiclesCatalogue: [],
   partners: [],
+  users: [],
   modelAlias: new Map(), // "R/A" -> Vehicle Object
   me: null,
   role: "staff"
@@ -123,12 +126,13 @@ async function load(){
 
   await loadMe();
 
-  const [clientsSnap, txSnap, vehiclesSnap, catalogueSnap, partnersSnap] = await Promise.all([
+  const [clientsSnap, txSnap, vehiclesSnap, catalogueSnap, partnersSnap, usersSnap] = await Promise.all([
     getDocs(collection(db,"clients")),
     getDocs(collection(db,"transactions")),
     getDocs(collection(db,"vehicles")),
     getDocs(collection(db,"vehiclescatalogue")),
-    getDocs(collection(db,"partners"))
+    getDocs(collection(db,"partners")),
+    getDocs(collection(db,"users"))
   ]);
 
   CACHE.clients = clientsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -136,6 +140,7 @@ async function load(){
   CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.vehiclesCatalogue = catalogueSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+  CACHE.users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
 
   for (const p of CACHE.partners) {
     const ms = await getDocs(collection(db, "partners", p.id, "members"));
@@ -145,7 +150,16 @@ async function load(){
   buildModelAlias();
   buildModelDatalist();
   buildClientSelect();
+  buildSellerSelect();
   render();
+}
+
+function buildSellerSelect(){
+  if(!fSeller) return;
+  const opts = CACHE.users
+    .sort((a,b)=> (a.name||"").localeCompare(b.name||""))
+    .map(u => `<option value="${u.id}">${u.name || u.email || u.id}</option>`);
+  fSeller.innerHTML = opts.join("");
 }
 
 function buildClientSelect(){
@@ -314,6 +328,13 @@ function openAdd(){
   fCatalogPrice.value = "";
   fNotes.value = "";
 
+  if(CACHE.role === "admin"){
+    sellerGroup.classList.remove("hidden");
+    fSeller.value = auth.currentUser?.uid || "";
+  } else {
+    sellerGroup.classList.add("hidden");
+  }
+
   modal.classList.remove("hidden");
 }
 
@@ -333,6 +354,13 @@ function openEdit(id){
   fDetail.value = t.detail || "";
   fBuy.value = String(t.buyPrice || "");
   fSell.value = String(t.sellPrice || "");
+
+  if(CACHE.role === "admin"){
+    sellerGroup.classList.remove("hidden");
+    fSeller.value = t.sellerId || "";
+  } else {
+    sellerGroup.classList.add("hidden");
+  }
 
   const vInfo = resolveModelDisplay(t.model);
   if (vInfo) {
@@ -379,6 +407,15 @@ async function save(){
   const selectedDate = fDate.value ? new Date(fDate.value) : new Date();
   const createdAt = Timestamp.fromDate(selectedDate);
 
+  let sellerId = uid;
+  let sellerName = CACHE.me?.name || "Vendeur";
+
+  if(CACHE.role === "admin" && fSeller.value){
+    sellerId = fSeller.value;
+    const sUser = CACHE.users.find(u => u.id === sellerId);
+    if(sUser) sellerName = sUser.name || sUser.email || "Vendeur";
+  }
+
   const payload = {
     clientId,
     clientName,
@@ -387,8 +424,8 @@ async function save(){
     notes: (fNotes.value || "").trim(),
     buyPrice,
     sellPrice,
-    sellerId: uid,
-    sellerName: CACHE.me?.name || "Vendeur",
+    sellerId,
+    sellerName,
     createdBy: uid,
     updatedAt: serverTimestamp(),
     createdAt
