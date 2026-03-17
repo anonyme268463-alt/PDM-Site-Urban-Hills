@@ -55,6 +55,11 @@ logoutBtn?.addEventListener("click", async () => {
 vmClose?.addEventListener("click", closeModal);
 vmCancel?.addEventListener("click", closeModal);
 
+vmSellPrice?.addEventListener("input", () => {
+  const sell = Number(vmSellPrice.value || 0);
+  vmPrice.value = Math.floor(sell / 2);
+});
+
 vehModal?.addEventListener("click", (e)=>{
   if(e.target === vehModal) closeModal();
 });
@@ -86,23 +91,23 @@ vmSave?.addEventListener("click", async () => {
   const model = (vmModel.value || "").trim();
   const type = (vmCategory.value || "").trim();
 
-  const price = Number(vmPrice.value || 0);
+  const buyPrice = Number(vmPrice.value || 0);
   const sellPrice = Number(vmSellPrice.value || 0);
 
   if(!brand || !model)
     return alert("Marque et modèle obligatoires.");
 
-  if(Number.isNaN(price) || price < 0)
-    return alert("Price invalide.");
+  if(Number.isNaN(buyPrice) || buyPrice < 0)
+    return alert("Prix d'achat invalide.");
 
   if(Number.isNaN(sellPrice) || sellPrice < 0)
-    return alert("Sell price invalide.");
+    return alert("Prix de vente invalide.");
 
   const payload = {
     brand,
     model,
     type,
-    price,
+    buyPrice,
     sellPrice,
     brandKey: brand.toLowerCase(),
     modelKey: model.toLowerCase(),
@@ -211,7 +216,7 @@ function render(){
     <td>${esc(v.brand || "-")}</td>
     <td>${esc(v.model || "-")}</td>
     <td>${esc(v.type || "-")}</td>
-    <td>$${Number(v.price || 0).toLocaleString("en-US")}</td>
+    <td>$${Number(v.buyPrice ?? v.price ?? 0).toLocaleString("en-US")}</td>
     <td>$${Number(v.sellPrice || 0).toLocaleString("en-US")}</td>
     <td>${fmtDate(v.createdAt)}</td>
     <td style="text-align:right;">
@@ -249,7 +254,7 @@ function openEdit(id){
   vmBrand.value = v.brand || "";
   vmModel.value = v.model || "";
   vmCategory.value = v.type || "";
-  vmPrice.value = Number(v.price || 0);
+  vmPrice.value = Number(v.buyPrice ?? v.price ?? 0);
   vmSellPrice.value = Number(v.sellPrice || 0);
 
   vmDelete.style.display = "";
