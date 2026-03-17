@@ -203,8 +203,8 @@ async function autoPrice() {
     return;
   }
 
-  const cataloguePrice = Number(vInfo.price || 0);
-  const buyPrice = Math.floor(cataloguePrice * 0.5);
+  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+  const buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
 
   const discountRate = await getClientDiscount(clientId);
   const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
@@ -336,10 +336,11 @@ function openEdit(id){
 
   const vInfo = resolveModelDisplay(t.model);
   if (vInfo) {
-    fCatalogPrice.value = Number(vInfo.price || 0);
+    const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+    fCatalogPrice.value = cataloguePrice;
     let rate = 0;
-    if (t.sellPrice && vInfo.price) {
-      rate = Math.round((1 - (t.sellPrice / vInfo.price)) * 100);
+    if (t.sellPrice && cataloguePrice) {
+      rate = Math.round((1 - (t.sellPrice / cataloguePrice)) * 100);
       // Avoid negative rates (e.g., if sold for more than catalog price)
       if (rate < 0) rate = 0;
     }
