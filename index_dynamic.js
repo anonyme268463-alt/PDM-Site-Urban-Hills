@@ -25,18 +25,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     let allVehicles = [];
 
     try {
-        const colRef = collection(db, "vehiclescatalogue");
+        const colRef = collection(db, "vehicles");
         const snap = await getDocs(colRef);
         allVehicles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         if (allVehicles.length === 0) {
-            console.warn("No vehicles found in 'vehiclescatalogue' collection.");
+            console.warn("No vehicles found in 'vehicles' collection.");
         }
 
         // Prepare data for filtering
         allVehicles.forEach(v => {
             v.hay = `${v.brand} ${v.model} ${v.type} ${v.classe}`.toLowerCase();
-            v.price = Number(v.price) || 0;
+            v.price = Number(v.sellPrice || v.price || 0);
             v.vitessemax = Number(v.vitessemax) || 0;
             v.places = Number(v.places) || 0;
         });

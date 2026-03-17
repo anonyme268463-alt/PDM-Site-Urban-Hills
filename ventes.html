@@ -25,7 +25,6 @@
       <a class="nav-link" href="vehicles.html"><span>Véhicules</span></a>
       <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
       <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
-      <a class="nav-link" href="catalogue.html"><span>Catalogue</span></a>
       <a class="nav-link" href="gestion.html"><span>Gestion</span></a>
         <a class="nav-link" href="logs.html"><span>Logs</span></a>
     </nav>
@@ -133,6 +132,10 @@
         <div class="form-group">
           <label>Prix catalogue</label>
           <input id="fCatalogPrice" type="number" class="input" readonly placeholder="0">
+        </div>
+        <div id="sellerGroup" class="form-group hidden">
+          <label>Vendeur (Admin only)</label>
+          <select id="fSeller" class="input"></select>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Notes</label>

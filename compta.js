@@ -175,16 +175,6 @@ function renderSalaries() {
     return;
   }
 
-  const map = new Map();
-  for (const tx of txRows) {
-    const key = tx.sellerId || tx.sellerName || tx.importedSeller || tx.vendeur || "";
-    if (!key) continue;
-    const cur = map.get(key) || { count: 0, base: 0 };
-    cur.count += 1;
-    cur.base += moneyBase(tx);
-    map.set(key, cur);
-  }
-
   const totalBaseAll = txRows.reduce((s, tx) => s + moneyBase(tx), 0);
 
   const rows = usersRows.map(u => {
@@ -196,22 +186,21 @@ function renderSalaries() {
     let base = 0;
 
     const lowerGrade = String(grade).toLowerCase();
+    // PDG/Admin gets a percentage of TOTAL sales
     if ((lowerGrade.includes("pdg") || lowerGrade.includes("patron") || lowerGrade.includes("admin")) && !lowerGrade.includes("co")) {
       count = txRows.length;
       base = totalBaseAll;
     } else {
-      const keyCandidates = [u.__id, u.email, u.name].filter(Boolean);
-      let found = null;
-      for (const k of keyCandidates) {
-        if (map.has(k)) { found = map.get(k); break; }
-      }
-      if (!found) {
-        const key2 = [...map.keys()].find(k => norm(k) === norm(u.email) || norm(k) === norm(u.name));
-        if (key2) found = map.get(key2);
-      }
-
-      count = found?.count || 0;
-      base = found?.base || 0;
+      // Regular sellers get a percentage of THEIR sales
+      const userTxs = txRows.filter(tx => {
+        const sid = tx.sellerId;
+        const sname = tx.sellerName || tx.importedSeller || tx.vendeur || "";
+        return (sid && sid === u.__id) ||
+               (norm(sname) === norm(u.name)) ||
+               (norm(sname) === norm(u.email));
+      });
+      count = userTxs.length;
+      base = userTxs.reduce((s, tx) => s + moneyBase(tx), 0);
     }
 
     const salary = base * rate;

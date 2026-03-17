@@ -27,6 +27,10 @@ const vmId = $("vmId");
 const vmBrand = $("vmBrand");
 const vmModel = $("vmModel");
 const vmCategory = $("vmCategory"); // FIX
+const vmClasse = $("vmClasse");
+const vmPlaces = $("vmPlaces");
+const vmVitesse = $("vmVitesse");
+const vmUrl = $("vmUrl");
 const vmPrice = $("vmPrice");
 const vmSellPrice = $("vmSellPrice");
 
@@ -77,6 +81,10 @@ addBtn?.addEventListener("click", () => {
   vmBrand.value = "";
   vmModel.value = "";
   vmCategory.value = "";
+  vmClasse.value = "";
+  vmPlaces.value = 0;
+  vmVitesse.value = 0;
+  vmUrl.value = "";
   vmPrice.value = 0;
   vmSellPrice.value = 0;
 
@@ -90,6 +98,10 @@ vmSave?.addEventListener("click", async () => {
   const brand = (vmBrand.value || "").trim();
   const model = (vmModel.value || "").trim();
   const type = (vmCategory.value || "").trim();
+  const classe = (vmClasse.value || "").trim();
+  const places = Number(vmPlaces.value || 0);
+  const vitessemax = Number(vmVitesse.value || 0);
+  const urlimagevehicule = (vmUrl.value || "").trim();
 
   const buyPrice = Number(vmPrice.value || 0);
   const sellPrice = Number(vmSellPrice.value || 0);
@@ -107,6 +119,10 @@ vmSave?.addEventListener("click", async () => {
     brand,
     model,
     type,
+    classe,
+    places,
+    vitessemax,
+    urlimagevehicule,
     buyPrice,
     sellPrice,
     brandKey: brand.toLowerCase(),
@@ -213,9 +229,18 @@ function render(){
 
   rows.innerHTML = list.map(v => `
   <tr>
-    <td>${esc(v.brand || "-")}</td>
-    <td>${esc(v.model || "-")}</td>
-    <td>${esc(v.type || "-")}</td>
+    <td>
+      <div style="font-weight:600">${esc(v.brand || "-")}</div>
+      <div class="muted" style="font-size:0.8em">${esc(v.model || "-")}</div>
+    </td>
+    <td>
+      <div>${esc(v.type || "-")}</div>
+      <div class="badge badge-info">${esc(v.classe || "-")}</div>
+    </td>
+    <td>
+      <div>🚗 ${v.places || 0} pl.</div>
+      <div class="muted" style="font-size:0.8em">⚡ ${v.vitessemax || 0} km/h</div>
+    </td>
     <td>$${Number(v.buyPrice ?? v.price ?? 0).toLocaleString("en-US")}</td>
     <td>$${Number(v.sellPrice || 0).toLocaleString("en-US")}</td>
     <td>${fmtDate(v.createdAt)}</td>
@@ -254,6 +279,10 @@ function openEdit(id){
   vmBrand.value = v.brand || "";
   vmModel.value = v.model || "";
   vmCategory.value = v.type || "";
+  vmClasse.value = v.classe || "";
+  vmPlaces.value = v.places || 0;
+  vmVitesse.value = v.vitessemax || 0;
+  vmUrl.value = v.urlimagevehicule || "";
   vmPrice.value = Number(v.buyPrice ?? v.price ?? 0);
   vmSellPrice.value = Number(v.sellPrice || 0);
 
