@@ -145,5 +145,58 @@
   </div>
 </div>
 
+<!-- Modal Nouveau Partenaire -->
+<div id="addPartnerModal" class="modal-overlay hidden">
+  <div class="modal-container" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2>Nouveau Partenaire</h2>
+        <button class="btn btn-outline btn-sm" id="apmClose">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nom du Partenaire</label>
+        <input id="apmName" type="text" class="input" placeholder="Benny&#39;s">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="apmCancel" class="btn btn-outline">Annuler</button>
+      <button id="apmSave" class="btn btn-gold">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Membre Partenaire -->
+<div id="memberModal" class="modal-overlay hidden">
+  <div class="modal-container" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="flex-row" style="justify-content: space-between; width: 100%;">
+        <h2 id="mmTitle">Membre Partenaire</h2>
+        <button class="btn btn-outline btn-sm" id="mmClose">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nom affiché (obligatoire si pas de ClientId)</label>
+        <input id="mmFullName" type="text" class="input" placeholder="Jean Dupont">
+      </div>
+      <div class="form-group">
+        <label>ID Client (optionnel)</label>
+        <input id="mmClientId" type="text" class="input" placeholder="CID-1234">
+      </div>
+      <div class="form-group">
+        <label>Taux de remise (%)</label>
+        <input id="mmRate" type="number" class="input" value="0" min="0" max="100">
+      </div>
+      <div id="mmId" style="display:none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="mmCancel" class="btn btn-outline">Annuler</button>
+      <button id="mmSave" class="btn btn-gold">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

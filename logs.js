@@ -2,40 +2,16 @@
 import { auth, db } from "./config.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  collection, doc, getDoc, getDocs, query, orderBy, limit
+  collection, getDocs, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { escapeHtml, fmtDate } from "./common.js";
+import { escapeHtml, checkIsAdmin, showDenyScreen } from "./common.js";
 
 const logoutBtn = document.getElementById("logoutBtn");
-const pageRoot = document.getElementById("pageRoot");
 const logsTableBody = document.getElementById("logsTableBody");
 const logSearch = document.getElementById("logSearch");
 const refreshBtn = document.getElementById("refreshBtn");
 
 let currentLogs = [];
-
-// 1. Permissions & Auth
-async function requireAdmin(user){
-  const ref = doc(db, "users", user.uid);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return false;
-  const data = snap.data();
-  const role = String(data.role || "staff").toLowerCase();
-  const rank = String(data.rank || "staff").toLowerCase();
-  const admins = ["admin", "pdg", "patron", "direction"];
-  return admins.includes(role) || admins.includes(rank);
-}
-
-function deny(){
-  pageRoot.innerHTML = `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Accès refusé</div>
-      </div>
-      <p class="muted" style="padding:18px">Vous n'avez pas l'autorisation de consulter cette page. Seuls les administrateurs peuvent voir les logs.</p>
-    </div>
-  `;
-}
 
 // 2. Data Logic
 async function loadLogs() {
@@ -99,14 +75,14 @@ refreshBtn?.addEventListener("click", loadLogs);
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "pdm-staff.html"; return; }
   try{
-    const ok = await requireAdmin(user);
+    const ok = await checkIsAdmin(user.uid);
     if (!ok) {
-      deny();
+      showDenyScreen();
     } else {
       loadLogs();
     }
   } catch(e){
     console.error(e);
-    deny();
+    showDenyScreen();
   }
 });

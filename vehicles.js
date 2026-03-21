@@ -2,9 +2,10 @@ import { db, auth } from "./config.js";
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { runBulkEnrichment } from "./vehicles_migration.js";
+import { checkIsAdmin, showDenyScreen } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -197,13 +198,18 @@ vmDelete?.addEventListener("click", async () => {
 });
 
 async function loadVehicles(){
-  rows.innerHTML = `<tr><td colspan="7">Chargement...</td></tr>`;
-  const snap = await getDocs(collection(db, "vehicles"));
-  VEHICLES = snap.docs.map(d => ({
-    id: d.id,
-    ...d.data()
-  }));
-  render();
+  rows.innerHTML = `<tr><td colspan="7" class="muted">Chargement...</td></tr>`;
+  try {
+    const snap = await getDocs(collection(db, "vehicles"));
+    VEHICLES = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+    render();
+  } catch (e) {
+    console.error(e);
+    rows.innerHTML = `<tr><td colspan="7" class="red">Erreur de chargement.</td></tr>`;
+  }
 }
 
 function render(){
@@ -236,7 +242,7 @@ function render(){
   statMonth.textContent = String(monthCount);
 
   if(!list.length){
-    rows.innerHTML = `<tr><td colspan="7">Aucun véhicule</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="7" class="muted">Aucun véhicule</td></tr>`;
     return;
   }
 
@@ -303,4 +309,12 @@ function openEdit(id){
   openModal();
 }
 
-loadVehicles();
+onAuthStateChanged(auth, async (u) => {
+  if (!u) { window.location.href = "pdm-staff.html"; return; }
+  const isAdmin = await checkIsAdmin(u.uid);
+  if (!isAdmin) {
+    showDenyScreen();
+  } else {
+    loadVehicles();
+  }
+});
