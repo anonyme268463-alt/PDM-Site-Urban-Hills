@@ -275,15 +275,15 @@ onAuthStateChanged(auth, async (user) => {
     const me = await getDoc(doc(db, "users", user.uid));
     const role = normRole(me.exists() ? me.data()?.role : "staff");
     if (role !== "admin") {
-      alert("Accès refusé (admin requis).");
-      window.location.href = "dashboard.html";
+      showDenyScreen();
+
       return;
     }
   } catch (e) {
     console.error(e);
     // Si la règle Firestore bloque, tu verras ici
-    alert("Impossible de vérifier le rôle (règles Firestore ?).");
-    window.location.href = "dashboard.html";
+    showDenyScreen();
+
     return;
   }
 

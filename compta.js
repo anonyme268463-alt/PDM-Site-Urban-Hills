@@ -1,23 +1,25 @@
+import { checkIsAdmin, showDenyScreen } from "./common.js";
 import { auth, db } from "./config.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  collection, query, where, orderBy, getDocs, addDoc, deleteDoc, doc,
-  Timestamp
+  collection, getDocs, addDoc, deleteDoc, doc, query, where, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-import { $, fmtMoney, fmtDate, escapeHtml, getWeekRange, toDateInputValue } from "./common.js";
+import {
+  $, escapeHtml, fmtMoney, fmtDate, toDateInputValue, getWeekRange
+} from "./common.js";
 
 /** DOM */
-const btnLogout = $("#btnLogout");
+const btnLogout = $("#logoutBtn");
+const btnRefresh = $("#refreshBtn");
 const btnWeek = $("#btnWeek");
-const btnPdf = $("#btnPdf");
+const btnApply = $("#btnApply");
 const btnAddCash = $("#btnAddCash");
+const btnPdf = $("#btnPdf");
 
-const qInput = $("#q");
+const periodLabel = $("#periodLabel");
 const dateFrom = $("#dateFrom");
 const dateTo = $("#dateTo");
-const btnApply = $("#btnApply");
-const btnRefresh = $("#btnRefresh");
+const qInput = $("#qInput");
 
 const kpiCa = $("#kpiCa");
 const kpiProfit = $("#kpiProfit");
@@ -26,13 +28,10 @@ const kpiExpense = $("#kpiExpense");
 const kpiOther = $("#kpiOther");
 const kpiNet = $("#kpiNet");
 
-const periodLabel = $("#periodLabel");
-
 const txTbody = $("#txTbody");
 const cashTbody = $("#cashTbody");
 const salaryTbody = $("#salaryTbody");
 
-/** Modal cashbook */
 const cashModal = $("#cashModal");
 const cashDate = $("#cashDate");
 const cashType = $("#cashType");
@@ -41,53 +40,46 @@ const cashAmount = $("#cashAmount");
 const cashCancel = $("#cashCancel");
 const cashSave = $("#cashSave");
 
+/** State */
 let currentUser = null;
+let range = { from: null, to: null };
+let txRows = [];
+let cashRows = [];
+let usersRows = [];
 
-/** State data */
-let txRows = [];      // transactions filtered
-let cashRows = [];    // cashbook filtered
-let usersRows = [];   // users
-let range = getWeekRange(new Date()); // default week
-
+/** Helpers */
 function setRange(r) {
   range = r;
-  dateFrom.value = toDateInputValue(range.from);
-  dateTo.value = toDateInputValue(range.to);
-  periodLabel.textContent = `${fmtDate(range.from)} → ${fmtDate(range.to)}`;
+  periodLabel.textContent = `${fmtDate(r.from)} — ${fmtDate(r.to)}`;
+  dateFrom.value = toDateInputValue(r.from);
+  dateTo.value = toDateInputValue(r.to);
 }
 
-/** Utils */
 function parseDateInputs() {
-  const f = dateFrom.value ? new Date(dateFrom.value + "T00:00:00") : null;
-  const t = dateTo.value ? new Date(dateTo.value + "T23:59:59") : null;
+  const f = dateFrom.value;
+  const t = dateTo.value;
   if (!f || !t) return null;
-  return { from: f, to: t };
+  const from = new Date(f + "T00:00:00");
+  const to = new Date(t + "T23:59:59");
+  return { from, to };
 }
 
-function txDate(tx) {
-  const d = tx.date || tx.createdAt || tx.updatedAt;
-  if (!d) return null;
-  if (typeof d?.toDate === "function") return d.toDate();
-  const dd = new Date(d);
-  return isNaN(dd.getTime()) ? null : dd;
+function norm(s) { return String(s || "").toLowerCase().trim(); }
+
+function txDate(row) {
+  if (!row.createdAt) return null;
+  return row.createdAt.toDate ? row.createdAt.toDate() : new Date(row.createdAt);
 }
 
 function moneyBase(tx) {
-  const profit =
-    Number.isFinite(tx.profit) ? tx.profit :
-    (Number.isFinite(tx.sellPrice) && Number.isFinite(tx.buyPrice) ? (tx.sellPrice - tx.buyPrice) : NaN);
-
-  if (Number.isFinite(profit)) return profit;
-
-  const sell = Number.isFinite(tx.sellPrice) ? tx.sellPrice : Number.isFinite(tx.price) ? tx.price : NaN;
-  return Number.isFinite(sell) ? sell : 0;
+  // If manual profit exists, use it, else sell - buy
+  if (Number.isFinite(tx.profit)) return tx.profit;
+  const s = Number(tx.sellPrice || tx.price || 0);
+  const b = Number(tx.buyPrice || 0);
+  return s - b;
 }
 
-function norm(str) {
-  return String(str ?? "").toLowerCase().trim();
-}
-
-/** Rendering */
+/** Render */
 function renderTransactions(list) {
   if (!list.length) {
     txTbody.innerHTML = `<tr><td colspan="7" class="muted">Aucune vente sur la période.</td></tr>`;
@@ -96,19 +88,16 @@ function renderTransactions(list) {
 
   txTbody.innerHTML = list.map(tx => {
     const d = txDate(tx);
-    const client = tx.clientName || tx.client || "-";
-    const model = tx.model || tx.vehicle || "-";
-    const sell = Number.isFinite(tx.sellPrice) ? tx.sellPrice : (Number.isFinite(tx.price) ? tx.price : 0);
-    const buy = Number.isFinite(tx.buyPrice) ? tx.buyPrice : 0;
-    const profit = (Number.isFinite(tx.profit) ? tx.profit : (sell - buy));
-
+    const sell = tx.sellPrice || tx.price || 0;
+    const buy = tx.buyPrice || 0;
+    const profit = moneyBase(tx);
     const seller = tx.sellerName || tx.importedSeller || tx.vendeur || "-";
 
     return `
       <tr>
         <td>${escapeHtml(d ? fmtDate(d) : "-")}</td>
-        <td>${escapeHtml(client)}</td>
-        <td>${escapeHtml(model)}</td>
+        <td>${escapeHtml(tx.clientName || tx.client || "-")}</td>
+        <td>${escapeHtml(tx.vehicle || tx.model || "-")}</td>
         <td>${escapeHtml(fmtMoney(sell))}</td>
         <td>${escapeHtml(fmtMoney(buy))}</td>
         <td>${escapeHtml(fmtMoney(profit))}</td>
@@ -427,9 +416,13 @@ btnPdf?.addEventListener("click", exportPdf);
 
 /** Init */
 onAuthStateChanged(auth, async (u) => {
-  if (!u) return;
+  if (!u) { window.location.href = "pdm-staff.html"; return; }
+  const isAdmin = await checkIsAdmin(u.uid);
+  if (!isAdmin) {
+    showDenyScreen();
+    return;
+  }
   currentUser = u;
-
   setRange(getWeekRange(new Date()));
   await refreshAll();
 });

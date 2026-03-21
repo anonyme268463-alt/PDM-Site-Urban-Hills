@@ -52,7 +52,8 @@ export function getWeekRange(now = new Date()) {
 
 export function normRole(r) {
   const s = String(r || "").toLowerCase().trim();
-  if (s.includes("admin")) return "admin";
+  const admins = ["admin", "pdg", "patron", "direction"];
+  if (admins.includes(s)) return "admin";
   return "staff";
 }
 
@@ -62,4 +63,44 @@ export function toBool(v, def = false) {
   if (typeof v === "number") return v !== 0;
   const s = String(v).toLowerCase();
   return s === "true" || s === "1" || s === "yes" || s === "oui" || s === "actif";
+}
+
+// Helper for Admin Access Check
+import { db } from "./config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+export async function checkIsAdmin(uid) {
+  try {
+    const ref = doc(db, "users", uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data();
+    const role = normRole(data.role);
+    const rank = normRole(data.rank);
+    return role === "admin" || rank === "admin";
+  } catch (e) {
+    console.error("Error checking admin status:", e);
+    return false;
+  }
+}
+
+export function showDenyScreen(containerSelector = ".main-content") {
+  const main = document.querySelector(containerSelector);
+  if (main) {
+    main.innerHTML = `
+      <header class="top-bar">
+        <div class="page-info">
+          <h1>Accès Refusé</h1>
+        </div>
+      </header>
+      <div class="content-body">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Autorisation insuffisante</div>
+          </div>
+          <p class="muted" style="padding:18px">Vous n'avez pas l'autorisation de consulter cette page. Seuls les administrateurs y ont accès.</p>
+        </div>
+      </div>
+    `;
+  }
 }
