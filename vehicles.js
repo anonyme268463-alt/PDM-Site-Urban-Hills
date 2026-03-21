@@ -3,6 +3,8 @@ import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
+import { runBulkEnrichment } from "./vehicles_migration.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -10,6 +12,7 @@ const rows = $("rows");
 const search = $("search");
 const refreshBtn = $("refreshBtn");
 const addBtn = $("addBtn");
+const enrichBtn = $("enrichBtn");
 const logoutBtn = $("logoutBtn");
 
 const statTotal = $("statTotal");
@@ -64,12 +67,37 @@ vmSellPrice?.addEventListener("input", () => {
   vmPrice.value = Math.floor(sell / 2);
 });
 
+[vmBrand, vmModel].forEach(el => {
+  el?.addEventListener("change", () => {
+    const b = (vmBrand.value || "").trim().toLowerCase();
+    const m = (vmModel.value || "").trim().toLowerCase();
+    if (VEHICLE_MAPPING[b] && VEHICLE_MAPPING[b][m]) {
+      const stats = VEHICLE_MAPPING[b][m];
+      if (!vmCategory.value) vmCategory.value = stats.type || "";
+      if (!vmClasse.value) vmClasse.value = stats.classe || "";
+      if (!vmPlaces.value || vmPlaces.value == 0) vmPlaces.value = stats.places || 0;
+      if (!vmVitesse.value || vmVitesse.value == 0) vmVitesse.value = stats.vitessemax || 0;
+    }
+  });
+});
+
 vehModal?.addEventListener("click", (e)=>{
   if(e.target === vehModal) closeModal();
 });
 
 refreshBtn?.addEventListener("click", loadVehicles);
 search?.addEventListener("input", render);
+
+enrichBtn?.addEventListener("click", async () => {
+  if(!confirm("Mettre à jour automatiquement tous les véhicules sans statistiques ?")) return;
+  enrichBtn.disabled = true;
+  enrichBtn.textContent = "Mise à jour...";
+  const res = await runBulkEnrichment();
+  alert(`Terminé ! ${res.updatedCount} véhicules mis à jour.`);
+  enrichBtn.disabled = false;
+  enrichBtn.textContent = "Auto-enrichir tout";
+  await loadVehicles();
+});
 
 addBtn?.addEventListener("click", () => {
 
