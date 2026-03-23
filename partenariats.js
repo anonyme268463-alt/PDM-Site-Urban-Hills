@@ -1,110 +1,98 @@
-import { db, auth } from "./config.js";
+import { db, auth, checkIsAdmin, logAction } from "./config.js";
 import {
-  collection, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
+  collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc,
+  serverTimestamp, onSnapshot, query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import { logAction } from "./logger.js";
-import { escapeHtml, checkIsAdmin, showDenyScreen } from "./common.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-const $ = (id) => document.getElementById(id);
+const partnersTable = document.getElementById("partnersTable");
+const search = document.getElementById("search");
+const refreshBtn = document.getElementById("refreshBtn");
+const addPartnerBtn = document.getElementById("addPartnerBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 
-const partnersTable = $("partnersTable");
-const membersTable = $("membersTable");
-const search = $("search");
-
-const statPartners = $("statPartners");
-const statMembers = $("statMembers");
-const statActive = $("statActive");
-
-const refreshBtn = $("refreshBtn");
-const addPartnerBtn = $("addPartnerBtn");
-const logoutBtn = $("logoutBtn");
+const statPartners = document.getElementById("statPartners");
+const statMembers = document.getElementById("statMembers");
+const statActive = document.getElementById("statActive");
 
 // Modals
-const partnerModal = $("partnerModal");
-const addPartnerModal = $("addPartnerModal");
-const memberModal = $("memberModal");
+const partnerModal = document.getElementById("partnerModal");
+const addPartnerModal = document.getElementById("addPartnerModal");
+const memberModal = document.getElementById("memberModal");
 
-// Partner Modal (View/Edit)
-const pmTitle = $("pmTitle");
-const pmClose = $("pmClose");
-const pmCancel = $("pmCancel");
-const pmSave = $("pmSave");
-const pmDelete = $("pmDelete");
-const pmName = $("pmName");
-const pmActive = $("pmActive");
-const pmId = $("pmId");
-const addMemberBtn = $("addMemberBtn");
+// Partner Modal UI
+const pmTitle = document.getElementById("pmTitle");
+const pmId = document.getElementById("pmId");
+const pmName = document.getElementById("pmName");
+const pmActive = document.getElementById("pmActive");
+const pmSave = document.getElementById("pmSave");
+const pmDelete = document.getElementById("pmDelete");
+const pmClose = document.getElementById("pmClose");
+const pmCancel = document.getElementById("pmCancel");
 
-// Add Partner Modal
-const apmClose = $("apmClose");
-const apmCancel = $("apmCancel");
-const apmSave = $("apmSave");
-const apmName = $("apmName");
+// Add Partner Modal UI
+const apmName = document.getElementById("apmName");
+const apmSave = document.getElementById("apmSave");
+const apmClose = document.getElementById("apmClose");
+const apmCancel = document.getElementById("apmCancel");
 
-// Member Modal (Add/Edit)
-const mmTitle = $("mmTitle");
-const mmClose = $("mmClose");
-const mmCancel = $("mmCancel");
-const mmSave = $("mmSave");
-const mmFullName = $("mmFullName");
-const mmClientId = $("mmClientId");
-const mmRate = $("mmRate");
-const mmId = $("mmId");
+// Member Modal UI
+const mmTitle = document.getElementById("mmTitle");
+const mmId = document.getElementById("mmId");
+const mmFullName = document.getElementById("mmFullName");
+const mmClientId = document.getElementById("mmClientId");
+const mmRate = document.getElementById("mmRate");
+const mmSave = document.getElementById("mmSave");
+const mmClose = document.getElementById("mmClose");
+const mmCancel = document.getElementById("mmCancel");
+
+const membersTable = document.getElementById("membersTable");
+const addMemberBtn = document.getElementById("addMemberBtn");
 
 let PARTNERS = [];
 let OPEN_PARTNER_ID = null;
 let OPEN_MEMBERS = [];
 
+function esc(t){
+  if(!t) return "";
+  const d = document.createElement("div");
+  d.textContent = String(t);
+  return d.innerHTML;
+}
+
 function fmtDate(ts){
-  try { return ts?.toDate?.().toLocaleDateString("fr-FR") || "-"; } catch { return "-"; }
+  if(!ts) return "-";
+  try {
+    const d = ts.toDate();
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch { return "-"; }
 }
 
-function esc(s){
-  return escapeHtml(s);
+function hideAllModals(){
+  partnerModal.classList.add("hidden");
+  addPartnerModal.classList.add("hidden");
+  memberModal.classList.add("hidden");
 }
 
-const hideAllModals = () => {
-  [partnerModal, addPartnerModal, memberModal].forEach(m => m.classList.add("hidden"));
-};
-
-logoutBtn?.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "pdm-staff.html";
-});
-
-// Modal Event Listeners
 [pmClose, pmCancel, apmClose, apmCancel, mmClose, mmCancel].forEach(btn => {
   btn?.addEventListener("click", hideAllModals);
 });
 
-[partnerModal, addPartnerModal, memberModal].forEach(m => {
-  m?.addEventListener("click", (e) => { if(e.target === m) hideAllModals(); });
-});
-
-// Admin-only Access Check
-
-}
-
-// Data Loading
 async function loadPartners(){
-  if (!partnersTable) return;
   partnersTable.innerHTML = `<tr><td colspan="6" class="muted">Chargement...</td></tr>`;
-
   try {
     const snap = await getDocs(collection(db, "partners"));
-    const base = snap.docs.map(d => ({ id: d.id, ...d.data(), membersCount: 0 }));
-
-    for (const p of base){
-      try {
-        const ms = await getDocs(collection(db, "partners", p.id, "members"));
-        p.membersCount = ms.size;
-      } catch {
-        p.membersCount = 0;
+    const list = [];
+    for (const d of snap.docs){
+      const data = d.id ? { id: d.id, ...d.data() } : null;
+      if (data) {
+        // Get members count
+        const mSnap = await getDocs(collection(db, "partners", d.id, "members"));
+        data.membersCount = mSnap.size;
+        list.push(data);
       }
     }
-
-    PARTNERS = base;
+    PARTNERS = list;
     renderPartners();
   } catch (e) {
     console.error(e);
@@ -113,18 +101,12 @@ async function loadPartners(){
 }
 
 function renderPartners(){
-  const q = (search?.value || "").trim().toLowerCase();
-
-  const list = PARTNERS
-    .filter(p => !q || (p.name || "").toLowerCase().includes(q))
-    .sort((a,b)=>{
-      const da = a.createdAt?.toDate?.()?.getTime?.() || 0;
-      const dbb = b.createdAt?.toDate?.()?.getTime?.() || 0;
-      return dbb - da;
-    });
+  const q = (search.value || "").trim().toLowerCase();
+  const list = PARTNERS.filter(p => (p.name || "").toLowerCase().includes(q))
+    .sort((a,b) => (a.name || "").localeCompare(b.name || ""));
 
   statPartners.textContent = String(list.length);
-  statMembers.textContent = String(list.reduce((s,p)=>s + (p.membersCount||0), 0));
+  statMembers.textContent = String(list.reduce((acc, p) => acc + (p.membersCount||0), 0));
   statActive.textContent = String(list.filter(p=>p.active===true).length);
 
   if(!list.length){
@@ -142,6 +124,7 @@ function renderPartners(){
       <td style="text-align:right;">
         <button class="btn btn-gold" data-open="${p.id}">Voir / Éditer</button>
       </td>
+    </tr>
     `).join("");
 
   partnersTable.querySelectorAll("[data-open]").forEach(btn=>{
@@ -212,6 +195,7 @@ function renderMembers(){
         <button class="btn btn-outline btn-sm" data-edit="${m.id}">Modifier</button>
         <button class="btn btn-danger btn-sm" data-del="${m.id}">Supprimer</button>
       </td>
+    </tr>
     `).join("");
 
   membersTable.querySelectorAll("[data-edit]").forEach(btn=>{
@@ -377,3 +361,17 @@ onAuthStateChanged(auth, async (user) => {
 
 search?.addEventListener("input", renderPartners);
 refreshBtn?.addEventListener("click", loadPartners);
+
+logoutBtn?.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "pdm-staff.html";
+});
+
+function showDenyScreen() {
+    document.body.innerHTML = `
+    <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000; color:#fff; font-family:sans-serif;">
+      <h1 style="color:var(--accent-gold);">Accès Refusé</h1>
+      <p>Vous n'avez pas les permissions pour accéder à cette page.</p>
+      <button onclick="window.location.href='dashboard.html'" class="btn btn-gold" style="margin-top:20px;">Retour au Dashboard</button>
+    </div>`;
+}
