@@ -15,6 +15,7 @@ const search = $("search");
 const refreshBtn = $("refreshBtn");
 const addBtn = $("addBtn");
 const enrichBtn = $("enrichBtn");
+const dedupeBtn = $("dedupeBtn");
 const logoutBtn = $("logoutBtn");
 
 const statTotal = $("statTotal");
@@ -106,6 +107,53 @@ enrichBtn?.addEventListener("click", async () => {
   enrichBtn.textContent = "Fusionner Catalogue";
   await loadVehicles();
 });
+dedupeBtn?.addEventListener("click", async () => {
+  if(!confirm("Voulez-vous supprimer les doublons stricts (même marque et même modèle) ? Seule la version la plus récente sera conservée.")) return;
+  dedupeBtn.disabled = true;
+  dedupeBtn.textContent = "Nettoyage...";
+
+  try {
+    const snap = await getDocs(collection(db, "vehicles"));
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Group by Brand + Model
+    const groups = {};
+    all.forEach(v => {
+      const key = `${(v.brand||"").trim().toLowerCase()}|${(v.model||"").trim().toLowerCase()}`;
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(v);
+    });
+
+    let deletedCount = 0;
+    for(const key in groups) {
+      const list = groups[key];
+      if(list.length > 1) {
+        // Sort by updatedAt or createdAt desc
+        list.sort((a,b) => {
+          const ta = (a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0);
+          const tb = (b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0);
+          return tb - ta;
+        });
+
+        // Keep the first (newest), delete others
+        const toDelete = list.slice(1);
+        for(const target of toDelete) {
+          await deleteDoc(doc(db, "vehicles", target.id));
+          deletedCount++;
+        }
+      }
+    }
+    alert(`Nettoyage terminé ! ${deletedCount} doublons supprimés.`);
+    await loadVehicles();
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors du nettoyage: " + err.message);
+  } finally {
+    dedupeBtn.disabled = false;
+    dedupeBtn.textContent = "Supprimer les doublons";
+  }
+});
+
 
 addBtn?.addEventListener("click", () => {
   OPEN_ID = null;

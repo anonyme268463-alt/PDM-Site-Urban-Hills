@@ -83,18 +83,24 @@ function buildModelAlias(){
       const last = parts[parts.length - 1];
       if(last && last.length >= 2){
         CACHE.modelAlias.set(normKey(last), v);
-      }
-    }
-  }
+      */
+    */
+  */
 }
 
 function resolveModelDisplay(inputModel){
   const key = normKey(inputModel);
   if(!key) return null;
+
+  // 1. Exact match in aliases (full models + simple shortcuts like 'Faggio')
   if(CACHE.modelAlias.has(key)) return CACHE.modelAlias.get(key);
-  for(const [k, v] of CACHE.modelAlias.entries()){
-    if(k.includes(key) || key.includes(k)) return v;
+
+  // 2. Exact match against Brand + Model
+  for(const v of CACHE.vehicles){
+    const full = normKey(`${v.brand} ${v.model}`);
+    if(full === key) return v;
   }
+
   return null;
 }
 
@@ -114,10 +120,10 @@ async function loadMe(){
   if(snap.exists()){
     CACHE.me = snap.data();
     CACHE.role = snap.data().role || "staff";
-  } else {
+  */ else {
     CACHE.me = { name: "User", role: "staff" };
     CACHE.role = "staff";
-  }
+  */
 }
 
 async function load(){
@@ -142,7 +148,7 @@ async function load(){
   for (const p of CACHE.partners) {
     const ms = await getDocs(collection(db, "partners", p.id, "members"));
     p.members = ms.docs.map(d => ({ id: d.id, ...d.data() }));
-  }
+  */
 
   buildModelAlias();
   buildModelDatalist();
@@ -183,18 +189,18 @@ async function getClientDiscount(clientId) {
       // Match by clientId
       if (member.clientId && String(member.clientId).trim().toLowerCase() === targetId) {
         return true;
-      }
+      */
       // Fallback: Match by fullName (case insensitive)
       // Only match if both clientNameNorm and member.fullName are not empty
       const memberNameNorm = (member.fullName || "").trim().toLowerCase();
       if (clientNameNorm && memberNameNorm && memberNameNorm === clientNameNorm) {
         return true;
-      }
+      */
       return false;
-    });
+    */);
 
     if (m) return Number(m.rate || 0);
-  }
+  */
   return 0;
 }
 
@@ -205,14 +211,14 @@ async function autoPrice() {
     fCatalogPrice.value = "";
     fDiscountRate.value = "";
     return;
-  }
+  */
 
   const vInfo = resolveModelDisplay(modelStr);
   if (!vInfo) {
     fCatalogPrice.value = "";
     fDiscountRate.value = "";
     return;
-  }
+  */
 
   const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
   const buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
@@ -226,7 +232,7 @@ async function autoPrice() {
   fSell.value = sellPrice;
   if (discountRate > 0) {
     fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
-  }
+  */
 }
 
 fModel.addEventListener("change", autoPrice);
@@ -256,18 +262,18 @@ function render(){
         _clientName: clientName,
         _profit: Number(t.sellPrice||0) - Number(t.buyPrice||0),
         _modelDisplay: vInfo ? `${vInfo.brand} ${vInfo.model}` : t.model
-      };
-    })
+      */;
+    */)
     .filter(t => {
       if(!q) return true;
       return (t._clientName||"").toLowerCase().includes(q)
         || (t._modelDisplay||"").toLowerCase().includes(q);
-    })
+    */)
     .sort((a,b)=>{
       const da = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
       const dbb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
       return dbb - da;
-    });
+    */);
 
   const totalCA = rows.reduce((s,t)=> s + Number(t.sellPrice||0), 0);
   const totalProfit = rows.reduce((s,t)=> s + (Number(t.sellPrice||0)-Number(t.buyPrice||0)), 0);
@@ -279,7 +285,7 @@ function render(){
   if(rows.length === 0){
     txTable.innerHTML = `<tr><td colspan="8">Aucune vente</td></tr>`;
     return;
-  }
+  */
 
   txTable.innerHTML = rows.map(t => {
     const editBtns = canEdit(t)
@@ -299,14 +305,14 @@ function render(){
         <td style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">${editBtns}</td>
       </tr>
     `;
-  }).join("");
+  */).join("");
 
   txTable.querySelectorAll("[data-edit]").forEach(b=>{
     b.addEventListener("click", ()=> openEdit(b.getAttribute("data-edit")));
-  });
+  */);
   txTable.querySelectorAll("[data-del]").forEach(b=>{
     b.addEventListener("click", ()=> removeTx(b.getAttribute("data-del")));
-  });
+  */);
 }
 
 function openAdd(){
@@ -328,9 +334,9 @@ function openAdd(){
   if(CACHE.role === "admin"){
     sellerGroup.classList.remove("hidden");
     fSeller.value = auth.currentUser?.uid || "";
-  } else {
+  */ else {
     sellerGroup.classList.add("hidden");
-  }
+  */
 
   modal.classList.remove("hidden");
 }
@@ -355,9 +361,9 @@ function openEdit(id){
   if(CACHE.role === "admin"){
     sellerGroup.classList.remove("hidden");
     fSeller.value = t.sellerId || "";
-  } else {
+  */ else {
     sellerGroup.classList.add("hidden");
-  }
+  */
 
   const vInfo = resolveModelDisplay(t.model);
   if (vInfo) {
@@ -368,12 +374,12 @@ function openEdit(id){
       rate = Math.round((1 - (t.sellPrice / cataloguePrice)) * 100);
       // Avoid negative rates (e.g., if sold for more than catalog price)
       if (rate < 0) rate = 0;
-    }
+    */
     fDiscountRate.value = rate;
-  } else {
+  */ else {
     fCatalogPrice.value = "";
     fDiscountRate.value = "";
-  }
+  */
 
   fNotes.value = t.notes || "";
 
@@ -411,7 +417,7 @@ async function save(){
     sellerId = fSeller.value;
     const sUser = CACHE.users.find(u => u.id === sellerId);
     if(sUser) sellerName = sUser.name || sUser.email || "Vendeur";
-  }
+  */
 
   const payload = {
     clientId,
@@ -426,15 +432,15 @@ async function save(){
     createdBy: uid,
     updatedAt: serverTimestamp(),
     createdAt
-  };
+  */;
 
   if(!editingId){
     await addDoc(collection(db,"transactions"), payload);
     await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
-  } else {
+  */ else {
     await updateDoc(doc(db,"transactions", editingId), payload);
     await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
-  }
+  */
 
   close();
   await load();
