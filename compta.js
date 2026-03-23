@@ -159,22 +159,50 @@ function gradeRate(grade) {
 }
 
 function renderSalaries() {
-  if (!usersRows.length) {
-    salaryTbody.innerHTML = `<tr><td colspan="5" class="muted">Aucun utilisateur.</td></tr>`;
-    return;
-  }
-
   const totalBaseAll = txRows.reduce((s, tx) => s + moneyBase(tx), 0);
 
-  const rows = usersRows.map(u => {
-    const name = u.name || u.email || u.__id;
+  // 1. Identify all sellers present in the transactions
+  const sellersMap = new Map(); // id -> { name, count, base, grade, rate, id }
+
+  // Initialize with known users
+  usersRows.forEach(u => {
+    const id = u.__id;
+    const name = u.name || u.email || id;
     const grade = u.grade || u.role || u.rank || "Vendeur";
-    const rate = gradeRate(grade);
+    sellersMap.set(id, { id, name, grade, count: 0, base: 0 });
+  });
+
+  // Add any sellers found in transactions but not in users list
+  txRows.forEach(tx => {
+    const sid = tx.sellerId;
+    const sname = tx.sellerName || tx.importedSeller || tx.vendeur || "Vendeur Inconnu";
+
+    if (sid && !sellersMap.has(sid)) {
+        sellersMap.set(sid, { id: sid, name: sname, grade: "Vendeur", count: 0, base: 0 });
+    } else if (!sid) {
+        // Handle transactions without an explicit ID (imported or legacy)
+        const key = norm(sname);
+        let found = false;
+        for (const entry of sellersMap.values()) {
+            if (norm(entry.name) === key) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            sellersMap.set("legacy_" + sname, { id: null, name: sname, grade: "Vendeur", count: 0, base: 0 });
+        }
+    }
+  });
+
+  // 2. Aggregate stats for each seller
+  const rows = Array.from(sellersMap.values()).map(s => {
+    const rate = gradeRate(s.grade);
+    const lowerGrade = String(s.grade).toLowerCase();
 
     let count = 0;
     let base = 0;
 
-    const lowerGrade = String(grade).toLowerCase();
     // PDG/Admin gets a percentage of TOTAL sales
     if ((lowerGrade.includes("pdg") || lowerGrade.includes("patron") || lowerGrade.includes("admin")) && !lowerGrade.includes("co")) {
       count = txRows.length;
@@ -184,24 +212,29 @@ function renderSalaries() {
       const userTxs = txRows.filter(tx => {
         const sid = tx.sellerId;
         const sname = tx.sellerName || tx.importedSeller || tx.vendeur || "";
-        return (sid && sid === u.__id) ||
-               (norm(sname) === norm(u.name)) ||
-               (norm(sname) === norm(u.email));
+        return (sid && sid === s.id) ||
+               (norm(sname) === norm(s.name));
       });
       count = userTxs.length;
       base = userTxs.reduce((s, tx) => s + moneyBase(tx), 0);
     }
 
     const salary = base * rate;
-
-    return {
-      name, grade, count, rate, salary
-    };
+    return { ...s, count, salary, rate };
   });
 
-  rows.sort((a, b) => (b.salary - a.salary));
+  // 3. Filter out those with 0 sales and not in users list (unless they are PDG/Admin who get global % regardless)
+  const finalRows = rows.filter(r => {
+      if (r.salary > 0 || r.count > 0) return true;
+      // Keep admins/PDG even if 0 sales? Usually yes for visibility.
+      const lg = String(r.grade).toLowerCase();
+      if (lg.includes("pdg") || lg.includes("admin") || lg.includes("patron")) return true;
+      return false;
+  });
 
-  salaryTbody.innerHTML = rows.map(r => `
+  finalRows.sort((a, b) => (b.salary - a.salary));
+
+  salaryTbody.innerHTML = finalRows.map(r => `
     <tr>
       <td>${escapeHtml(r.name)}</td>
       <td>${escapeHtml(r.grade)}</td>
