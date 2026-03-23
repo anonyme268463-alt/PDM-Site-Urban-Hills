@@ -25,8 +25,6 @@ service cloud.firestore {
       allow write: if hasAdminRole() || (isSignedIn() && request.auth.uid == userId);
     }
 
-
-
     // Vehicles: Publicly readable (for catalogue), staff-write, admin-delete.
     match /vehicles/{docId} {
       allow read: if true;
@@ -34,7 +32,7 @@ service cloud.firestore {
       allow delete: if hasAdminRole();
     }
 
-    // Transactions, Clients, Vehicles, Stock: Readable/Writable by staff (signed in), Deletable by admin.
+    // Transactions, Clients, Stock: Readable/Writable by staff (signed in), Deletable by admin.
     match /transactions/{docId} {
       allow read, create: if isSignedIn();
       allow update: if hasAdminRole() ||
@@ -53,7 +51,22 @@ service cloud.firestore {
       allow delete: if hasAdminRole();
     }
 
-    // Logs: readable by admin, create by anyone signed in
+    match /partners/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+
+    match /partners/{partnerId}/members/{docId} {
+       allow read: if isSignedIn();
+       allow write: if hasAdminRole();
+    }
+
+    // Cashbook: Only Admins can read/write.
+    match /cashbook/{docId} {
+      allow read, write: if hasAdminRole();
+    }
+
+    // Logs: ONLY readable by admin, create by anyone signed in
     match /logs/{docId} {
       allow read: if hasAdminRole();
       allow create: if isSignedIn();

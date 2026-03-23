@@ -108,7 +108,7 @@ enrichBtn?.addEventListener("click", async () => {
   await loadVehicles();
 });
 dedupeBtn?.addEventListener("click", async () => {
-  if(!confirm("Voulez-vous supprimer les doublons stricts (même marque et même modèle) ? Seule la version la plus récente sera conservée.")) return;
+  if(!confirm("Voulez-vous supprimer les doublons (même marque et même modèle) ? Seule la version la plus récente sera conservée.")) return;
   dedupeBtn.disabled = true;
   dedupeBtn.textContent = "Nettoyage...";
 
@@ -116,13 +116,48 @@ dedupeBtn?.addEventListener("click", async () => {
     const snap = await getDocs(collection(db, "vehicles"));
     const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Group by Brand + Model
+    // Group by Brand + Model (normalized)
     const groups = {};
     all.forEach(v => {
-      const key = `${(v.brand||"").trim().toLowerCase()}|${(v.model||"").trim().toLowerCase()}`;
+      const b = (v.brand || "").trim().toLowerCase();
+      const m = (v.model || "").trim().toLowerCase();
+      if (!b && !m) return; // skip empty entries
+      const key = `${b}|${m}`;
       if(!groups[key]) groups[key] = [];
       groups[key].push(v);
     });
+
+    let deletedCount = 0;
+    let details = "";
+    for(const key in groups) {
+      const list = groups[key];
+      if(list.length > 1) {
+        // Sort by updatedAt or createdAt desc
+        list.sort((a,b) => {
+          const ta = (a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0);
+          const tb = (b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0);
+          return tb - ta;
+        });
+
+        // Keep the first (newest), delete others
+        const toDelete = list.slice(1);
+        for(const target of toDelete) {
+          await deleteDoc(doc(db, "vehicles", target.id));
+          deletedCount++;
+        }
+        details += `\n- ${key} (${list.length} -> 1)`;
+      }
+    }
+    alert(`Nettoyage terminé ! ${deletedCount} doublons supprimés.${details ? '\n\nDétails :' + details : ''}`);
+    await loadVehicles();
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors du nettoyage: " + err.message);
+  } finally {
+    dedupeBtn.disabled = false;
+    dedupeBtn.textContent = "Supprimer les doublons";
+  }
+});
 
     let deletedCount = 0;
     for(const key in groups) {
