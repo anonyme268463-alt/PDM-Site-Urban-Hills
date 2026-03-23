@@ -52,7 +52,6 @@ let CACHE = {
   clients: [],
   tx: [],
   vehicles: [],
-  vehiclesCatalogue: [],
   partners: [],
   users: [],
   modelAlias: new Map(), // "R/A" -> Vehicle Object
@@ -71,7 +70,7 @@ function normKey(s){
 
 function buildModelAlias(){
   CACHE.modelAlias = new Map();
-  const list = CACHE.vehiclesCatalogue?.length ? CACHE.vehiclesCatalogue : CACHE.vehicles;
+  const list = CACHE.vehicles;
 
   for(const v of list){
     const full = (v.model || "").trim();
@@ -101,7 +100,7 @@ function resolveModelDisplay(inputModel){
 
 function buildModelDatalist(){
   if(!modelsList) return;
-  const list = CACHE.vehiclesCatalogue?.length ? CACHE.vehiclesCatalogue : CACHE.vehicles;
+  const list = CACHE.vehicles;
   const uniq = Array.from(new Set(
     list.map(v => (v.model || "").trim()).filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b, "fr"));
@@ -126,11 +125,10 @@ async function load(){
 
   await loadMe();
 
-  const [clientsSnap, txSnap, vehiclesSnap, catalogueSnap, partnersSnap, usersSnap] = await Promise.all([
+  const [clientsSnap, txSnap, vehiclesSnap, partnersSnap, usersSnap] = await Promise.all([
     getDocs(collection(db,"clients")),
     getDocs(collection(db,"transactions")),
     getDocs(collection(db,"vehicles")),
-    getDocs(collection(db,"vehiclescatalogue")),
     getDocs(collection(db,"partners")),
     getDocs(collection(db,"users"))
   ]);
@@ -138,7 +136,6 @@ async function load(){
   CACHE.clients = clientsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.tx = txSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  CACHE.vehiclesCatalogue = catalogueSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
   CACHE.users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
 

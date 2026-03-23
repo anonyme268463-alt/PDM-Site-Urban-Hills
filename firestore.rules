@@ -25,11 +25,7 @@ service cloud.firestore {
       allow write: if hasAdminRole() || (isSignedIn() && request.auth.uid == userId);
     }
 
-    // Catalogue: Publicly readable, admin-only write.
-    match /vehiclescatalogue/{docId} {
-      allow read: if true;
-      allow write: if hasAdminRole();
-    }
+
 
     // Vehicles: Publicly readable (for catalogue), staff-write, admin-delete.
     match /vehicles/{docId} {
