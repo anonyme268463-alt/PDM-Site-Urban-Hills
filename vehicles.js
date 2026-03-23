@@ -5,6 +5,7 @@ import {
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { runBulkEnrichment } from "./vehicles_migration.js";
+import { mergeCatalogueToVehicles } from "./merge_collections.js";
 import { checkIsAdmin, showDenyScreen } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
@@ -91,13 +92,18 @@ refreshBtn?.addEventListener("click", loadVehicles);
 search?.addEventListener("input", render);
 
 enrichBtn?.addEventListener("click", async () => {
-  if(!confirm("Mettre à jour automatiquement tous les véhicules sans statistiques ?")) return;
+  if(!confirm("Voulez-vous fusionner la collection catalogue vers la collection véhicules ?")) return;
   enrichBtn.disabled = true;
-  enrichBtn.textContent = "Mise à jour...";
-  const res = await runBulkEnrichment();
-  alert(`Terminé ! ${res.updatedCount} véhicules mis à jour.`);
+  enrichBtn.textContent = "Fusion en cours...";
+  try {
+    const res = await mergeCatalogueToVehicles();
+    alert(`Fusion terminée ! ${res.createdCount} créés, ${res.updatedCount} mis à jour.`);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de la fusion: " + err.message);
+  }
   enrichBtn.disabled = false;
-  enrichBtn.textContent = "Auto-enrichir tout";
+  enrichBtn.textContent = "Fusionner Catalogue";
   await loadVehicles();
 });
 

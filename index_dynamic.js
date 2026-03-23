@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         applyFilters();
 
     } catch (e) {
-        console.error("Error loading vehicles from 'vehiclescatalogue':", e);
+        console.error("Error loading vehicles from 'vehicles':", e);
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--accent-red);">
                 Erreur lors du chargement des véhicules.<br>
