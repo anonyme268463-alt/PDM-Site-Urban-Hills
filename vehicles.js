@@ -180,7 +180,7 @@ dedupeBtn?.addEventListener("click", async () => {
     }
     alert(`Nettoyage terminé ! ${deletedCount} doublons supprimés.`);
     await loadVehicles();
-  } catch (err)
+    catch (err) {
     console.error(err);
     alert("Erreur lors du nettoyage: " + err.message);
   } finally {
