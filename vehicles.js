@@ -159,55 +159,6 @@ dedupeBtn?.addEventListener("click", async () => {
   }
 });
 
-    let deletedCount = 0;
-    for(const key in groups) {
-      const list = groups[key];
-      if(list.length > 1) {
-        // Sort by updatedAt or createdAt desc
-        list.sort((a,b) => {
-          const ta = (a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0);
-          const tb = (b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0);
-          return tb - ta;
-        });
-
-        // Keep the first (newest), delete others
-        const toDelete = list.slice(1);
-        for(const target of toDelete) {
-          await deleteDoc(doc(db, "vehicles", target.id));
-          deletedCount++;
-        }
-      }
-    }
-    alert(`Nettoyage terminé ! ${deletedCount} doublons supprimés.`);
-    await loadVehicles();
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors du nettoyage: " + err.message);
-  } finally {
-    dedupeBtn.disabled = false;
-    dedupeBtn.textContent = "Supprimer les doublons";
-  }
-});
-
-
-addBtn?.addEventListener("click", () => {
-  OPEN_ID = null;
-  vmTitle.textContent = "Ajouter un véhicule";
-  vmId.textContent = "-";
-  vmBrand.value = "";
-  vmModel.value = "";
-  vmCategory.value = "";
-  vmClasse.value = "";
-  vmPlaces.value = 0;
-  vmVitesse.value = 0;
-  vmUrl.value = "";
-  vmFile.value = "";
-  vmPrice.value = 0;
-  vmSellPrice.value = 0;
-  vmDelete.style.display = "none";
-  openModal();
-});
-
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

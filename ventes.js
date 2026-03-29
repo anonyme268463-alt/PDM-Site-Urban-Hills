@@ -76,13 +76,18 @@ function buildModelAlias(){
     const full = (v.model || "").trim();
     if(!full) continue;
 
-    CACHE.modelAlias.set(normKey(full), v);
+    const kFull = normKey(full);
+    // Always keep the full name as priority
+    if (!CACHE.modelAlias.has(kFull)) {
+        CACHE.modelAlias.set(kFull, v);
+    }
 
     const parts = full.split(" ");
     if(parts.length >= 2){
       const last = parts[parts.length - 1];
-      if(last && last.length >= 2){
-        CACHE.modelAlias.set(normKey(last), v);
+      const kLast = normKey(last);
+      if(last && last.length >= 2 && !CACHE.modelAlias.has(kLast)){
+        CACHE.modelAlias.set(kLast, v);
       }
     }
   }
