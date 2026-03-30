@@ -73,17 +73,20 @@ function buildModelAlias(){
   const list = CACHE.vehicles;
 
   for(const v of list){
-    const full = (v.model || "").trim();
-    if(!full) continue;
+    const brand = (v.brand || "").trim();
+    const model = (v.model || "").trim();
+    if(!model) continue;
 
-    CACHE.modelAlias.set(normKey(full), v);
+    // 1. Map exact model name (e.g., "Sanchez")
+    const kModel = normKey(model);
+    if(!CACHE.modelAlias.has(kModel)){
+      CACHE.modelAlias.set(kModel, v);
+    }
 
-    const parts = full.split(" ");
-    if(parts.length >= 2){
-      const last = parts[parts.length - 1];
-      if(last && last.length >= 2){
-        CACHE.modelAlias.set(normKey(last), v);
-      }
+    // 2. Map full name (e.g., "Maibatsu Sanchez")
+    const kFull = normKey(`${brand} ${model}`);
+    if(!CACHE.modelAlias.has(kFull)){
+      CACHE.modelAlias.set(kFull, v);
     }
   }
 }
@@ -92,14 +95,8 @@ function resolveModelDisplay(inputModel){
   const key = normKey(inputModel);
   if(!key) return null;
 
-  // 1. Exact match in aliases (full models + simple shortcuts like 'Faggio')
+  // Check exact matches in aliases first
   if(CACHE.modelAlias.has(key)) return CACHE.modelAlias.get(key);
-
-  // 2. Exact match against Brand + Model
-  for(const v of CACHE.vehicles){
-    const full = normKey(`${v.brand} ${v.model}`);
-    if(full === key) return v;
-  }
 
   return null;
 }
