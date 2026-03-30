@@ -1,28 +1,11 @@
 import { auth, db } from "./config.js";
 import { requireRole } from "./guard.js";
-import { $, escapeHtml, normRole, toBool } from "./common.js";
-
+import { $, esc, normRole, toBool, showDenyScreen, renderUserBadge } from "./common.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  onAuthStateChanged,
-  signOut,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  collection, doc, getDoc, getDocs, query, orderBy, limit, setDoc, updateDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* ---------------------------
-   DOM
---------------------------- */
 const searchInput = $("#searchInput");
 const refreshBtn = $("#refreshBtn");
 const openCreateBtn = $("#openCreateBtn");
@@ -34,7 +17,6 @@ const statStaff = $("#statStaff");
 
 const usersTbody = $("#usersTbody");
 
-// modal
 const backdrop = $("#userModalBackdrop");
 const modalTitle = $("#modalTitle");
 const closeModalBtn = $("#closeModalBtn");
@@ -47,30 +29,19 @@ const f_name = $("#f_name");
 const f_role = $("#f_role");
 const f_active = $("#f_active");
 
-/* ---------------------------
-   State
---------------------------- */
-let allUsers = []; // cached list
+let allUsers = [];
 let editingUid = null;
 
-/* ---------------------------
-   Helpers
---------------------------- */
-function showModal() {
-  backdrop.classList.add("show");
-}
-function hideModal() {
-  backdrop.classList.remove("show");
-}
+function showModal() { backdrop.classList.remove("hidden"); }
+function hideModal() { backdrop.classList.add("hidden"); }
 function setLoadingRow(msg = "CHARGEMENT...") {
-  usersTbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">${escapeHtml(msg)}</td></tr>`;
+  usersTbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">${esc(msg)}</td></tr>`;
 }
 
 function computeStats(list) {
   const total = list.length;
   const admins = list.filter(u => normRole(u.role) === "admin").length;
   const staff = total - admins;
-
   statTotal.textContent = String(total);
   statAdmins.textContent = String(admins);
   statStaff.textContent = String(staff);
@@ -78,28 +49,21 @@ function computeStats(list) {
 
 function render(list) {
   computeStats(list);
-
   if (!list.length) {
     usersTbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;">AUCUN UTILISATEUR.</td></tr>`;
     return;
   }
-
   usersTbody.innerHTML = list.map(u => {
     const active = toBool(u.active, true);
-    const badge = active
-      ? `<span class="badge green">● ACTIF</span>`
-      : `<span class="badge red">● INACTIF</span>`;
-
+    const badge = active ? `<span class="badge green">● ACTIF</span>` : `<span class="badge red">● INACTIF</span>`;
     const role = normRole(u.role).toUpperCase();
     return `
-      <tr data-uid="${escapeHtml(u.uid)}">
-        <td>${escapeHtml(u.email || "—")}</td>
-        <td>${escapeHtml(u.name || "—")}</td>
-        <td>${escapeHtml(role)}</td>
+      <tr data-uid="${esc(u.uid)}">
+        <td>${esc(u.email || "—")}</td>
+        <td>${esc(u.name || "—")}</td>
+        <td>${esc(role)}</td>
         <td>${badge}</td>
-        <td style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; opacity:.9;">
-          ${escapeHtml(u.uid)}
-        </td>
+        <td style="font-family: monospace; font-size:12px; opacity:.9;">${esc(u.uid)}</td>
         <td>
           <div class="row-actions">
             <button class="btn btn-muted js-toggle">${active ? "Désactiver" : "Activer"}</button>
@@ -110,7 +74,6 @@ function render(list) {
     `;
   }).join("");
 
-  // bind buttons
   usersTbody.querySelectorAll("tr").forEach(tr => {
     const uid = tr.getAttribute("data-uid");
     tr.querySelector(".js-edit")?.addEventListener("click", () => openEdit(uid));
@@ -121,171 +84,86 @@ function render(list) {
 function applyFilter() {
   const q = (searchInput.value || "").trim().toLowerCase();
   if (!q) return render(allUsers);
-
   const filtered = allUsers.filter(u => {
-    return (
-      String(u.uid || "").toLowerCase().includes(q) ||
-      String(u.email || "").toLowerCase().includes(q) ||
-      String(u.name || "").toLowerCase().includes(q) ||
-      String(u.role || "").toLowerCase().includes(q)
-    );
+    return (u.uid || "").toLowerCase().includes(q) ||
+           (u.email || "").toLowerCase().includes(q) ||
+           (u.name || "").toLowerCase().includes(q) ||
+           (u.role || "").toLowerCase().includes(q);
   });
   render(filtered);
 }
 
-/* ---------------------------
-   Firestore
---------------------------- */
 async function fetchUsers() {
   setLoadingRow("CHARGEMENT...");
   try {
-    // (Optionnel) garde si tu utilises guard.js
     await requireRole("admin");
-
     const q = query(collection(db, "users"), orderBy("updatedAt", "desc"), limit(500));
     const snap = await getDocs(q);
-
     allUsers = snap.docs.map(d => {
       const data = d.data() || {};
-      return {
-        uid: d.id,
-        email: data.email || "",
-        name: data.name || "",
-        role: data.role || "staff",
-        active: toBool(data.active, true),
-        updatedAt: data.updatedAt || null,
-      };
+      return { uid: d.id, email: data.email || "", name: data.name || "", role: data.role || "staff", active: toBool(data.active, true), updatedAt: data.updatedAt || null };
     });
-
     applyFilter();
   } catch (e) {
     console.error(e);
-    setLoadingRow("Erreur de chargement (vérifie tes règles Firestore).");
-    // on garde l'UI stable
-    statTotal.textContent = "0";
-    statAdmins.textContent = "0";
-    statStaff.textContent = "0";
+    setLoadingRow("Erreur de chargement.");
   }
 }
 
 async function openEdit(uid) {
   const u = allUsers.find(x => x.uid === uid);
   if (!u) return;
-
   editingUid = uid;
   modalTitle.textContent = "Modifier un utilisateur";
-
-  f_uid.value = u.uid;
-  f_uid.disabled = true;
-
-  f_email.value = u.email || "";
-  f_name.value = u.name || "";
-  f_role.value = normRole(u.role);
-  f_active.checked = toBool(u.active, true);
-
+  f_uid.value = u.uid; f_uid.disabled = true;
+  f_email.value = u.email || ""; f_name.value = u.name || "";
+  f_role.value = normRole(u.role); f_active.checked = toBool(u.active, true);
   showModal();
 }
 
 function openCreate() {
-  editingUid = null;
-  modalTitle.textContent = "Créer / Ajouter un utilisateur (Firestore)";
-
-  f_uid.value = "";
-  f_uid.disabled = false;
-
-  f_email.value = "";
-  f_name.value = "";
-  f_role.value = "staff";
-  f_active.checked = true;
-
+  editingUid = null; modalTitle.textContent = "Créer un utilisateur";
+  f_uid.value = ""; f_uid.disabled = false;
+  f_email.value = ""; f_name.value = ""; f_role.value = "staff"; f_active.checked = true;
   showModal();
 }
 
 async function saveUser() {
   const uid = (f_uid.value || "").trim();
-  if (!uid) {
-    alert("UID requis.");
-    return;
-  }
-
-  const payload = {
-    email: (f_email.value || "").trim() || "",
-    name: (f_name.value || "").trim() || "",
-    role: normRole(f_role.value),
-    active: !!f_active.checked,
-    updatedAt: serverTimestamp(),
-  };
-
+  if (!uid) return alert("UID requis.");
+  const payload = { email: f_email.value.trim(), name: f_name.value.trim(), role: normRole(f_role.value), active: !!f_active.checked, updatedAt: serverTimestamp() };
   try {
     await requireRole("admin");
     await setDoc(doc(db, "users", uid), payload, { merge: true });
-    hideModal();
-    await fetchUsers();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur enregistrement (vérifie règles Firestore).");
-  }
+    hideModal(); await fetchUsers();
+  } catch (e) { console.error(e); alert("Erreur enregistrement."); }
 }
 
 async function toggleActive(uid) {
   const u = allUsers.find(x => x.uid === uid);
   if (!u) return;
-
   try {
     await requireRole("admin");
-    await updateDoc(doc(db, "users", uid), {
-      active: !toBool(u.active, true),
-      updatedAt: serverTimestamp(),
-    });
+    await updateDoc(doc(db, "users", uid), { active: !toBool(u.active, true), updatedAt: serverTimestamp() });
     await fetchUsers();
-  } catch (e) {
-    console.error(e);
-    alert("Impossible de modifier (vérifie règles Firestore).");
-  }
+  } catch (e) { console.error(e); alert("Erreur modification."); }
 }
 
-/* ---------------------------
-   Auth + boot
---------------------------- */
-logoutBtn?.addEventListener("click", async () => {
-  try { await signOut(auth); } catch {}
-  window.location.href = "index.html";
-});
-
+logoutBtn?.addEventListener("click", async () => { try { await signOut(auth); } catch {} window.location.href = "pdm-staff.html"; });
 refreshBtn?.addEventListener("click", fetchUsers);
 openCreateBtn?.addEventListener("click", openCreate);
-
 searchInput?.addEventListener("input", applyFilter);
-
 closeModalBtn?.addEventListener("click", hideModal);
 cancelBtn?.addEventListener("click", hideModal);
-backdrop?.addEventListener("click", (e) => {
-  if (e.target === backdrop) hideModal();
-});
+backdrop?.addEventListener("click", (e) => { if (e.target === backdrop) hideModal(); });
 saveBtn?.addEventListener("click", saveUser);
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  // Vérif admin via Firestore (simple & fiable)
+  if (!user) { window.location.href = "pdm-staff.html"; return; }
   try {
-    const me = await getDoc(doc(db, "users", user.uid));
-    const role = normRole(me.exists() ? me.data()?.role : "staff");
-    if (role !== "admin") {
-      alert("Accès refusé (admin requis).");
-      window.location.href = "dashboard.html";
-      return;
-    }
-  } catch (e) {
-    console.error(e);
-    // Si la règle Firestore bloque, tu verras ici
-    alert("Impossible de vérifier le rôle (règles Firestore ?).");
-    window.location.href = "dashboard.html";
-    return;
-  }
-
-  await fetchUsers();
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists() || normRole(snap.data()?.role) !== "admin") { showDenyScreen(); return; }
+    renderUserBadge(snap.data());
+    await fetchUsers();
+  } catch (e) { console.error(e); showDenyScreen(); }
 });

@@ -1,0 +1,16 @@
+{
+  "name": "pdm-site-urban-hills",
+  "version": "1.0.0",
+  "description": "Premium Deluxe Motorsport - Urban Hills Site",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "playwright": "^1.58.2"
+  }
+}

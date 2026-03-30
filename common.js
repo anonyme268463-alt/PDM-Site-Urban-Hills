@@ -1,7 +1,7 @@
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-export function escapeHtml(str) {
+export function esc(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -9,6 +9,8 @@ export function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+export const escapeHtml = esc;
 
 export function fmtMoney(n, currency = "$") {
   const x = Number(n || 0);
@@ -34,10 +36,9 @@ export function toDateInputValue(d) {
   return `${y}-${m}-${day}`;
 }
 
-// Lundi 00:00 → Dimanche 23:59:59 (local)
 export function getWeekRange(now = new Date()) {
   const d = new Date(now);
-  const day = d.getDay(); // 0 dimanche, 1 lundi...
+  const day = d.getDay();
   const diffToMonday = (day === 0 ? -6 : 1 - day);
   const monday = new Date(d);
   monday.setDate(d.getDate() + diffToMonday);
@@ -48,4 +49,77 @@ export function getWeekRange(now = new Date()) {
   sunday.setHours(23, 59, 59, 999);
 
   return { from: monday, to: sunday };
+}
+
+export function normRole(r) {
+  const s = String(r || "").toLowerCase().trim();
+  const admins = ["admin", "pdg", "patron", "direction"];
+  if (admins.includes(s)) return "admin";
+  return "staff";
+}
+
+export function toBool(v, def = false) {
+  if (v === undefined || v === null) return def;
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v !== 0;
+  const s = String(v).toLowerCase();
+  return s === "true" || s === "1" || s === "yes" || s === "oui" || s === "actif";
+}
+
+import { db } from "./config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+export async function checkIsAdmin(uid) {
+  try {
+    const ref = doc(db, "users", uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data();
+    const role = normRole(data.role || data.rank);
+    return role === "admin";
+  } catch (e) {
+    console.error("Error checking admin status:", e);
+    return false;
+  }
+}
+
+export function showDenyScreen(containerSelector = ".main-content") {
+  const main = document.querySelector(containerSelector);
+  if (main) {
+    main.innerHTML = `
+      <header class="top-bar">
+        <div class="page-info">
+          <h1>Accès Refusé</h1>
+        </div>
+      </header>
+      <div class="content-body">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Autorisation insuffisante</div>
+          </div>
+          <p class="muted" style="padding:18px">Vous n'avez pas l'autorisation de consulter cette page. Seuls les administrateurs y ont accès.</p>
+        </div>
+      </div>
+    `;
+  }
+}
+
+export function renderUserBadge(userData) {
+  const topBar = document.querySelector(".top-bar");
+  if (!topBar) return;
+
+  const role = userData.role || userData.rank || "Staff";
+  const name = userData.name || "Utilisateur";
+
+  const badge = document.createElement("div");
+  badge.className = "user-badge";
+  badge.innerHTML = `
+    <div class="user-info-badge">
+      <span class="role-badge">${esc(role)}</span>
+      <span class="separator-badge">-</span>
+      <span class="name-badge">${esc(name)}</span>
+    </div>
+  `;
+
+  topBar.appendChild(badge);
 }

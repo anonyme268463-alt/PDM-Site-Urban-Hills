@@ -4,146 +4,147 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDM Admin — Gestion</title>
+  <link rel="icon" href="favicon.png">
   <link rel="stylesheet" href="app.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" src="gestion.js"></script>
 </head>
 
 <body>
-  <div class="app">
+  <div class="app-container">
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="brand">
-        <div class="title">PDM ADMIN</div>
-        <div class="subtitle">Urban Hills</div>
+      <div class="sidebar-brand">
+        <div class="brand-title">PDM <span>ADMIN</span></div>
+        <div class="brand-sub">Urban Hills</div>
       </div>
 
-      <nav class="nav">
-        <a href="dashboard.html">Dashboard</a>
-        <a href="clients.html">Clients</a>
-        <a href="stock.html">Stock</a>
-        <a href="ventes.html">Ventes</a>
-        <a href="vehicles.html">Véhicules</a>
-        <a href="partenariats.html">Partenaires</a>
-        <a href="compta.html">Comptabilité</a>
-        <a href="catalogue.html">Catalogue</a>
-        <a class="active" href="gestion.html">Gestion</a>
+      <nav class="sidebar-nav">
+        <a class="nav-link" href="dashboard.html"><span>Dashboard</span></a>
+        <a class="nav-link" href="clients.html"><span>Clients</span></a>
+        <a class="nav-link" href="stock.html"><span>Stock</span></a>
+        <a class="nav-link" href="ventes.html"><span>Ventes</span></a>
+        <a class="nav-link" href="vehicles.html"><span>Véhicules</span></a>
+        <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
+        <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
+        <a class="nav-link active" href="gestion.html"><span>Gestion</span></a>
+      <a class="nav-link" href="logs.html"><span>Logs</span></a>
       </nav>
 
-      <div class="logout">
-        <button id="logoutBtn" class="btn-logout">Déconnexion</button>
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
       </div>
     </aside>
 
     <!-- MAIN -->
-    <main class="main">
-      <div class="page">
-        <h1>Gestion</h1>
-        <p class="sub">Admin-only — utilisateurs &amp; paramètres</p>
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="page-info">
+          <h1>Gestion Staff</h1>
+          <p>Administration des accès et des utilisateurs (Admin-only)</p>
+        </div>
+        <div class="top-bar-actions flex-row">
+          <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
+          <button id="openCreateBtn" class="btn btn-gold">+ Ajouter un utilisateur</button>
+        </div>
+      </header>
 
-        <!-- TOP CARD -->
-        <section class="card pad">
-          <div class="toolbar">
-            <input id="searchInput" class="input" placeholder="Rechercher par email, nom, UID..." />
-            <button id="refreshBtn" class="btn">Rafraîchir</button>
-            <button id="openCreateBtn" class="btn btn-gold">+ Créer un utilisateur</button>
+      <div class="content-body">
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <div class="card-title">Total utilisateurs</div>
+            <div id="statTotal" class="stat-value">0</div>
           </div>
-
-          <div class="stats">
-            <div class="stat">
-              <div class="label">Total users</div>
-              <div id="statTotal" class="value">0</div>
-            </div>
-            <div class="stat">
-              <div class="label">Admins</div>
-              <div id="statAdmins" class="value">0</div>
-            </div>
-            <div class="stat">
-              <div class="label">Staff</div>
-              <div id="statStaff" class="value">0</div>
-            </div>
+          <div class="card stat-card">
+            <div class="card-title">Administrateurs</div>
+            <div id="statAdmins" class="stat-value">0</div>
           </div>
-        </section>
-
-        <!-- TABLE CARD -->
-        <section class="card table-wrap">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
-            <div style="font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px; opacity:.85;">
-              Utilisateurs — collection Firestore : <span style="color:var(--gold);">users</span>
-            </div>
+          <div class="card stat-card">
+            <div class="card-title">Membres Staff</div>
+            <div id="statStaff" class="stat-value">0</div>
           </div>
+        </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Nom</th>
-                <th>Rôle</th>
-                <th>Statut</th>
-                <th>UID</th>
-                <th style="text-align:right;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="usersTbody">
-              <tr><td colspan="6" style="opacity:.7;">CHARGEMENT...</td></tr>
-            </tbody>
-          </table>
+        <div class="card" style="margin-bottom: 24px;">
+          <input id="searchInput" class="input" placeholder="Rechercher par email, nom, UID..." />
+        </div>
 
-          <div style="margin-top:12px;opacity:.75;font-size:12px;">
-            ⚠ Cette page ne crée pas les comptes Auth (Firebase ne permet pas “lister/créer” des users Auth côté client).
-            Tu crées le compte dans Firebase Console → <b>Auth</b>, puis tu mets/édites sa fiche dans <b>users/{uid}</b>.
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Liste des membres (Collection Firestore: users)</div>
           </div>
-        </section>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Nom</th>
+                  <th>Rôle</th>
+                  <th>Statut</th>
+                  <th>UID</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTbody">
+                <tr><td colspan="6" class="muted">CHARGEMENT...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted" style="font-size: 11px; margin-top: 15px;">
+            Note: La création d'un compte nécessite une invitation préalable dans Firebase Auth.
+            Éditez ici les informations Firestore liées à l'UID de l'utilisateur.
+          </p>
+        </div>
       </div>
     </main>
   </div>
 
   <!-- MODAL -->
-  <div id="userModalBackdrop" class="modal-backdrop">
-    <div class="modal">
-      <div class="modal-head">
-        <div id="modalTitle" class="modal-title">Utilisateur</div>
-        <button id="closeModalBtn" class="modal-close">×</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="form-grid">
-          <div class="full">
-            <label for="f_uid">UID</label>
-            <input id="f_uid" class="input" placeholder="uid firebase auth" />
-          </div>
-
-          <div class="full">
-            <label for="f_email">Email (optionnel)</label>
-            <input id="f_email" class="input" placeholder="ex: pdm-staff@pdm.local" />
-          </div>
-
-          <div class="full">
-            <label for="f_name">Nom</label>
-            <input id="f_name" class="input" placeholder="Ex: PDG - Hundo" />
-          </div>
-
-          <div>
-            <label for="f_role">Rôle</label>
-            <select id="f_role">
-              <option value="admin">admin</option>
-              <option value="staff">staff</option>
-            </select>
-          </div>
-
-          <div class="checkbox" style="margin-top:22px;">
-            <input id="f_active" type="checkbox" />
-            <label for="f_active" style="margin:0;">Actif</label>
-          </div>
+  <div id="userModalBackdrop" class="modal-overlay hidden">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="flex-row" style="justify-content: space-between; width: 100%;">
+          <h2 id="modalTitle">Utilisateur</h2>
+          <button id="closeModalBtn" class="btn btn-outline btn-sm">✕</button>
         </div>
       </div>
 
-      <div class="modal-foot">
-        <button id="cancelBtn" class="btn btn-muted">Annuler</button>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>UID (Firebase Auth)</label>
+          <input id="f_uid" class="input" placeholder="Copiez l'UID depuis Firebase Auth" />
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input id="f_email" class="input" type="email" placeholder="staff@pdm.local" />
+        </div>
+
+        <div class="form-group">
+          <label>Nom Complet</label>
+          <input id="f_name" class="input" placeholder="Ex: Jean Dupont" />
+        </div>
+
+        <div class="form-group">
+          <label>Rôle</label>
+          <select id="f_role" class="input">
+            <option value="admin">admin</option>
+            <option value="staff">staff</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-top: 15px;">
+          <label style="display: flex; gap: 8px; align-items: center; cursor: pointer;">
+            <input id="f_active" type="checkbox" checked /> <span>Compte actif</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelBtn" class="btn btn-outline">Annuler</button>
         <button id="saveBtn" class="btn btn-gold">Enregistrer</button>
       </div>
     </div>
   </div>
-
-  <!-- IMPORTANT: module, sinon import casse -->
-  <script type="module" src="gestion.js"></script>
 </body>
 </html>

@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Is the user authenticated?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: Does the user have an administrative role?
+    function hasAdminRole() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             (
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction'] ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction']
+             );
+    }
+
+    // --- COLLECTIONS ---
+
+    // Users: Auth users can read, only admins or owner can write.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // Vehicles: Publicly readable (for catalogue), staff-write, admin-delete.
+    match /vehicles/{docId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
+    }
+
+    // Transactions, Clients, Stock: Readable/Writable by staff (signed in), Deletable by admin.
+    match /transactions/{docId} {
+      allow read, create: if isSignedIn();
+      allow update: if hasAdminRole() ||
+                       (resource.data.sellerId == request.auth.uid) ||
+                       (resource.data.createdBy == request.auth.uid);
+      allow delete: if hasAdminRole();
+    }
+
+    match /clients/{docId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
+    }
+
+    match /stock/{docId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
+    }
+
+    match /partners/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+
+    match /partners/{partnerId}/members/{docId} {
+       allow read: if isSignedIn();
+       allow write: if hasAdminRole();
+    }
+
+    // Cashbook: Only Admins can read/write.
+    match /cashbook/{docId} {
+      allow read, write: if hasAdminRole();
+    }
+
+    // Logs: ONLY readable by admin, create by anyone signed in
+    match /logs/{docId} {
+      allow read: if hasAdminRole();
+      allow create: if isSignedIn();
+    }
+
+    // Default: Authenticated read, Admin write.
+    match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+  }
+}

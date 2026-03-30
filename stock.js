@@ -1,12 +1,11 @@
-// stock.js (remplace ton stock.js par celui-ci)
 import { auth, db } from "./config.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  collection, addDoc, deleteDoc, doc, updateDoc,
+  collection, addDoc, deleteDoc, doc, updateDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { esc, renderUserBadge } from "./common.js";
 
-// Elements
 const searchInput = document.getElementById("searchInput");
 const refreshBtn  = document.getElementById("refreshBtn");
 const addStockBtn = document.getElementById("addStockBtn");
@@ -20,8 +19,7 @@ const stockTbody = document.getElementById("stockTable");
 const resTbody   = document.getElementById("resTable");
 const logoutBtn  = document.getElementById("logoutBtn");
 
-// Dialog (modal)
-const dlg         = document.getElementById("stockDialog");
+const dlg         = document.getElementById("stockDialogBackdrop");
 const dTitle      = document.getElementById("dTitle");
 const dClose      = document.getElementById("dClose");
 const dCancel     = document.getElementById("dCancel");
@@ -34,8 +32,8 @@ const dClient     = document.getElementById("dClient");
 
 let rowsStock = [];
 let rowsRes = [];
-let editTarget = null; // { kind: "stock"|"res", id: string } | null
-let mode = "stock";    // when creating new
+let editTarget = null;
+let mode = "stock";
 
 function fmtDate(ts) {
   try {
@@ -50,25 +48,23 @@ function norm(s){ return (s ?? "").toString().trim().toLowerCase(); }
 function openDialog(kind, row=null) {
   mode = kind;
   editTarget = row?.id ? { kind, id: row.id } : null;
-
   dTitle.textContent = row?.id ? "Modifier" : "Ajouter";
   dBrand.value = row?.brand ?? "";
   dModel.value = row?.model ?? "";
   dQty.value   = (row?.qty ?? 1);
 
   if (kind === "res") {
-    dClientWrap.style.display = "";
+    dClientWrap.style.display = "block";
     dClient.value = row?.client ?? "";
   } else {
     dClientWrap.style.display = "none";
     dClient.value = "";
   }
-
-  dlg.showModal();
+  dlg.classList.remove("hidden");
 }
 
 function closeDialog() {
-  try { dlg.close(); } catch {}
+  dlg.classList.add("hidden");
   editTarget = null;
 }
 
@@ -86,12 +82,12 @@ function renderStock(list) {
   }
   stockTbody.innerHTML = list.map(r => `
     <tr>
-      <td>${r.brand ?? "-"}</td>
-      <td>${r.model ?? "-"}</td>
+      <td>${esc(r.brand || "-")}</td>
+      <td>${esc(r.model || "-")}</td>
       <td>${r.qty ?? 0}</td>
       <td>${fmtDate(r.createdAt)}</td>
-      <td class="td-actions">
-        <button class="btn btn-sm" data-action="edit" data-kind="stock" data-id="${r.id}">Modifier</button>
+      <td style="text-align: right;">
+        <button class="btn btn-sm btn-outline" data-action="edit" data-kind="stock" data-id="${r.id}">Modifier</button>
         <button class="btn btn-sm btn-danger" data-action="del" data-kind="stock" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
@@ -105,14 +101,14 @@ function renderRes(list) {
   }
   resTbody.innerHTML = list.map(r => `
     <tr>
-      <td>${r.brand ?? "-"}</td>
-      <td>${r.model ?? "-"}</td>
-      <td>${r.client ?? "-"}</td>
+      <td>${esc(r.brand || "-")}</td>
+      <td>${esc(r.model || "-")}</td>
+      <td>${esc(r.client || "-")}</td>
       <td>${r.qty ?? 0}</td>
-      <td><span class="pill">${r.status ?? "RÉSERVÉ"}</span></td>
+      <td><span class="badge badge-info">${esc(r.status || "RÉSERVÉ")}</span></td>
       <td>${fmtDate(r.createdAt)}</td>
-      <td class="td-actions">
-        <button class="btn btn-sm" data-action="edit" data-kind="res" data-id="${r.id}">Modifier</button>
+      <td style="text-align: right;">
+        <button class="btn btn-sm btn-outline" data-action="edit" data-kind="res" data-id="${r.id}">Modifier</button>
         <button class="btn btn-sm btn-danger" data-action="del" data-kind="res" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
@@ -127,7 +123,6 @@ function applyFilter() {
   renderRes(r);
 }
 
-// listeners
 let unsubStock=null, unsubRes=null;
 function startListeners() {
   const qStock = query(collection(db, "stock"), orderBy("createdAt", "desc"));
@@ -136,22 +131,19 @@ function startListeners() {
   unsubStock = onSnapshot(qStock, (snap) => {
     rowsStock = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     applyFilter(); refreshStats();
-  });
+  }, (err) => console.error("Stock listener error:", err));
 
   unsubRes = onSnapshot(qRes, (snap) => {
     rowsRes = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     applyFilter(); refreshStats();
-  });
+  }, (err) => console.error("Res listener error:", err));
 }
 function stopListeners(){ try{unsubStock?.()}catch{} try{unsubRes?.()}catch{} unsubStock=unsubRes=null; }
 
-// UI events
 searchInput.addEventListener("input", applyFilter);
 refreshBtn.addEventListener("click", () => { applyFilter(); refreshStats(); });
-
 addStockBtn.addEventListener("click", () => openDialog("stock"));
 addResBtn.addEventListener("click", () => openDialog("res"));
-
 dClose.addEventListener("click", closeDialog);
 dCancel.addEventListener("click", closeDialog);
 
@@ -160,14 +152,12 @@ dSave.addEventListener("click", async () => {
   const model = (dModel.value||"").trim();
   const qty   = Math.max(0, Number(dQty.value||0));
   const client= (dClient.value||"").trim();
-
   if (!brand || !model) return alert("Marque et modèle sont requis.");
 
   try {
     if (editTarget) {
       const col = editTarget.kind === "res" ? "reservations" : "stock";
       const ref = doc(db, col, editTarget.id);
-
       const payload = { brand, model, qty, updatedAt: serverTimestamp() };
       if (editTarget.kind === "res") {
         payload.client = client || "-";
@@ -192,32 +182,24 @@ dSave.addEventListener("click", async () => {
       }
     }
     closeDialog();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur lors de l'enregistrement.");
-  }
+  } catch (e) { console.error(e); alert("Erreur lors de l'enregistrement."); }
 });
 
 function onTableClick(e) {
   const b = e.target.closest("button[data-action]");
   if (!b) return;
   const action = b.dataset.action;
-  const kind = b.dataset.kind; // stock|res
+  const kind = b.dataset.kind;
   const id = b.dataset.id;
-
   const list = kind === "res" ? rowsRes : rowsStock;
   const row = list.find(x => x.id === id);
   if (!row) return;
 
   if (action === "edit") openDialog(kind, row);
-
   if (action === "del") {
     if (!confirm("Supprimer cette ligne ?")) return;
     const col = kind === "res" ? "reservations" : "stock";
-    deleteDoc(doc(db, col, id)).catch(err => {
-      console.error(err);
-      alert("Erreur lors de la suppression.");
-    });
+    deleteDoc(doc(db, col, id)).catch(err => { console.error(err); alert("Erreur lors de la suppression."); });
   }
 }
 stockTbody.addEventListener("click", onTableClick);
@@ -228,11 +210,16 @@ logoutBtn?.addEventListener("click", async () => {
   window.location.href = "pdm-staff.html";
 });
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (!user) {
     stopListeners();
     window.location.href = "pdm-staff.html";
     return;
   }
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) renderUserBadge(snap.data());
+  } catch(e) { console.error("Error loading user badge:", e); }
+
   if (!unsubStock && !unsubRes) startListeners();
 });
