@@ -156,7 +156,7 @@ function renderSalaries() {
 }
 
 async function loadUsers() {
-  const snap = await getDocs(query(collection(db, "users"), orderBy("updatedAt", "desc")));
+  const snap = await getDocs(query(collection(db, "users"), orderBy("createdAt", "desc")));
   usersRows = snap.docs.map(d => ({ __id: d.id, ...d.data() }));
 }
 

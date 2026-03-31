@@ -87,8 +87,8 @@ function renderStock(list) {
       <td>${r.qty ?? 0}</td>
       <td>${fmtDate(r.createdAt)}</td>
       <td style="text-align: right;">
-        <button class="btn btn-sm btn-outline" data-action="edit" data-kind="stock" data-id="${r.id}">Modifier</button>
-        <button class="btn btn-sm btn-danger" data-action="del" data-kind="stock" data-id="${r.id}">Supprimer</button>
+        <button class="btn btn-sm btn-outline btn-edit" data-kind="stock" data-id="${r.id}">Modifier</button>
+        <button class="btn btn-sm btn-danger btn-del" data-kind="stock" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
   `).join("");
@@ -108,8 +108,8 @@ function renderRes(list) {
       <td><span class="badge badge-info">${esc(r.status || "RÉSERVÉ")}</span></td>
       <td>${fmtDate(r.createdAt)}</td>
       <td style="text-align: right;">
-        <button class="btn btn-sm btn-outline" data-action="edit" data-kind="res" data-id="${r.id}">Modifier</button>
-        <button class="btn btn-sm btn-danger" data-action="del" data-kind="res" data-id="${r.id}">Supprimer</button>
+        <button class="btn btn-sm btn-outline btn-edit" data-kind="res" data-id="${r.id}">Modifier</button>
+        <button class="btn btn-sm btn-danger btn-del" data-kind="res" data-id="${r.id}">Supprimer</button>
       </td>
     </tr>
   `).join("");
@@ -186,20 +186,19 @@ dSave.addEventListener("click", async () => {
 });
 
 function onTableClick(e) {
-  const b = e.target.closest("button[data-action]");
+  const b = e.target.closest("button");
   if (!b) return;
-  const action = b.dataset.action;
-  const kind = b.dataset.kind;
   const id = b.dataset.id;
+  const kind = b.dataset.kind;
   const list = kind === "res" ? rowsRes : rowsStock;
   const row = list.find(x => x.id === id);
   if (!row) return;
 
-  if (action === "edit") openDialog(kind, row);
-  if (action === "del") {
-    if (!confirm("Supprimer cette ligne ?")) return;
+  if (b.classList.contains("btn-edit")) openDialog(kind, row);
+  if (b.classList.contains("btn-del")) {
+    if (!confirm("Supprimer ?")) return;
     const col = kind === "res" ? "reservations" : "stock";
-    deleteDoc(doc(db, col, id)).catch(err => { console.error(err); alert("Erreur lors de la suppression."); });
+    deleteDoc(doc(db, col, id)).catch(err => { console.error(err); alert("Erreur suppression."); });
   }
 }
 stockTbody.addEventListener("click", onTableClick);

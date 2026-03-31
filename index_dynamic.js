@@ -1,14 +1,6 @@
+
 import { db } from "./config.js";
 import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-
-function esc(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 document.addEventListener("DOMContentLoaded", async () => {
     const grid = document.querySelector(".catalogue-grid");
@@ -37,6 +29,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         const snap = await getDocs(colRef);
         allVehicles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+        if (allVehicles.length === 0) {
+            console.warn("No vehicles found in 'vehicles' collection.");
+        }
+
+        // Prepare data for filtering
         allVehicles.forEach(v => {
             v.hay = `${v.brand} ${v.model} ${v.type} ${v.classe}`.toLowerCase();
             v.price = Number(v.sellPrice || v.price || 0);
@@ -44,6 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             v.places = Number(v.places) || 0;
         });
 
+        // Initialize Type Select
         const types = [...new Set(allVehicles.map(v => v.type))].sort();
         typeSelect.innerHTML = '<option value="all">Tous les types</option>';
         types.forEach(t => {
@@ -57,11 +55,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         applyFilters();
 
     } catch (e) {
-        console.error("Error loading vehicles:", e);
+        console.error("Error loading vehicles from 'vehicles':", e);
         grid.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--danger);">
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--accent-red);">
                 Erreur lors du chargement des véhicules.<br>
-                <small style="color: var(--text-muted);">${esc(e.message)}</small>
+                <small style="color: var(--text-muted);">${e.message}</small>
             </div>
         `;
     }
@@ -85,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (el) {
                 el.scrollIntoView({ behavior: "smooth", block: "center" });
                 el.style.boxShadow = "0 0 0 2px var(--accent-gold)";
-                setTimeout(() => { if(el) el.style.boxShadow = ""; }, 2000);
+                setTimeout(() => el.style.boxShadow = "", 2000);
             }
         };
     }
@@ -117,11 +115,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             return true;
         });
 
+        // Sort
         if (f.sort === "priceAsc") filtered.sort((a,b) => a.price - b.price);
         else if (f.sort === "priceDesc") filtered.sort((a,b) => b.price - a.price);
         else if (f.sort === "speedDesc") filtered.sort((a,b) => b.vitessemax - a.vitessemax);
         else if (f.sort === "seatsDesc") filtered.sort((a,b) => b.places - a.places);
-        else filtered.sort((a,b) => (a.type || "").localeCompare(b.type || "") || a.price - b.price || (a.brand || "").localeCompare(b.brand || ""));
+        else filtered.sort((a,b) => a.type.localeCompare(b.type) || a.price - b.price || a.brand.localeCompare(b.brand));
 
         renderGrid(filtered);
         resultsCount.textContent = `${filtered.length} véhicule${filtered.length > 1 ? 's' : ''}`;
@@ -150,13 +149,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             article.innerHTML = `
                 <div class="car-card-header">
                     <div>
-                        <div class="car-brand">${esc(v.brand)}</div>
-                        <div class="car-name">${esc(v.model)}</div>
+                        <div class="car-brand">${v.brand}</div>
+                        <div class="car-name">${v.model}</div>
                     </div>
-                    <div class="car-stock">Type : ${esc(v.type)}</div>
+                    <div class="car-stock">Type : ${v.type}</div>
                 </div>
                 <div class="car-image">
-                    <img src="${esc(v.urlimagevehicule)}" alt="${esc(v.brand)} ${esc(v.model)}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x300.png?text=Image+non+disponible'">
+                    <img src="${v.urlimagevehicule}" alt="${v.brand} ${v.model}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x300.png?text=Image+non+disponible'">
                 </div>
                 <div class="car-infos">
                     <div class="car-price">
@@ -170,7 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
                 <div class="car-footer">
                     <div class="car-badges">
-                        <span class="badge">Classe ${esc(v.classe || '-')}</span>
+                        <span class="badge">Classe ${v.classe || '-'}</span>
                     </div>
                     <div class="car-cta-link">Acheter</div>
                 </div>
@@ -179,16 +178,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Events
     [qInput, typeSelect, classSelect, sortSelect, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(el => {
         el?.addEventListener("input", applyFilters);
         el?.addEventListener("change", applyFilters);
     });
 
     resetBtn?.addEventListener("click", () => {
-        [qInput, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(x => { if(x) x.value = ""; });
-        if(typeSelect) typeSelect.value = "all";
-        if(classSelect) classSelect.value = "all";
-        if(sortSelect) sortSelect.value = "default";
+        [qInput, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(x => x.value = "");
+        typeSelect.value = "all";
+        classSelect.value = "all";
+        sortSelect.value = "default";
         applyFilters();
     });
 });

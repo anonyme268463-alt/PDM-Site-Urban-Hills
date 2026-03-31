@@ -107,6 +107,7 @@ export function showDenyScreen(containerSelector = ".main-content") {
 export function renderUserBadge(userData) {
   const topBar = document.querySelector(".top-bar");
   if (!topBar) return;
+  if (topBar.querySelector(".user-badge")) return;
 
   const role = userData.role || userData.rank || "Staff";
   const name = userData.name || "Utilisateur";
