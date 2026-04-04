@@ -1,7 +1,7 @@
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-export function escapeHtml(str) {
+export function esc(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -9,6 +9,8 @@ export function escapeHtml(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+export const escapeHtml = esc;
 
 export function fmtMoney(n, currency = "$") {
   const x = Number(n || 0);
@@ -34,10 +36,9 @@ export function toDateInputValue(d) {
   return `${y}-${m}-${day}`;
 }
 
-// Lundi 00:00 → Dimanche 23:59:59 (local)
 export function getWeekRange(now = new Date()) {
   const d = new Date(now);
-  const day = d.getDay(); // 0 dimanche, 1 lundi...
+  const day = d.getDay();
   const diffToMonday = (day === 0 ? -6 : 1 - day);
   const monday = new Date(d);
   monday.setDate(d.getDate() + diffToMonday);
@@ -65,7 +66,6 @@ export function toBool(v, def = false) {
   return s === "true" || s === "1" || s === "yes" || s === "oui" || s === "actif";
 }
 
-// Helper for Admin Access Check
 import { db } from "./config.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
@@ -75,9 +75,8 @@ export async function checkIsAdmin(uid) {
     const snap = await getDoc(ref);
     if (!snap.exists()) return false;
     const data = snap.data();
-    const role = normRole(data.role);
-    const rank = normRole(data.rank);
-    return role === "admin" || rank === "admin";
+    const role = normRole(data.role || data.rank);
+    return role === "admin";
   } catch (e) {
     console.error("Error checking admin status:", e);
     return false;
@@ -103,4 +102,25 @@ export function showDenyScreen(containerSelector = ".main-content") {
       </div>
     `;
   }
+}
+
+export function renderUserBadge(userData) {
+  const topBar = document.querySelector(".top-bar");
+  if (!topBar) return;
+  if (topBar.querySelector(".user-badge")) return;
+
+  const role = userData.role || userData.rank || "Staff";
+  const name = userData.name || "Utilisateur";
+
+  const badge = document.createElement("div");
+  badge.className = "user-badge";
+  badge.innerHTML = `
+    <div class="user-info-badge">
+      <span class="role-badge">${esc(role)}</span>
+      <span class="separator-badge">-</span>
+      <span class="name-badge">${esc(name)}</span>
+    </div>
+  `;
+
+  topBar.appendChild(badge);
 }

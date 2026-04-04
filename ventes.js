@@ -3,8 +3,9 @@ import {
   collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc,
   serverTimestamp, query, orderBy, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
+import { esc, renderUserBadge } from "./common.js";
 
 const txTable = document.getElementById("txTable");
 const search = document.getElementById("search");
@@ -35,10 +36,13 @@ const fNotes = document.getElementById("fNotes");
 
 const modelsList = document.getElementById("modelsList");
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "pdm-staff.html";
-});
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    await signOut(auth);
+    window.location.href = "pdm-staff.html";
+  });
+}
 
 function money(n){
   return "$" + Number(n || 0).toLocaleString("en-US");
@@ -48,17 +52,7 @@ function dateFR(ts){
   return "-";
 }
 
-let CACHE = {
-  clients: [],
-  tx: [],
-  vehicles: [],
-  partners: [],
-  users: [],
-  modelAlias: new Map(), // "R/A" -> Vehicle Object
-  me: null,
-  role: "staff"
-};
-
+let CACHE = { tx:[], clients:[], partners:[], users:[], vehicles:[], me:null, role:"staff", modelAlias:new Map() };
 let editingId = null;
 
 function normKey(s){
@@ -71,33 +65,21 @@ function normKey(s){
 function buildModelAlias(){
   CACHE.modelAlias = new Map();
   const list = CACHE.vehicles;
-
   for(const v of list){
     const brand = (v.brand || "").trim();
     const model = (v.model || "").trim();
     if(!model) continue;
-
-    // 1. Map exact model name (e.g., "Sanchez")
     const kModel = normKey(model);
-    if(!CACHE.modelAlias.has(kModel)){
-      CACHE.modelAlias.set(kModel, v);
-    }
-
-    // 2. Map full name (e.g., "Maibatsu Sanchez")
+    if(!CACHE.modelAlias.has(kModel)) CACHE.modelAlias.set(kModel, v);
     const kFull = normKey(`${brand} ${model}`);
-    if(!CACHE.modelAlias.has(kFull)){
-      CACHE.modelAlias.set(kFull, v);
-    }
+    if(!CACHE.modelAlias.has(kFull)) CACHE.modelAlias.set(kFull, v);
   }
 }
 
 function resolveModelDisplay(inputModel){
   const key = normKey(inputModel);
   if(!key) return null;
-
-  // Check exact matches in aliases first
   if(CACHE.modelAlias.has(key)) return CACHE.modelAlias.get(key);
-
   return null;
 }
 
@@ -107,58 +89,77 @@ function buildModelDatalist(){
   const uniq = Array.from(new Set(
     list.map(v => (v.model || "").trim()).filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b, "fr"));
-  modelsList.innerHTML = uniq.map(m => `<option value="${m}"></option>`).join("");
+  modelsList.innerHTML = uniq.map(m => `<option value="${esc(m)}"></option>`).join("");
 }
 
 async function loadMe(){
   const u = auth.currentUser;
   if(!u) return;
-  const snap = await getDoc(doc(db,"users", u.uid));
-  if(snap.exists()){
-    CACHE.me = snap.data();
-    CACHE.role = snap.data().role || "staff";
-  } else {
-    CACHE.me = { name: "User", role: "staff" };
-    CACHE.role = "staff";
+  try {
+    const snap = await getDoc(doc(db,"users", u.uid));
+    if(snap.exists()){
+      CACHE.me = snap.data();
+      CACHE.role = snap.data().role || "staff";
+      renderUserBadge(CACHE.me);
+    } else {
+      CACHE.me = { name: "User", role: "staff" };
+      CACHE.role = "staff";
+    }
+  } catch(e) { console.error("Error loading user info:", e); }
+}
+
+async function getClientDiscount(clientId) {
+  if (!clientId) return 0;
+  const client = CACHE.clients.find(c => c.id === clientId);
+  if (!client) return 0;
+  const clientNameNorm = (client.name || "").trim().toLowerCase();
+  for (const p of CACHE.partners) {
+    if (p.members && p.members.some(m => (m.name || "").trim().toLowerCase() === clientNameNorm)) {
+      return Number(p.discount || 0);
+    }
   }
+  return 0;
 }
 
 async function load(){
-  txTable.innerHTML = `<tr><td colspan="8">Chargement...</td></tr>`;
-
   await loadMe();
+  txTable.innerHTML = `<tr><td colspan="8">Chargement...</td></tr>`;
+  try {
+    const [txSnap, clientsSnap, partnersSnap, usersSnap, vehiclesSnap] = await Promise.all([
+      getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))),
+      getDocs(collection(db,"clients")),
+      getDocs(collection(db,"partners")),
+      getDocs(collection(db,"users")),
+      getDocs(collection(db,"vehicles"))
+    ]);
 
-  const [clientsSnap, txSnap, vehiclesSnap, partnersSnap, usersSnap] = await Promise.all([
-    getDocs(collection(db,"clients")),
-    getDocs(collection(db,"transactions")),
-    getDocs(collection(db,"vehicles")),
-    getDocs(collection(db,"partners")),
-    getDocs(collection(db,"users"))
-  ]);
+    CACHE.tx = txSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.clients = clientsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
 
-  CACHE.clients = clientsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  CACHE.tx = txSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-  CACHE.users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    for (const p of CACHE.partners) {
+      const ms = await getDocs(collection(db, "partners", p.id, "members"));
+      p.members = ms.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
 
-  for (const p of CACHE.partners) {
-    const ms = await getDocs(collection(db, "partners", p.id, "members"));
-    p.members = ms.docs.map(d => ({ id: d.id, ...d.data() }));
+    buildModelAlias();
+    buildModelDatalist();
+    buildClientSelect();
+    buildSellerSelect();
+    render();
+  } catch(e) {
+    console.error(e);
+    txTable.innerHTML = `<tr><td colspan="8" class="red">Erreur de chargement.</td></tr>`;
   }
-
-  buildModelAlias();
-  buildModelDatalist();
-  buildClientSelect();
-  buildSellerSelect();
-  render();
 }
 
 function buildSellerSelect(){
   if(!fSeller) return;
   const opts = CACHE.users
     .sort((a,b)=> (a.name||"").localeCompare(b.name||""))
-    .map(u => `<option value="${u.id}">${u.name || u.email || u.id}</option>`);
+    .map(u => `<option value="${u.id}">${esc(u.name || u.email || u.id)}</option>`);
   fSeller.innerHTML = opts.join("");
 }
 
@@ -167,93 +168,23 @@ function buildClientSelect(){
     .concat(
       CACHE.clients
         .sort((a,b)=> (a.name||"").localeCompare(b.name||""))
-        .map(c => `<option value="${c.id}">${c.name || c.id}</option>`)
+        .map(c => `<option value="${c.id}">${esc(c.name || c.id)}</option>`)
     );
   fClient.innerHTML = opts.join("");
 }
 
-async function getClientDiscount(clientId) {
-  if (!clientId) return 0;
-
-  const client = CACHE.clients.find(c => c.id === clientId);
-  const clientNameNorm = client?.name ? client.name.trim().toLowerCase() : "";
-  const targetId = String(clientId).trim().toLowerCase();
-
-  for (const p of CACHE.partners) {
-    if (!p.active) continue;
-
-    const m = p.members?.find(member => {
-      // Match by clientId
-      if (member.clientId && String(member.clientId).trim().toLowerCase() === targetId) {
-        return true;
-      }
-      // Fallback: Match by fullName (case insensitive)
-      // Only match if both clientNameNorm and member.fullName are not empty
-      const memberNameNorm = (member.fullName || "").trim().toLowerCase();
-      if (clientNameNorm && memberNameNorm && memberNameNorm === clientNameNorm) {
-        return true;
-      }
-      return false;
-    });
-
-    if (m) return Number(m.rate || 0);
-  }
-  return 0;
-}
-
-async function autoPrice() {
-  const modelStr = fModel.value.trim();
-  const clientId = fClient.value;
-  if (!modelStr) {
-    fCatalogPrice.value = "";
-    fDiscountRate.value = "";
-    return;
-  }
-
-  const vInfo = resolveModelDisplay(modelStr);
-  if (!vInfo) {
-    fCatalogPrice.value = "";
-    fDiscountRate.value = "";
-    return;
-  }
-
-  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
-  const buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
-
-  const discountRate = await getClientDiscount(clientId);
-  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
-
-  fCatalogPrice.value = cataloguePrice;
-  fDiscountRate.value = discountRate;
-  fBuy.value = buyPrice;
-  fSell.value = sellPrice;
-  if (discountRate > 0) {
-    fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
-  }
-}
-
-fModel.addEventListener("change", autoPrice);
-fClient.addEventListener("change", autoPrice);
-
 function canEdit(tx){
-  const uid = auth.currentUser?.uid;
-  if(!uid) return false;
   if(CACHE.role === "admin") return true;
+  const uid = auth.currentUser?.uid;
   return (tx.sellerId === uid) || (tx.createdBy === uid);
 }
 
 function render(){
   const q = (search.value || "").trim().toLowerCase();
-
   const rows = CACHE.tx
     .map(t => {
-      const clientName =
-        t.clientName ||
-        (CACHE.clients.find(c => c.id === t.clientId)?.name) ||
-        "-";
-
+      const clientName = t.clientName || (CACHE.clients.find(c => c.id === t.clientId)?.name) || "-";
       const vInfo = resolveModelDisplay(t.model);
-
       return {
         ...t,
         _clientName: clientName,
@@ -289,16 +220,15 @@ function render(){
       ? `<button class="btn btn-gold" data-edit="${t.id}">Edit</button>
          <button class="btn" data-del="${t.id}">Suppr</button>`
       : `<span class="badge badge-no">LOCK</span>`;
-
     return `
       <tr>
         <td>${dateFR(t.createdAt)}</td>
-        <td>${t._clientName}</td>
-        <td title="${t._modelDisplay}">${t._modelDisplay}</td>
+        <td>${esc(t._clientName)}</td>
+        <td title="${esc(t._modelDisplay)}">${esc(t._modelDisplay)}</td>
         <td>${money(t.buyPrice)}</td>
         <td>${money(t.sellPrice)}</td>
         <td>${money(t._profit)}</td>
-        <td>${t.sellerName || "-"}</td>
+        <td>${esc(t.sellerName || "-")}</td>
         <td style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">${editBtns}</td>
       </tr>
     `;
@@ -315,10 +245,8 @@ function render(){
 function openAdd(){
   editingId = null;
   mTitle.textContent = "Ajouter une vente";
-
   const today = new Date();
   fDate.value = today.toISOString().slice(0,10);
-
   fClient.value = "";
   fModel.value = "";
   fDetail.value = "";
@@ -327,41 +255,33 @@ function openAdd(){
   fDiscountRate.value = "";
   fCatalogPrice.value = "";
   fNotes.value = "";
-
   if(CACHE.role === "admin"){
     sellerGroup.classList.remove("hidden");
     fSeller.value = auth.currentUser?.uid || "";
   } else {
     sellerGroup.classList.add("hidden");
   }
-
   modal.classList.remove("hidden");
 }
 
 function openEdit(id){
   const t = CACHE.tx.find(x=>x.id===id);
-  if(!t) return;
-  if(!canEdit(t)) return;
-
+  if(!t || !canEdit(t)) return;
   editingId = id;
   mTitle.textContent = "Modifier la vente";
-
   const d = t.createdAt?.toDate ? t.createdAt.toDate() : new Date();
   fDate.value = d.toISOString().slice(0,10);
-
   fClient.value = t.clientId || "";
   fModel.value = t.model || "";
   fDetail.value = t.detail || "";
   fBuy.value = String(t.buyPrice || "");
   fSell.value = String(t.sellPrice || "");
-
   if(CACHE.role === "admin"){
     sellerGroup.classList.remove("hidden");
     fSeller.value = t.sellerId || "";
   } else {
     sellerGroup.classList.add("hidden");
   }
-
   const vInfo = resolveModelDisplay(t.model);
   if (vInfo) {
     const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
@@ -369,7 +289,6 @@ function openEdit(id){
     let rate = 0;
     if (t.sellPrice && cataloguePrice) {
       rate = Math.round((1 - (t.sellPrice / cataloguePrice)) * 100);
-      // Avoid negative rates (e.g., if sold for more than catalog price)
       if (rate < 0) rate = 0;
     }
     fDiscountRate.value = rate;
@@ -377,39 +296,53 @@ function openEdit(id){
     fCatalogPrice.value = "";
     fDiscountRate.value = "";
   }
-
   fNotes.value = t.notes || "";
-
   modal.classList.remove("hidden");
 }
 
-function close(){
-  modal.classList.add("hidden");
+function close(){ modal.classList.add("hidden"); }
+if(closeModal) closeModal.addEventListener("click", close);
+if(cancelBtn) cancelBtn.addEventListener("click", close);
+if(addBtn) addBtn.addEventListener("click", openAdd);
+if(refreshBtn) refreshBtn.addEventListener("click", load);
+
+async function autoPrice() {
+  const modelStr = fModel.value.trim();
+  const clientId = fClient.value;
+  if (!modelStr) { fCatalogPrice.value = ""; fDiscountRate.value = ""; return; }
+  const vInfo = resolveModelDisplay(modelStr);
+  if (!vInfo) { fCatalogPrice.value = ""; fDiscountRate.value = ""; return; }
+  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+  const buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
+  const discountRate = await getClientDiscount(clientId);
+  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+  fCatalogPrice.value = cataloguePrice;
+  fDiscountRate.value = discountRate;
+  fBuy.value = buyPrice;
+  fSell.value = sellPrice;
+  if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
 }
+fModel.addEventListener("change", autoPrice);
+fClient.addEventListener("change", autoPrice);
 
 async function save(){
   const uid = auth.currentUser?.uid;
   if(!uid) return;
-
   const clientId = fClient.value || "";
   const clientName = (CACHE.clients.find(c=>c.id===clientId)?.name) || "";
-
   const buyPrice = Number(fBuy.value || 0);
   const sellPrice = Number(fSell.value || 0);
-
   if(!clientId){ alert("Choisis un client."); return; }
   if(!fModel.value.trim()){ alert("Entre un modele."); return; }
 
   const modelRaw = fModel.value.trim();
   const vInfo = resolveModelDisplay(modelRaw);
   const modelNormalized = vInfo ? `${vInfo.brand} ${vInfo.model}` : modelRaw;
-
   const selectedDate = fDate.value ? new Date(fDate.value) : new Date();
   const createdAt = Timestamp.fromDate(selectedDate);
 
   let sellerId = uid;
   let sellerName = CACHE.me?.name || "Vendeur";
-
   if(CACHE.role === "admin" && fSeller.value){
     sellerId = fSeller.value;
     const sUser = CACHE.users.find(u => u.id === sellerId);
@@ -417,51 +350,33 @@ async function save(){
   }
 
   const payload = {
-    clientId,
-    clientName,
-    model: modelNormalized,
-    detail: (fDetail.value || "").trim(),
-    notes: (fNotes.value || "").trim(),
-    buyPrice,
-    sellPrice,
-    sellerId,
-    sellerName,
-    createdBy: uid,
-    updatedAt: serverTimestamp(),
-    createdAt
+    clientId, clientName, model: modelNormalized,
+    detail: (fDetail.value || "").trim(), notes: (fNotes.value || "").trim(),
+    buyPrice, sellPrice, sellerId, sellerName, createdBy: uid,
+    updatedAt: serverTimestamp(), createdAt
   };
 
-  if(!editingId){
-    await addDoc(collection(db,"transactions"), payload);
-    await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
-  } else {
-    await updateDoc(doc(db,"transactions", editingId), payload);
-    await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
-  }
-
-  close();
-  await load();
+  try {
+    if(!editingId){
+      await addDoc(collection(db,"transactions"), payload);
+      await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
+    } else {
+      await updateDoc(doc(db,"transactions", editingId), payload);
+      await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
+    }
+    close();
+    await load();
+  } catch(e) { console.error(e); alert("Erreur lors de l'enregistrement."); }
 }
+if(saveBtn) saveBtn.addEventListener("click", save);
 
 async function removeTx(id){
-  const t = CACHE.tx.find(x=>x.id===id);
-  if(!t) return;
-  if(!canEdit(t)) return;
-
   if(!confirm("Supprimer cette vente ?")) return;
-  await deleteDoc(doc(db,"transactions", id));
-  await logAction("VENTE_SUPPR", `Suppression vente ${id} (${t.model} - ${t.clientName})`);
-  await load();
+  try {
+    await deleteDoc(doc(db,"transactions",id));
+    await logAction("VENTE_SUPPR", `Suppression vente ${id}`);
+    await load();
+  } catch(e) { console.error(e); alert("Erreur lors de la suppression."); }
 }
 
-addBtn.addEventListener("click", openAdd);
-refreshBtn.addEventListener("click", load);
-search.addEventListener("input", render);
-
-closeModal.addEventListener("click", close);
-cancelBtn.addEventListener("click", close);
-modal.addEventListener("click", (e)=>{ if(e.target===modal) close(); });
-
-saveBtn.addEventListener("click", save);
-
-load();
+onAuthStateChanged(auth, u => { if(u) load(); else window.location.href = "pdm-staff.html"; });

@@ -1,12 +1,24 @@
-import { db, auth } from "./config.js";
 import {
-  collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp
+  addDoc,
+  auth } from "./config.js";
+import {
+  collection,
+  collection,
+  db,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { runBulkEnrichment } from "./vehicles_migration.js";
 import { mergeCatalogueToVehicles } from "./merge_collections.js";
-import { checkIsAdmin, showDenyScreen } from "./common.js";
+import { checkIsAdmin, showDenyScreen, renderUserBadge, esc  from "./common.js"; renderUserBadge, esc } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -44,10 +56,7 @@ const vmSellPrice = $("vmSellPrice");
 let VEHICLES = [];
 let OPEN_ID = null;
 
-function esc(s){
-  return String(s ?? "").replace(/[&<>"']/g, (c)=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
+[c]));
 }
 
 function fmtDate(ts){
@@ -351,6 +360,8 @@ function openEdit(id){
 
 onAuthStateChanged(auth, async (u) => {
   if (!u) { window.location.href = "pdm-staff.html"; return; }
+  const uSnap = await getDocs(query(collection(db, "users"), where("id", "==", u.uid)));
+  if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
   const isAdmin = await checkIsAdmin(u.uid);
   if (!isAdmin) {
     showDenyScreen();

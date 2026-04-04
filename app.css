@@ -497,3 +497,37 @@ button, input, select, textarea {
     padding: 12px;
   }
 }
+
+/* User Badge Styles */
+.user-badge {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+}
+
+.user-info-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.role-badge {
+  color: var(--accent-gold);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.separator-badge {
+  color: var(--text-muted);
+}
+
+.name-badge {
+  color: var(--text-main);
+  font-weight: 500;
+}

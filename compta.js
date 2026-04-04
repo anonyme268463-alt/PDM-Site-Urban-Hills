@@ -1,58 +1,52 @@
-import { checkIsAdmin, showDenyScreen } from "./common.js";
-import { auth, db } from "./config.js";
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { db, auth } from "./config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  collection, getDocs, addDoc, deleteDoc, doc, query, where, orderBy, Timestamp
+  collection, getDocs, doc, deleteDoc, addDoc, query, where, orderBy, Timestamp, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import {
-  $, escapeHtml, fmtMoney, fmtDate, toDateInputValue, getWeekRange
-} from "./common.js";
+import { checkIsAdmin, showDenyScreen, fmtMoney, esc, renderUserBadge, getWeekRange, toDateInputValue } from "./common.js";
 
-/** DOM */
-const btnLogout = $("#logoutBtn");
-const btnRefresh = $("#refreshBtn");
-const btnWeek = $("#btnWeek");
-const btnApply = $("#btnApply");
-const btnAddCash = $("#btnAddCash");
-const btnPdf = $("#btnPdf");
+const periodLabel = document.getElementById("periodLabel");
+const btnWeek = document.getElementById("btnWeek");
+const btnApply = document.getElementById("btnApply");
+const dateFrom = document.getElementById("dateFrom");
+const dateTo = document.getElementById("dateTo");
+const btnRefresh = document.getElementById("btnRefresh");
+const qInput = document.getElementById("qInput");
 
-const periodLabel = $("#periodLabel");
-const dateFrom = $("#dateFrom");
-const dateTo = $("#dateTo");
-const qInput = $("#qInput");
+const kpiCa = document.getElementById("kpiCa");
+const kpiProfit = document.getElementById("kpiProfit");
+const kpiCount = document.getElementById("kpiCount");
+const kpiExpense = document.getElementById("kpiExpense");
+const kpiOther = document.getElementById("kpiOther");
+const kpiNet = document.getElementById("kpiNet");
 
-const kpiCa = $("#kpiCa");
-const kpiProfit = $("#kpiProfit");
-const kpiCount = $("#kpiCount");
-const kpiExpense = $("#kpiExpense");
-const kpiOther = $("#kpiOther");
-const kpiNet = $("#kpiNet");
+const txTbody = document.getElementById("txTbody");
+const cashTbody = document.getElementById("cashTbody");
+const salaryTbody = document.getElementById("salaryTbody");
 
-const txTbody = $("#txTbody");
-const cashTbody = $("#cashTbody");
-const salaryTbody = $("#salaryTbody");
+const btnAddCash = document.getElementById("btnAddCash");
+const cashModal = document.getElementById("cashModal");
+const cashCancel = document.getElementById("cashCancel");
+const cashSave = document.getElementById("cashSave");
+const cashDate = document.getElementById("cashDate");
+const cashType = document.getElementById("cashType");
+const cashReason = document.getElementById("cashReason");
+const cashAmount = document.getElementById("cashAmount");
 
-const cashModal = $("#cashModal");
-const cashDate = $("#cashDate");
-const cashType = $("#cashType");
-const cashReason = $("#cashReason");
-const cashAmount = $("#cashAmount");
-const cashCancel = $("#cashCancel");
-const cashSave = $("#cashSave");
+const btnPdf = document.getElementById("btnPdf");
+const btnLogout = document.getElementById("btnLogout");
 
-/** State */
-let currentUser = null;
 let range = { from: null, to: null };
 let txRows = [];
 let cashRows = [];
 let usersRows = [];
+let currentUser = null;
 
-/** Helpers */
 function setRange(r) {
   range = r;
-  periodLabel.textContent = `${fmtDate(r.from)} — ${fmtDate(r.to)}`;
   dateFrom.value = toDateInputValue(r.from);
   dateTo.value = toDateInputValue(r.to);
+  periodLabel.textContent = `Du ${r.from.toLocaleDateString()} au ${r.to.toLocaleDateString()}`;
 }
 
 function parseDateInputs() {
@@ -64,88 +58,57 @@ function parseDateInputs() {
   return { from, to };
 }
 
-function norm(s) { return String(s || "").toLowerCase().trim(); }
+function norm(s) { return String(s || "").trim().toLowerCase(); }
+const moneyBase = (tx) => Number(tx.sellPrice || 0);
 
-function txDate(row) {
-  if (!row.createdAt) return null;
-  return row.createdAt.toDate ? row.createdAt.toDate() : new Date(row.createdAt);
-}
-
-function moneyBase(tx) {
-  // If manual profit exists, use it, else sell - buy
-  if (Number.isFinite(tx.profit)) return tx.profit;
-  const s = Number(tx.sellPrice || tx.price || 0);
-  const b = Number(tx.buyPrice || 0);
-  return s - b;
-}
-
-/** Render */
 function renderTransactions(list) {
   if (!list.length) {
-    txTbody.innerHTML = `<tr><td colspan="7" class="muted">Aucune vente sur la période.</td></tr>`;
+    txTbody.innerHTML = `<tr><td colspan="7" class="muted">Aucune vente.</td></tr>`;
     return;
   }
-
-  txTbody.innerHTML = list.map(tx => {
-    const d = txDate(tx);
-    const sell = tx.sellPrice || tx.price || 0;
-    const buy = tx.buyPrice || 0;
-    const profit = moneyBase(tx);
-    const seller = tx.sellerName || tx.importedSeller || tx.vendeur || "-";
-
-    return `
-      <tr>
-        <td>${escapeHtml(d ? fmtDate(d) : "-")}</td>
-        <td>${escapeHtml(tx.clientName || tx.client || "-")}</td>
-        <td>${escapeHtml(tx.vehicle || tx.model || "-")}</td>
-        <td>${escapeHtml(fmtMoney(sell))}</td>
-        <td>${escapeHtml(fmtMoney(buy))}</td>
-        <td>${escapeHtml(fmtMoney(profit))}</td>
-        <td>${escapeHtml(seller)}</td>
-      </tr>
-    `;
-  }).join("");
+  txTbody.innerHTML = list.map(tx => `
+    <tr>
+      <td>${tx.createdAt?.toDate ? tx.createdAt.toDate().toLocaleDateString() : "-"}</td>
+      <td>${esc(tx.clientName || tx.client || "-")}</td>
+      <td>${esc(tx.model || tx.vehicle || "-")}</td>
+      <td>${fmtMoney(tx.buyPrice)}</td>
+      <td>${fmtMoney(tx.sellPrice)}</td>
+      <td>${fmtMoney(tx.profit)}</td>
+      <td>${esc(tx.sellerName || tx.importedSeller || tx.vendeur || "-")}</td>
+    </tr>
+  `).join("");
 }
 
 function renderCashbook(list) {
   if (!list.length) {
-    cashTbody.innerHTML = `<tr><td colspan="5" class="muted">Aucune opération manuelle sur la période.</td></tr>`;
+    cashTbody.innerHTML = `<tr><td colspan="5" class="muted">Aucune opération.</td></tr>`;
     return;
   }
-
-  cashTbody.innerHTML = list.map(row => {
-    const d = txDate(row);
-    const type = row.type === "income" ? "Gain" : "Dépense";
-    const reason = row.reason || row.label || "-";
-    const amount = Number(row.amount || 0);
-
-    return `
-      <tr>
-        <td>${escapeHtml(d ? fmtDate(d) : "-")}</td>
-        <td>${escapeHtml(type)}</td>
-        <td>${escapeHtml(reason)}</td>
-        <td>${escapeHtml(fmtMoney(amount))}</td>
-        <td>
-          <button class="btn btn-danger btn-sm" data-del="${row.__id}">Supprimer</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+  cashTbody.innerHTML = list.map(c => `
+    <tr>
+      <td>${c.date?.toDate ? c.date.toDate().toLocaleDateString() : "-"}</td>
+      <td><span class="badge ${c.type === "expense" ? "badge-danger" : "badge-success"}">${c.type === "expense" ? "Dépense" : "Autre"}</span></td>
+      <td>${esc(c.reason)}</td>
+      <td>${fmtMoney(c.amount)}</td>
+      <td style="text-align:right;"><button class="btn btn-danger btn-sm" data-del="${c.__id}">Suppr</button></td>
+    </tr>
+  `).join("");
 }
 
 function renderKpis() {
-  const ca = txRows.reduce((s, tx) => s + (Number.isFinite(tx.sellPrice) ? tx.sellPrice : Number.isFinite(tx.price) ? tx.price : 0), 0);
-  const profit = txRows.reduce((s, tx) => s + moneyBase(tx), 0);
-  const count = txRows.length;
-
-  const expense = cashRows.filter(x => x.type === "expense").reduce((s, x) => s + Number(x.amount || 0), 0);
-  const other = cashRows.filter(x => x.type === "income").reduce((s, x) => s + Number(x.amount || 0), 0);
-
-  const net = profit + other - expense;
+  const ca = txRows.reduce((s, tx) => s + Number(tx.sellPrice || 0), 0);
+  const profit = txRows.reduce((s, tx) => s + Number(tx.profit || 0), 0);
+  const expense = cashRows.filter(c => c.type === "expense").reduce((s, c) => s + Number(c.amount || 0), 0);
+  const other = cashRows.filter(c => c.type === "other").reduce((s, c) => s + Number(c.amount || 0), 0);
+  const salaries = Array.from(document.querySelectorAll("#salaryTbody tr")).reduce((s, tr) => {
+    const val = tr.children[4]?.textContent || "$0";
+    return s + Number(val.replace(/[^0-9.-]+/g, ""));
+  }, 0);
+  const net = profit - expense + other - salaries;
 
   kpiCa.textContent = fmtMoney(ca);
   kpiProfit.textContent = fmtMoney(profit);
-  kpiCount.textContent = String(count);
+  kpiCount.textContent = String(txRows.length);
   kpiExpense.textContent = fmtMoney(expense);
   kpiOther.textContent = fmtMoney(other);
   kpiNet.textContent = fmtMoney(net);
@@ -155,307 +118,113 @@ function gradeRate(grade) {
   const g = String(grade || "").toLowerCase();
   if (g.includes("co") && g.includes("pdg")) return 0.12;
   if (g.includes("pdg") || g.includes("patron") || g.includes("admin")) return 0.05;
-  return 0.10; // vendeur
+  return 0.10;
 }
 
 function renderSalaries() {
   const totalBaseAll = txRows.reduce((s, tx) => s + moneyBase(tx), 0);
-
-  // 1. Identify all sellers present in the transactions
-  const sellersMap = new Map(); // id -> { name, count, base, grade, rate, id }
-
-  // Initialize with known users
-  usersRows.forEach(u => {
-    const id = u.__id;
-    const name = u.name || u.email || id;
-    const grade = u.grade || u.role || u.rank || "Vendeur";
-    sellersMap.set(id, { id, name, grade, count: 0, base: 0 });
-  });
-
-  // Add any sellers found in transactions but not in users list
+  const sellersMap = new Map();
+  usersRows.forEach(u => sellersMap.set(u.__id, { id: u.__id, name: u.name || u.email || u.__id, grade: u.grade || u.role || u.rank || "Vendeur", count: 0, base: 0 }));
   txRows.forEach(tx => {
     const sid = tx.sellerId;
     const sname = tx.sellerName || tx.importedSeller || tx.vendeur || "Vendeur Inconnu";
-
-    if (sid && !sellersMap.has(sid)) {
-        sellersMap.set(sid, { id: sid, name: sname, grade: "Vendeur", count: 0, base: 0 });
-    } else if (!sid) {
-        // Handle transactions without an explicit ID (imported or legacy)
-        const key = norm(sname);
-        let found = false;
-        for (const entry of sellersMap.values()) {
-            if (norm(entry.name) === key) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            sellersMap.set("legacy_" + sname, { id: null, name: sname, grade: "Vendeur", count: 0, base: 0 });
-        }
-    }
+    if (sid && !sellersMap.has(sid)) sellersMap.set(sid, { id: sid, name: sname, grade: "Vendeur", count: 0, base: 0 });
+    else if (!sid && !Array.from(sellersMap.values()).some(e => norm(e.name) === norm(sname))) sellersMap.set("legacy_" + sname, { id: null, name: sname, grade: "Vendeur", count: 0, base: 0 });
   });
 
-  // 2. Aggregate stats for each seller
-  const rows = Array.from(sellersMap.values()).map(s => {
+  const finalRows = Array.from(sellersMap.values()).map(s => {
     const rate = gradeRate(s.grade);
-    const lowerGrade = String(s.grade).toLowerCase();
-
-    let count = 0;
-    let base = 0;
-
-    // PDG/Admin gets a percentage of TOTAL sales
-    if ((lowerGrade.includes("pdg") || lowerGrade.includes("patron") || lowerGrade.includes("admin")) && !lowerGrade.includes("co")) {
-      count = txRows.length;
-      base = totalBaseAll;
-    } else {
-      // Regular sellers get a percentage of THEIR sales
-      const userTxs = txRows.filter(tx => {
-        const sid = tx.sellerId;
-        const sname = tx.sellerName || tx.importedSeller || tx.vendeur || "";
-        return (sid && sid === s.id) ||
-               (norm(sname) === norm(s.name));
-      });
-      count = userTxs.length;
-      base = userTxs.reduce((s, tx) => s + moneyBase(tx), 0);
+    const lg = s.grade.toLowerCase();
+    let count = 0, base = 0;
+    if ((lg.includes("pdg") || lg.includes("patron") || lg.includes("admin")) && !lg.includes("co")) { count = txRows.length; base = totalBaseAll; }
+    else {
+      const userTxs = txRows.filter(tx => (tx.sellerId && tx.sellerId === s.id) || (norm(tx.sellerName || tx.importedSeller || tx.vendeur) === norm(s.name)));
+      count = userTxs.length; base = userTxs.reduce((sum, tx) => sum + moneyBase(tx), 0);
     }
-
-    const salary = base * rate;
-    return { ...s, count, salary, rate };
-  });
-
-  // 3. Filter out those with 0 sales and not in users list (unless they are PDG/Admin who get global % regardless)
-  const finalRows = rows.filter(r => {
-      if (r.salary > 0 || r.count > 0) return true;
-      // Keep admins/PDG even if 0 sales? Usually yes for visibility.
-      const lg = String(r.grade).toLowerCase();
-      if (lg.includes("pdg") || lg.includes("admin") || lg.includes("patron")) return true;
-      return false;
-  });
-
-  finalRows.sort((a, b) => (b.salary - a.salary));
+    return { ...s, count, salary: base * rate, rate };
+  }).filter(r => r.salary > 0 || r.count > 0 || String(r.grade).toLowerCase().includes("pdg") || String(r.grade).toLowerCase().includes("admin")).sort((a, b) => b.salary - a.salary);
 
   salaryTbody.innerHTML = finalRows.map(r => `
     <tr>
-      <td>${escapeHtml(r.name)}</td>
-      <td>${escapeHtml(r.grade)}</td>
-      <td>${escapeHtml(String(r.count))}</td>
-      <td>${escapeHtml(Math.round(r.rate * 100) + "%")}</td>
-      <td>${escapeHtml(fmtMoney(r.salary))}</td>
+      <td>${esc(r.name)}</td>
+      <td>${esc(r.grade)}</td>
+      <td>${r.count}</td>
+      <td>${Math.round(r.rate * 100)}%</td>
+      <td>${fmtMoney(r.salary)}</td>
     </tr>
   `).join("") || `<tr><td colspan="5" class="muted">Aucune donnée.</td></tr>`;
 }
 
-/** Data loading */
 async function loadUsers() {
   const snap = await getDocs(query(collection(db, "users"), orderBy("createdAt", "desc")));
   usersRows = snap.docs.map(d => ({ __id: d.id, ...d.data() }));
 }
 
 async function loadTransactions() {
-  const fromTs = Timestamp.fromDate(range.from);
-  const toTs = Timestamp.fromDate(range.to);
-
-  const qy = query(
-    collection(db, "transactions"),
-    where("createdAt", ">=", fromTs),
-    where("createdAt", "<=", toTs),
-    orderBy("createdAt", "desc")
-  );
-
+  const qy = query(collection(db, "transactions"), where("createdAt", ">=", Timestamp.fromDate(range.from)), where("createdAt", "<=", Timestamp.fromDate(range.to)), orderBy("createdAt", "desc"));
   const snap = await getDocs(qy);
-  const raw = snap.docs.map(d => ({ __id: d.id, ...d.data() }));
-
-  txRows = raw.map(x => {
-    const sellPrice = Number(x.sellPrice ?? x.price ?? 0);
-    const buyPrice = Number(x.buyPrice ?? 0);
-    const profit = Number.isFinite(Number(x.profit)) ? Number(x.profit) : (sellPrice - buyPrice);
-    return { ...x, sellPrice, buyPrice, profit };
+  txRows = snap.docs.map(d => {
+    const data = d.data();
+    const sell = Number(data.sellPrice ?? data.price ?? 0);
+    const buy = Number(data.buyPrice ?? 0);
+    return { ...data, __id: d.id, sellPrice: sell, buyPrice: buy, profit: Number.isFinite(data.profit) ? Number(data.profit) : (sell - buy) };
   });
 }
 
 async function loadCashbook() {
-  const fromTs = Timestamp.fromDate(range.from);
-  const toTs = Timestamp.fromDate(range.to);
-
-  const qy = query(
-    collection(db, "cashbook"),
-    where("date", ">=", fromTs),
-    where("date", "<=", toTs),
-    orderBy("date", "desc")
-  );
-
+  const qy = query(collection(db, "cashbook"), where("date", ">=", Timestamp.fromDate(range.from)), where("date", "<=", Timestamp.fromDate(range.to)), orderBy("date", "desc"));
   const snap = await getDocs(qy);
   cashRows = snap.docs.map(d => ({ __id: d.id, ...d.data() }));
 }
 
 function applySearchFilter() {
   const q = norm(qInput.value);
-  const txFiltered = !q ? txRows : txRows.filter(tx => {
-    return (
-      norm(tx.clientName).includes(q) ||
-      norm(tx.client).includes(q) ||
-      norm(tx.model).includes(q) ||
-      norm(tx.vehicle).includes(q) ||
-      norm(tx.sellerName).includes(q) ||
-      norm(tx.importedSeller).includes(q) ||
-      norm(tx.vendeur).includes(q)
-    );
-  });
-
-  renderTransactions(txFiltered);
-  renderKpis();
-  renderSalaries();
+  const filtered = !q ? txRows : txRows.filter(tx => [tx.clientName, tx.client, tx.model, tx.vehicle, tx.sellerName, tx.importedSeller, tx.vendeur].some(x => norm(x).includes(q)));
+  renderTransactions(filtered); renderKpis(); renderSalaries();
 }
 
 async function refreshAll() {
   txTbody.innerHTML = `<tr><td colspan="7" class="muted">Chargement…</td></tr>`;
   cashTbody.innerHTML = `<tr><td colspan="5" class="muted">Chargement…</td></tr>`;
   salaryTbody.innerHTML = `<tr><td colspan="5" class="muted">Chargement…</td></tr>`;
-
-  await Promise.all([loadUsers(), loadTransactions(), loadCashbook()]);
-  renderCashbook(cashRows);
-  renderKpis();
-  renderSalaries();
-  applySearchFilter();
+  try {
+    await Promise.all([loadUsers(), loadTransactions(), loadCashbook()]);
+    renderCashbook(cashRows); renderSalaries(); renderKpis(); applySearchFilter();
+  } catch(e) { console.error(e); }
 }
 
-/** Cash modal */
-function openCashModal() {
-  cashDate.value = toDateInputValue(new Date());
-  cashType.value = "expense";
-  cashReason.value = "";
-  cashAmount.value = "";
-  cashModal.classList.remove("hidden");
-}
-
-function closeCashModal() {
-  cashModal.classList.add("hidden");
-}
-
-async function saveCash() {
+btnAddCash?.addEventListener("click", () => { cashDate.value = toDateInputValue(new Date()); cashType.value = "expense"; cashReason.value = ""; cashAmount.value = ""; cashModal.classList.remove("hidden"); });
+cashCancel?.addEventListener("click", () => cashModal.classList.add("hidden"));
+cashSave?.addEventListener("click", async () => {
   const d = cashDate.value ? new Date(cashDate.value + "T12:00:00") : null;
   const amount = Number(cashAmount.value);
   const reason = cashReason.value.trim();
-
-  if (!d || !Number.isFinite(amount) || amount <= 0 || !reason) {
-    alert("Remplis Date + Montant (>0) + Libellé.");
-    return;
-  }
-
-  await addDoc(collection(db, "cashbook"), {
-    date: Timestamp.fromDate(d),
-    type: cashType.value,
-    reason,
-    amount,
-    createdAt: Timestamp.fromDate(new Date()),
-    updatedAt: Timestamp.fromDate(new Date()),
-    createdBy: currentUser?.uid || null
-  });
-
-  closeCashModal();
-  await refreshAll();
-}
-
-/** PDF export (sans lib) */
-function exportPdf() {
-  const html = `
-  <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Comptabilité — Export</title>
-    <style>
-      body{font-family:Arial, sans-serif; padding:24px;}
-      h1{margin:0 0 6px;}
-      .muted{color:#666;}
-      table{width:100%; border-collapse:collapse; margin:12px 0;}
-      th,td{border:1px solid #ddd; padding:8px; font-size:12px;}
-      th{background:#f4f4f4; text-align:left;}
-      .kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0;}
-      .kpi{border:1px solid #ddd; padding:10px; border-radius:8px;}
-      .kpi b{display:block; margin-top:6px; font-size:16px;}
-      @media print { button{display:none;} }
-    </style>
-  </head>
-  <body>
-    <h1>Comptabilité</h1>
-    <div class="muted">Période : ${escapeHtml(periodLabel.textContent)}</div>
-
-    <div class="kpis">
-      <div class="kpi">CA total (ventes)<b>${escapeHtml(kpiCa.textContent)}</b></div>
-      <div class="kpi">Profit total (ventes)<b>${escapeHtml(kpiProfit.textContent)}</b></div>
-      <div class="kpi">Nb ventes<b>${escapeHtml(kpiCount.textContent)}</b></div>
-      <div class="kpi">Dépenses<b>${escapeHtml(kpiExpense.textContent)}</b></div>
-      <div class="kpi">Gains autres<b>${escapeHtml(kpiOther.textContent)}</b></div>
-      <div class="kpi">Résultat net<b>${escapeHtml(kpiNet.textContent)}</b></div>
-    </div>
-
-    <h2>Salaires vendeurs</h2>
-    ${document.querySelector("#salaryTbody").closest("table").outerHTML}
-
-    <h2>Transactions (ventes)</h2>
-    ${document.querySelector("#txTbody").closest("table").outerHTML}
-
-    <h2>Opérations manuelles (cashbook)</h2>
-    ${document.querySelector("#cashTbody").closest("table").outerHTML}
-
-    <script>window.onload=()=>window.print();</script>
-  </body>
-  </html>
-  `;
-
-  const w = window.open("", "_blank");
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-}
-
-/** Events */
-btnLogout?.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "pdm-staff.html";
+  if (!d || !Number.isFinite(amount) || amount <= 0 || !reason) return alert("Remplis Date + Montant (>0) + Libellé.");
+  try {
+    await addDoc(collection(db, "cashbook"), { date: Timestamp.fromDate(d), type: cashType.value, reason, amount, createdAt: Timestamp.fromDate(new Date()), updatedAt: Timestamp.fromDate(new Date()), createdBy: currentUser?.uid || null });
+    cashModal.classList.add("hidden"); await refreshAll();
+  } catch(e) { console.error(e); }
 });
 
-btnWeek?.addEventListener("click", async () => {
-  setRange(getWeekRange(new Date()));
-  await refreshAll();
+btnPdf?.addEventListener("click", () => {
+  const html = `<html><head><meta charset="utf-8"/><title>Compta — Export</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#f4f4f4;}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}.kpi{border:1px solid #ddd;padding:10px;border-radius:8px;}@media print{button{display:none;}}</style></head><body><h1>Comptabilité</h1><div class="muted">Période : ${esc(periodLabel.textContent)}</div><div class="kpis"><div class="kpi">CA total<b>${kpiCa.textContent}</b></div><div class="kpi">Profit total<b>${kpiProfit.textContent}</b></div><div class="kpi">Dépenses<b>${kpiExpense.textContent}</b></div><div class="kpi">Résultat net<b>${kpiNet.textContent}</b></div></div><h2>Salaires</h2>${document.querySelector("#salaryTbody").closest("table").outerHTML}<h2>Ventes</h2>${document.querySelector("#txTbody").closest("table").outerHTML}<h2>Cashbook</h2>${document.querySelector("#cashTbody").closest("table").outerHTML}<script>window.onload=()=>window.print();</script></body></html>`;
+  const w = window.open("", "_blank"); w.document.write(html); w.document.close();
 });
 
-btnApply?.addEventListener("click", async () => {
-  const r = parseDateInputs();
-  if (!r) return alert("Choisis une date de début et une date de fin.");
-  setRange(r);
-  await refreshAll();
-});
-
+btnLogout?.addEventListener("click", async () => { await signOut(auth); window.location.href = "pdm-staff.html"; });
+btnWeek?.addEventListener("click", async () => { setRange(getWeekRange(new Date())); await refreshAll(); });
+btnApply?.addEventListener("click", async () => { const r = parseDateInputs(); if (!r) return alert("Dates requises."); setRange(r); await refreshAll(); });
 btnRefresh?.addEventListener("click", refreshAll);
 qInput?.addEventListener("input", applySearchFilter);
+cashTbody?.addEventListener("click", async (e) => { const id = e.target?.dataset?.del; if (!id || !confirm("Supprimer ?")) return; await deleteDoc(doc(db, "cashbook", id)); await refreshAll(); });
 
-btnAddCash?.addEventListener("click", openCashModal);
-cashCancel?.addEventListener("click", closeCashModal);
-cashSave?.addEventListener("click", saveCash);
-cashModal?.addEventListener("click", (e) => {
-  if (e.target?.dataset?.close) closeCashModal();
-});
-
-cashTbody?.addEventListener("click", async (e) => {
-  const id = e.target?.dataset?.del;
-  if (!id) return;
-  if (!confirm("Supprimer cette opération ?")) return;
-  await deleteDoc(doc(db, "cashbook", id));
-  await refreshAll();
-});
-
-btnPdf?.addEventListener("click", exportPdf);
-
-/** Init */
 onAuthStateChanged(auth, async (u) => {
   if (!u) { window.location.href = "pdm-staff.html"; return; }
-  const isAdmin = await checkIsAdmin(u.uid);
-  if (!isAdmin) {
-    showDenyScreen();
-    return;
-  }
+  if (!(await checkIsAdmin(u.uid))) { showDenyScreen(); return; }
   currentUser = u;
-  setRange(getWeekRange(new Date()));
-  await refreshAll();
+  try {
+    const snap = await getDoc(doc(db, "users", u.uid));
+    if (snap.exists()) renderUserBadge(snap.data());
+  } catch(e) { console.error(e); }
+  setRange(getWeekRange(new Date())); await refreshAll();
 });

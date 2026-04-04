@@ -1,7 +1,25 @@
-import { db, auth, checkIsAdmin, logAction } from "./config.js";
 import {
-  collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc,
-  serverTimestamp, onSnapshot, query, where, orderBy
+  addDoc,
+  auth,
+  checkIsAdmin,
+  collection,
+  deleteDoc,
+  doc,
+  esc } from "./common.js";
+import { db,
+  getDoc,
+  getDocs,
+  logAction } from "./config.js";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  renderUserBadge,
+  serverTimestamp,
+  showDenyScreen,
+  updateDoc,
+  where
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
@@ -347,6 +365,8 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   try {
+    const uSnap = await getDocs(query(collection(db, "users"), where("id", "==", user.uid)));
+    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
     const ok = await checkIsAdmin(user.uid);
     if (!ok) {
       showDenyScreen();
