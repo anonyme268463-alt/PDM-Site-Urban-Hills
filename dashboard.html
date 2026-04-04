@@ -4,65 +4,96 @@
   <meta charset="UTF-8">
   <title>PDM Admin - Dashboard</title>
   <link rel="stylesheet" href="app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module" src="dashboard.js"></script>
 </head>
 <body>
 
-<div class="layout">
-
+<div class="app-container">
   <aside class="sidebar">
-    <h2>PDM ADMIN</h2>
-    <a class="active" href="dashboard.html">Dashboard</a>
-    <a href="clients.html">Clients</a>
-    <a href="stock.html">Stock</a>
-    <a href="ventes.html">Ventes</a>
-    <a href="vehicles.html">Véhicules</a>
-    <a href="partenariats.html">Partenaires</a>
-    <a href="compta.html">Comptabilité</a>
-    <a href="catalogue.html">Catalogue</a>
-    <a href="gestion.html">Gestion</a>
-    <button id="logoutBtn">Déconnexion</button>
+    <div class="sidebar-brand">
+      <div class="brand-title">PDM <span>ADMIN</span></div>
+      <div class="brand-sub">Urban Hills</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-link active" href="dashboard.html">
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-link" href="clients.html">
+        <span>Clients</span>
+      </a>
+      <a class="nav-link" href="stock.html">
+        <span>Stock</span>
+      </a>
+      <a class="nav-link" href="ventes.html">
+        <span>Ventes</span>
+      </a>
+      <a class="nav-link" href="vehicles.html">
+        <span>Véhicules</span>
+      </a>
+      <a class="nav-link" href="partenariats.html">
+        <span>Partenaires</span>
+      </a>
+      <a class="nav-link" href="compta.html">
+        <span>Comptabilité</span>
+      </a>
+            <a class="nav-link" href="gestion.html">
+        <span>Gestion</span>
+      </a>
+      <a class="nav-link" href="logs.html"><span>Logs</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+    </div>
   </aside>
 
-  <main class="content">
-    <h1>Vue Globale</h1>
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="page-info">
+        <h1>Vue Globale</h1>
+        <p>Statistiques et aperçu des activités récentes</p>
+      </div>
+    </header>
 
-    <div class="cards">
-      <div class="card">
-        <div>CA TOTAL</div>
-        <h2 id="caTotal">$0</h2>
+    <div class="content-body">
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <div class="card-title">CA TOTAL</div>
+          <div class="stat-value" id="caTotal">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">PROFIT TOTAL</div>
+          <div class="stat-value" id="profitTotal">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">NOMBRE DE VENTES</div>
+          <div class="stat-value" id="salesCount">0</div>
+        </div>
       </div>
 
       <div class="card">
-        <div>PROFIT TOTAL</div>
-        <h2 id="profitTotal">$0</h2>
-      </div>
-
-      <div class="card">
-        <div>NOMBRE DE VENTES</div>
-        <h2 id="salesCount">0</h2>
+        <div class="card-header">
+          <div class="card-title">Dernières ventes</div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Modèle</th>
+                <th>Vente</th>
+                <th>Profit</th>
+              </tr>
+            </thead>
+            <tbody id="lastSales">
+              <tr><td colspan="5" class="muted">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-
-    <h2 style="margin-top:40px;">Dernières ventes</h2>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Client</th>
-          <th>Modèle</th>
-          <th>Vente</th>
-          <th>Profit</th>
-        </tr>
-      </thead>
-      <tbody id="lastSales">
-        <tr><td colspan="5">Chargement...</td></tr>
-      </tbody>
-    </table>
-
   </main>
-
 </div>
 
 </body>
