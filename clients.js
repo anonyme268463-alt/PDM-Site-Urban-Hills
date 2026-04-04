@@ -6,7 +6,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { logAction } from "./logger.js";
 import { esc, renderUserBadge } from "./common.js";
 
-const tbody = document.getElementById("clientTableBody");
+const tbody = document.getElementById("clientsTable");
 const search = document.getElementById("search");
 const modal = document.getElementById("clientModal");
 const closeModal = document.getElementById("closeModal");
