@@ -11,7 +11,7 @@ import { db,
   getDocs,
   logAction } from "./config.js";
 import {
-  collection,
+  partners,
   onSnapshot,
   orderBy,
   query,
