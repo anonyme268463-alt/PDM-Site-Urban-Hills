@@ -18,7 +18,7 @@ import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { runBulkEnrichment } from "./vehicles_migration.js";
 import { mergeCatalogueToVehicles } from "./merge_collections.js";
-import { checkIsAdmin, showDenyScreen, renderUserBadge, esc  from "./common.js"; renderUserBadge, esc } from "./common.js";
+import { checkIsAdmin, showDenyScreen, renderUserBadge, esc } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
 
