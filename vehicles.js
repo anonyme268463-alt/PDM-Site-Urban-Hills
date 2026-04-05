@@ -1,174 +1,73 @@
+import { db, auth } from "./config.js";
 import {
-  addDoc,
-  auth } from "./config.js";
-import {
-  collection,
-  collection,
-  db,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where
+  collection, doc, addDoc, updateDoc, deleteDoc,
+  serverTimestamp, query, where, orderBy, onSnapshot, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import {
+  esc, checkIsAdmin, showDenyScreen, renderUserBadge
+} from "./common.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
-import { runBulkEnrichment } from "./vehicles_migration.js";
 import { mergeCatalogueToVehicles } from "./merge_collections.js";
-import { checkIsAdmin, showDenyScreen, renderUserBadge, esc } from "./common.js";
+import { logAction } from "./logger.js";
 
-const $ = (id) => document.getElementById(id);
+// DOM Elements
+const elements = {
+  statTotal: document.getElementById("statTotal"),
+  statCats: document.getElementById("statCats"),
+  statMonth: document.getElementById("statMonth"),
+  search: document.getElementById("search"),
+  refreshBtn: document.getElementById("refreshBtn"),
+  enrichBtn: document.getElementById("enrichBtn"),
+  dedupeBtn: document.getElementById("dedupeBtn"),
+  addBtn: document.getElementById("addBtn"),
+  rows: document.getElementById("rows"),
+  vehModal: document.getElementById("vehModal"),
+  vmTitle: document.getElementById("vmTitle"),
+  vmClose: document.getElementById("vmClose"),
+  vmBrand: document.getElementById("vmBrand"),
+  vmModel: document.getElementById("vmModel"),
+  vmCategory: document.getElementById("vmCategory"),
+  vmPrice: document.getElementById("vmPrice"),
+  vmSellPrice: document.getElementById("vmSellPrice"),
+  vmClasse: document.getElementById("vmClasse"),
+  vmPlaces: document.getElementById("vmPlaces"),
+  vmVitesse: document.getElementById("vmVitesse"),
+  vmFile: document.getElementById("vmFile"),
+  vmUrl: document.getElementById("vmUrl"),
+  vmId: document.getElementById("vmId"),
+  vmDelete: document.getElementById("vmDelete"),
+  vmCancel: document.getElementById("vmCancel"),
+  vmSave: document.getElementById("vmSave"),
+  logoutBtn: document.getElementById("logoutBtn")
+};
 
-const rows = $("rows");
-const search = $("search");
-const refreshBtn = $("refreshBtn");
-const addBtn = $("addBtn");
-const enrichBtn = $("enrichBtn");
-const dedupeBtn = $("dedupeBtn");
-const logoutBtn = $("logoutBtn");
-
-const statTotal = $("statTotal");
-const statCats = $("statCats");
-const statMonth = $("statMonth");
-
-const vehModal = $("vehModal");
-const vmTitle = $("vmTitle");
-const vmClose = $("vmClose");
-const vmCancel = $("vmCancel");
-const vmSave = $("vmSave");
-const vmDelete = $("vmDelete");
-const vmId = $("vmId");
-
-const vmBrand = $("vmBrand");
-const vmModel = $("vmModel");
-const vmCategory = $("vmCategory");
-const vmClasse = $("vmClasse");
-const vmPlaces = $("vmPlaces");
-const vmVitesse = $("vmVitesse");
-const vmUrl = $("vmUrl");
-const vmFile = $("vmFile");
-const vmPrice = $("vmPrice");
-const vmSellPrice = $("vmSellPrice");
-
-let VEHICLES = [];
+let ALL_VEHICLES = [];
 let OPEN_ID = null;
+let unsubscribe = null;
 
-[c]));
+function closeModal() {
+  elements.vehModal.classList.add("hidden");
+  OPEN_ID = null;
 }
 
-function fmtDate(ts){
-  try { return ts?.toDate?.().toLocaleDateString("fr-FR") || "-"; }
-  catch { return "-"; }
+function openModal(title = "Nouveau Véhicule") {
+  elements.vmTitle.textContent = title;
+  elements.vehModal.classList.remove("hidden");
 }
 
-function openModal(){ vehModal.classList.remove("hidden"); }
-function closeModal(){ vehModal.classList.add("hidden"); }
-
-logoutBtn?.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "pdm-staff.html";
-});
-
-vmClose?.addEventListener("click", closeModal);
-vmCancel?.addEventListener("click", closeModal);
-
-vmSellPrice?.addEventListener("input", () => {
-  const sell = Number(vmSellPrice.value || 0);
-  vmPrice.value = Math.floor(sell / 2);
-});
-
-[vmBrand, vmModel].forEach(el => {
-  el?.addEventListener("change", () => {
-    const b = (vmBrand.value || "").trim().toLowerCase();
-    const m = (vmModel.value || "").trim().toLowerCase();
-    if (VEHICLE_MAPPING[b] && VEHICLE_MAPPING[b][m]) {
-      const stats = VEHICLE_MAPPING[b][m];
-      if (!vmCategory.value) vmCategory.value = stats.type || "";
-      if (!vmClasse.value) vmClasse.value = stats.classe || "";
-      if (!vmPlaces.value || vmPlaces.value == 0) vmPlaces.value = stats.places || 0;
-      if (!vmVitesse.value || vmVitesse.value == 0) vmVitesse.value = stats.vitessemax || 0;
-    }
-  });
-});
-
-vehModal?.addEventListener("click", (e)=>{
-  if(e.target === vehModal) closeModal();
-});
-
-refreshBtn?.addEventListener("click", loadVehicles);
-search?.addEventListener("input", render);
-
-enrichBtn?.addEventListener("click", async () => {
-  if(!confirm("Voulez-vous fusionner la collection catalogue vers la collection véhicules ?")) return;
-  enrichBtn.disabled = true;
-  enrichBtn.textContent = "Fusion en cours...";
+function fmtDate(ts) {
+  if (!ts) return "-";
+  if (ts.seconds === undefined && !(ts instanceof Date)) return "...";
   try {
-    const res = await mergeCatalogueToVehicles();
-    alert(`Fusion terminée ! ${res.createdCount} créés, ${res.updatedCount} mis à jour.`);
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors de la fusion: " + err.message);
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    return date.toLocaleDateString("fr-FR");
+  } catch (e) {
+    return "-";
   }
-  enrichBtn.disabled = false;
-  enrichBtn.textContent = "Fusionner Catalogue";
-  await loadVehicles();
-});
-dedupeBtn?.addEventListener("click", async () => {
-  if(!confirm("Voulez-vous supprimer les doublons (même marque et même modèle) ? Seule la version la plus récente sera conservée.")) return;
-  dedupeBtn.disabled = true;
-  dedupeBtn.textContent = "Nettoyage...";
+}
 
-  try {
-    const snap = await getDocs(collection(db, "vehicles"));
-    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // Group by Brand + Model (normalized)
-    const groups = {};
-    all.forEach(v => {
-      const b = (v.brand || "").trim().toLowerCase();
-      const m = (v.model || "").trim().toLowerCase();
-      if (!b && !m) return; // skip empty entries
-      const key = `${b}|${m}`;
-      if(!groups[key]) groups[key] = [];
-      groups[key].push(v);
-    });
-
-    let deletedCount = 0;
-    let details = "";
-    for(const key in groups) {
-      const list = groups[key];
-      if(list.length > 1) {
-        // Sort by updatedAt or createdAt desc
-        list.sort((a,b) => {
-          const ta = (a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0);
-          const tb = (b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0);
-          return tb - ta;
-        });
-
-        // Keep the first (newest), delete others
-        const toDelete = list.slice(1);
-        for(const target of toDelete) {
-          await deleteDoc(doc(db, "vehicles", target.id));
-          deletedCount++;
-        }
-        details += `\n- ${key} (${list.length} -> 1)`;
-      }
-    }
-    alert(`Nettoyage terminé ! ${deletedCount} doublons supprimés.${details ? '\n\nDétails :' + details : ''}`);
-    await loadVehicles();
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors du nettoyage: " + err.message);
-  } finally {
-    dedupeBtn.disabled = false;
-    dedupeBtn.textContent = "Supprimer les doublons";
-  }
-});
-
-function fileToBase64(file) {
+async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -177,195 +76,279 @@ function fileToBase64(file) {
   });
 }
 
-vmSave?.addEventListener("click", async () => {
-  const brand = (vmBrand.value || "").trim();
-  const model = (vmModel.value || "").trim();
-  const type = (vmCategory.value || "").trim();
-  const classe = (vmClasse.value || "").trim();
-  const places = Number(vmPlaces.value || 0);
-  const vitessemax = Number(vmVitesse.value || 0);
-  let urlimagevehicule = (vmUrl.value || "").trim();
+function initFirestoreListener() {
+  if (unsubscribe) unsubscribe();
 
-  const buyPrice = Number(vmPrice.value || 0);
-  const sellPrice = Number(vmSellPrice.value || 0);
+  elements.rows.innerHTML = '<tr><td colspan="7" class="muted">Chargement...</td></tr>';
 
-  if(!brand || !model) return alert("Marque et modèle obligatoires.");
+  const q = query(collection(db, "vehicles"), orderBy("updatedAt", "desc"));
 
-  // Handle local file upload
-  if (vmFile.files && vmFile.files[0]) {
-    try {
-      urlimagevehicule = await fileToBase64(vmFile.files[0]);
-    } catch (e) {
-      console.error("Error converting file:", e);
-      return alert("Erreur lors de la lecture du fichier image.");
-    }
-  }
-
-  const payload = {
-    brand,
-    model,
-    type,
-    classe,
-    places,
-    vitessemax,
-    urlimagevehicule,
-    buyPrice,
-    sellPrice,
-    brandKey: brand.toLowerCase(),
-    modelKey: model.toLowerCase(),
-    typeKey: type.toLowerCase(),
-    updatedAt: serverTimestamp()
-  };
-
-  vmSave.disabled = true;
-  vmSave.textContent = "Enregistrement...";
-
-  try {
-    if(!OPEN_ID){
-      payload.createdAt = serverTimestamp();
-      await addDoc(collection(db, "vehicles"), payload);
-    } else {
-      await updateDoc(doc(db, "vehicles", OPEN_ID), payload);
-    }
-    closeModal();
-    await loadVehicles();
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors de l'enregistrement.");
-  } finally {
-    vmSave.disabled = false;
-    vmSave.textContent = "Enregistrer";
-  }
-});
-
-vmDelete?.addEventListener("click", async () => {
-  if(!OPEN_ID) return;
-  if(!confirm("Supprimer ce véhicule ?")) return;
-  await deleteDoc(doc(db, "vehicles", OPEN_ID));
-  closeModal();
-  await loadVehicles();
-});
-
-async function loadVehicles(){
-  rows.innerHTML = `<tr><td colspan="7" class="muted">Chargement...</td></tr>`;
-  try {
-    const snap = await getDocs(collection(db, "vehicles"));
-    VEHICLES = snap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+  unsubscribe = onSnapshot(q, (snap) => {
+    ALL_VEHICLES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
-  } catch (e) {
-    console.error(e);
-    rows.innerHTML = `<tr><td colspan="7" class="red">Erreur de chargement.</td></tr>`;
-  }
+  }, (err) => {
+    console.error("Firestore error:", err);
+    elements.rows.innerHTML = '<tr><td colspan="7" class="red">Erreur de connexion Firestore. Vérifiez vos permissions.</td></tr>';
+  });
 }
 
-function render(){
-  const q = (search.value || "").trim().toLowerCase();
-  const list = VEHICLES
-  .filter(v => {
-    if(!q) return true;
-    const a = (v.brand || "").toLowerCase();
-    const b = (v.model || "").toLowerCase();
-    const c = (v.type || "").toLowerCase();
-    return a.includes(q) || b.includes(q) || c.includes(q);
-  })
-  .sort((a,b)=>{
-    const da = a.createdAt?.toDate?.()?.getTime?.() || 0;
-    const db = b.createdAt?.toDate?.()?.getTime?.() || 0;
-    return db - da;
+function render() {
+  const searchTerm = (elements.search.value || "").trim().toLowerCase();
+
+  const filtered = ALL_VEHICLES.filter(v => {
+    if (!searchTerm) return true;
+    return (v.brand || "").toLowerCase().includes(searchTerm) ||
+           (v.model || "").toLowerCase().includes(searchTerm) ||
+           (v.type || "").toLowerCase().includes(searchTerm);
   });
 
-  statTotal.textContent = String(list.length);
-  const catSet = new Set(list.map(v => (v.type || "").trim()).filter(Boolean));
-  statCats.textContent = String(catSet.size);
+  // Stats
+  elements.statTotal.textContent = filtered.length;
+  const categories = new Set(filtered.map(v => (v.type || "").trim().toLowerCase()).filter(Boolean));
+  elements.statCats.textContent = categories.size;
 
   const now = new Date();
-  const month = now.getMonth();
-  const year = now.getFullYear();
-  const monthCount = list.filter(v => {
-    const d = v.createdAt?.toDate?.();
-    return d && d.getMonth() === month && d.getFullYear() === year;
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthCount = filtered.filter(v => {
+    const d = v.createdAt?.toDate ? v.createdAt.toDate() : (v.createdAt ? new Date(v.createdAt) : null);
+    return d && d >= startOfMonth;
   }).length;
-  statMonth.textContent = String(monthCount);
+  elements.statMonth.textContent = monthCount;
 
-  if(!list.length){
-    rows.innerHTML = `<tr><td colspan="7" class="muted">Aucun véhicule</td></tr>`;
+  if (filtered.length === 0) {
+    elements.rows.innerHTML = '<tr><td colspan="7" class="muted">Aucun véhicule trouvé.</td></tr>';
     return;
   }
 
-  rows.innerHTML = list.map(v => `
-  <tr>
-    <td>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <img src="${v.urlimagevehicule}" style="width:40px; height:25px; object-fit:cover; border-radius:4px; background:#222;" onerror="this.src='https://via.placeholder.com/40x25?text=?'">
-        <div>
-          <div style="font-weight:600">${esc(v.brand || "-")}</div>
-          <div class="muted" style="font-size:0.8em">${esc(v.model || "-")}</div>
+  elements.rows.innerHTML = filtered.map(v => `
+    <tr>
+      <td>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="${v.urlimagevehicule || ""}"
+               style="width:48px; height:28px; object-fit:cover; border-radius:4px; background:#111;"
+               onerror="this.src='https://via.placeholder.com/48x28?text=?'">
+          <div>
+            <div style="font-weight:600; color:#fff;">${esc(v.brand)}</div>
+            <div class="muted" style="font-size:11px;">${esc(v.model)}</div>
+          </div>
         </div>
-      </div>
-    </td>
-    <td>
-      <div>${esc(v.type || "-")}</div>
-      <div class="badge badge-info">${esc(v.classe || "-")}</div>
-    </td>
-    <td>
-      <div>🚗 ${v.places || 0} pl.</div>
-      <div class="muted" style="font-size:0.8em">⚡ ${v.vitessemax || 0} km/h</div>
-    </td>
-    <td>$${Number(v.buyPrice ?? v.price ?? 0).toLocaleString("en-US")}</td>
-    <td>$${Number(v.sellPrice || 0).toLocaleString("en-US")}</td>
-    <td>${fmtDate(v.createdAt)}</td>
-    <td style="text-align:right;">
-      <button class="btn btn-sm" data-edit="${v.id}">Modifier</button>
-      <button class="btn btn-danger btn-sm" data-del="${v.id}">Supprimer</button>
-    </td>
-  </tr>
+      </td>
+      <td>
+        <div style="font-size:13px;">${esc(v.type)}</div>
+        <span class="badge badge-info" style="font-size:10px;">${esc(v.classe)}</span>
+      </td>
+      <td>
+        <div style="font-size:13px;">👥 ${v.places || 0} places</div>
+        <div class="muted" style="font-size:11px;">⚡ ${v.vitessemax || 0} km/h</div>
+      </td>
+      <td style="font-family:monospace; color:var(--accent-gold-soft); font-weight:600;">$${(v.buyPrice || v.price || 0).toLocaleString()}</td>
+      <td style="font-family:monospace; color:var(--accent-gold); font-weight:600;">$${(v.sellPrice || v.price || 0).toLocaleString()}</td>
+      <td class="muted" style="font-size:12px;">${fmtDate(v.createdAt)}</td>
+      <td style="text-align:right;">
+        <button class="btn btn-gold btn-sm" data-id="${v.id}" data-action="edit">Éditer</button>
+      </td>
+    </tr>
   `).join("");
 
-  rows.querySelectorAll("[data-edit]").forEach(btn=>{
-    btn.addEventListener("click", ()=> openEdit(btn.dataset.edit));
-  });
-
-  rows.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      const id = btn.dataset.del;
-      if(!confirm("Supprimer ce véhicule ?")) return;
-      await deleteDoc(doc(db, "vehicles", id));
-      await loadVehicles();
+  elements.rows.querySelectorAll('[data-action="edit"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const v = ALL_VEHICLES.find(x => x.id === btn.dataset.id);
+      if (!v) return;
+      OPEN_ID = v.id;
+      elements.vmId.textContent = v.id;
+      elements.vmBrand.value = v.brand || "";
+      elements.vmModel.value = v.model || "";
+      elements.vmCategory.value = v.type || "";
+      elements.vmClasse.value = v.classe || "";
+      elements.vmPlaces.value = v.places || 0;
+      elements.vmVitesse.value = v.vitessemax || 0;
+      elements.vmPrice.value = v.buyPrice || v.price || 0;
+      elements.vmSellPrice.value = v.sellPrice || v.price || 0;
+      elements.vmUrl.value = v.urlimagevehicule || "";
+      elements.vmFile.value = "";
+      elements.vmDelete.style.display = "block";
+      openModal("Modifier Véhicule");
     });
   });
 }
 
-function openEdit(id){
-  const v = VEHICLES.find(x => x.id === id);
-  if(!v) return;
-  OPEN_ID = id;
-  vmTitle.textContent = "Modifier un véhicule";
-  vmId.textContent = id;
-  vmBrand.value = v.brand || "";
-  vmModel.value = v.model || "";
-  vmCategory.value = v.type || "";
-  vmClasse.value = v.classe || "";
-  vmPlaces.value = v.places || 0;
-  vmVitesse.value = v.vitessemax || 0;
-  vmUrl.value = v.urlimagevehicule || "";
-  vmFile.value = "";
-  vmPrice.value = Number(v.buyPrice ?? v.price ?? 0);
-  vmSellPrice.value = Number(v.sellPrice || 0);
-  vmDelete.style.display = "";
-  openModal();
-}
+elements.refreshBtn?.addEventListener("click", () => initFirestoreListener());
+elements.search?.addEventListener("input", render);
 
-onAuthStateChanged(auth, async (u) => {
-  if (!u) { window.location.href = "pdm-staff.html"; return; }
-  const uSnap = await getDocs(query(collection(db, "users"), where("id", "==", u.uid)));
-  if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
-  const isAdmin = await checkIsAdmin(u.uid);
-  if (!isAdmin) {
+elements.addBtn?.addEventListener("click", () => {
+  OPEN_ID = null;
+  elements.vmId.textContent = "-";
+  elements.vmBrand.value = "";
+  elements.vmModel.value = "";
+  elements.vmCategory.value = "";
+  elements.vmClasse.value = "";
+  elements.vmPlaces.value = "";
+  elements.vmVitesse.value = "";
+  elements.vmPrice.value = "";
+  elements.vmSellPrice.value = "";
+  elements.vmUrl.value = "";
+  elements.vmFile.value = "";
+  elements.vmDelete.style.display = "none";
+  openModal("Nouveau Véhicule");
+});
+
+elements.vmClose?.addEventListener("click", closeModal);
+elements.vmCancel?.addEventListener("click", closeModal);
+
+elements.vmSellPrice?.addEventListener("input", () => {
+  const sell = Number(elements.vmSellPrice.value || 0);
+  elements.vmPrice.value = Math.floor(sell / 2);
+});
+
+[elements.vmBrand, elements.vmModel].forEach(el => {
+  el?.addEventListener("change", () => {
+    const brand = elements.vmBrand.value.trim().toLowerCase();
+    const model = elements.vmModel.value.trim().toLowerCase();
+    if (VEHICLE_MAPPING[brand] && VEHICLE_MAPPING[brand][model]) {
+      const data = VEHICLE_MAPPING[brand][model];
+      if (!elements.vmCategory.value) elements.vmCategory.value = data.type || "";
+      if (!elements.vmClasse.value) elements.vmClasse.value = data.classe || "";
+      if (!elements.vmPlaces.value) elements.vmPlaces.value = data.places || 0;
+      if (!elements.vmVitesse.value) elements.vmVitesse.value = data.vitessemax || 0;
+    }
+  });
+});
+
+elements.vmSave?.addEventListener("click", async () => {
+  const brand = elements.vmBrand.value.trim();
+  const model = elements.vmModel.value.trim();
+  if (!brand || !model) return alert("Marque et Modèle sont requis.");
+
+  elements.vmSave.disabled = true;
+  elements.vmSave.textContent = "Enregistrement...";
+
+  try {
+    let url = elements.vmUrl.value.trim();
+    if (elements.vmFile.files && elements.vmFile.files[0]) {
+      url = await fileToBase64(elements.vmFile.files[0]);
+    }
+
+    const data = {
+      brand,
+      model,
+      type: elements.vmCategory.value.trim(),
+      classe: elements.vmClasse.value.trim(),
+      places: Number(elements.vmPlaces.value || 0),
+      vitessemax: Number(elements.vmVitesse.value || 0),
+      buyPrice: Number(elements.vmPrice.value || 0),
+      sellPrice: Number(elements.vmSellPrice.value || 0),
+      urlimagevehicule: url,
+      updatedAt: serverTimestamp(),
+      brandKey: brand.toLowerCase(),
+      modelKey: model.toLowerCase()
+    };
+
+    if (OPEN_ID) {
+      await updateDoc(doc(db, "vehicles", OPEN_ID), data);
+      await logAction("VEHICLE_UPDATE", `Modifié: ${brand} ${model}`);
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(collection(db, "vehicles"), data);
+      await logAction("VEHICLE_ADD", `Ajouté: ${brand} ${model}`);
+    }
+    closeModal();
+  } catch (err) {
+    console.error("Save error:", err);
+    alert("Erreur lors de l'enregistrement.");
+  } finally {
+    elements.vmSave.disabled = false;
+    elements.vmSave.textContent = "Enregistrer";
+  }
+});
+
+elements.vmDelete?.addEventListener("click", async () => {
+  if (!OPEN_ID) return;
+  if (!confirm("Supprimer ce véhicule définitivement ?")) return;
+  try {
+    const v = ALL_VEHICLES.find(x => x.id === OPEN_ID);
+    await deleteDoc(doc(db, "vehicles", OPEN_ID));
+    await logAction("VEHICLE_DELETE", `Supprimé: ${v?.brand} ${v?.model}`);
+    closeModal();
+  } catch (err) {
+    console.error("Delete error:", err);
+    alert("Erreur lors de la suppression.");
+  }
+});
+
+elements.enrichBtn?.addEventListener("click", async () => {
+  if (!confirm("Importer les véhicules du catalogue vers la base de données ?")) return;
+  elements.enrichBtn.disabled = true;
+  elements.enrichBtn.textContent = "Fusion en cours...";
+  try {
+    const res = await mergeCatalogueToVehicles();
+    alert(`Migration terminée : ${res.createdCount} créés, ${res.updatedCount} mis à jour.`);
+  } catch (err) {
+    console.error("Enrich error:", err);
+    alert("Erreur lors de la fusion.");
+  } finally {
+    elements.enrichBtn.disabled = false;
+    elements.enrichBtn.textContent = "Fusionner Catalogue";
+  }
+});
+
+elements.dedupeBtn?.addEventListener("click", async () => {
+  if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;
+  elements.dedupeBtn.disabled = true;
+  elements.dedupeBtn.textContent = "Nettoyage...";
+  try {
+    const groups = {};
+    ALL_VEHICLES.forEach(v => {
+      const key = `${v.brand?.toLowerCase()}|${v.model?.toLowerCase()}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(v);
+    });
+    let deleted = 0;
+    for (const key in groups) {
+      const list = groups[key];
+      if (list.length > 1) {
+        list.sort((a, b) => {
+          const ta = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0;
+          const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
+          return tb - ta;
+        });
+        for (let i = 1; i < list.length; i++) {
+          await deleteDoc(doc(db, "vehicles", list[i].id));
+          deleted++;
+        }
+      }
+    }
+    alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
+  } catch (err) {
+    console.error("Dedupe error:", err);
+    alert("Erreur lors du nettoyage.");
+  } finally {
+    elements.dedupeBtn.disabled = false;
+    elements.dedupeBtn.textContent = "Supprimer les doublons";
+  }
+});
+
+elements.logoutBtn?.addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "pdm-staff.html";
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "pdm-staff.html";
+    return;
+  }
+  try {
+    const isAdmin = await checkIsAdmin(user.uid);
+    if (!isAdmin) {
+      showDenyScreen();
+      return;
+    }
+    const qUser = query(collection(db, "users"), where("id", "==", user.uid));
+    const uSnap = await getDocs(qUser);
+    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
+    initFirestoreListener();
+  } catch (err) {
+    console.error("Auth init error:", err);
     showDenyScreen();
-  } else {
-    loadVehicles();
   }
 });

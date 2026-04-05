@@ -1,397 +1,327 @@
+import { db, auth } from "./config.js";
 import {
-  addDoc,
-  auth,
-  checkIsAdmin,
-  collection,
-  deleteDoc,
-  doc,
-  esc } from "./common.js";
-import { db,
-  getDoc,
-  getDocs,
-  logAction } from "./config.js";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  renderUserBadge,
-  serverTimestamp,
-  showDenyScreen,
-  updateDoc,
-  where
+  collection, doc, addDoc, updateDoc, deleteDoc,
+  serverTimestamp, query, where, orderBy, onSnapshot, getDocs, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import {
+  esc, checkIsAdmin, showDenyScreen, renderUserBadge
+} from "./common.js";
+import { logAction } from "./logger.js";
 
-const partnersTable = document.getElementById("partnersTable");
-const search = document.getElementById("search");
-const refreshBtn = document.getElementById("refreshBtn");
-const addPartnerBtn = document.getElementById("addPartnerBtn");
-const logoutBtn = document.getElementById("logoutBtn");
+// DOM Elements
+const elements = {
+  statPartners: document.getElementById("statPartners"),
+  statMembers: document.getElementById("statMembers"),
+  statActive: document.getElementById("statActive"),
+  search: document.getElementById("search"),
+  refreshBtn: document.getElementById("refreshBtn"),
+  addPartnerBtn: document.getElementById("addPartnerBtn"),
+  partnersTable: document.getElementById("partnersTable"),
 
-const statPartners = document.getElementById("statPartners");
-const statMembers = document.getElementById("statMembers");
-const statActive = document.getElementById("statActive");
+  partnerModal: document.getElementById("partnerModal"),
+  pmTitle: document.getElementById("pmTitle"),
+  pmClose: document.getElementById("pmClose"),
+  pmName: document.getElementById("pmName"),
+  pmActive: document.getElementById("pmActive"),
+  pmSave: document.getElementById("pmSave"),
+  pmDelete: document.getElementById("pmDelete"),
+  pmId: document.getElementById("pmId"),
+  pmCancel: document.getElementById("pmCancel"),
+  addMemberBtn: document.getElementById("addMemberBtn"),
+  membersTable: document.getElementById("membersTable"),
 
-// Modals
-const partnerModal = document.getElementById("partnerModal");
-const addPartnerModal = document.getElementById("addPartnerModal");
-const memberModal = document.getElementById("memberModal");
+  addPartnerModal: document.getElementById("addPartnerModal"),
+  apmClose: document.getElementById("apmClose"),
+  apmName: document.getElementById("apmName"),
+  apmCancel: document.getElementById("apmCancel"),
+  apmSave: document.getElementById("apmSave"),
 
-// Partner Modal UI
-const pmTitle = document.getElementById("pmTitle");
-const pmId = document.getElementById("pmId");
-const pmName = document.getElementById("pmName");
-const pmActive = document.getElementById("pmActive");
-const pmSave = document.getElementById("pmSave");
-const pmDelete = document.getElementById("pmDelete");
-const pmClose = document.getElementById("pmClose");
-const pmCancel = document.getElementById("pmCancel");
+  memberModal: document.getElementById("memberModal"),
+  mmTitle: document.getElementById("mmTitle"),
+  mmClose: document.getElementById("mmClose"),
+  mmFullName: document.getElementById("mmFullName"),
+  mmClientId: document.getElementById("mmClientId"),
+  mmRate: document.getElementById("mmRate"),
+  mmId: document.getElementById("mmId"),
+  mmCancel: document.getElementById("mmCancel"),
+  mmSave: document.getElementById("mmSave"),
 
-// Add Partner Modal UI
-const apmName = document.getElementById("apmName");
-const apmSave = document.getElementById("apmSave");
-const apmClose = document.getElementById("apmClose");
-const apmCancel = document.getElementById("apmCancel");
+  logoutBtn: document.getElementById("logoutBtn")
+};
 
-// Member Modal UI
-const mmTitle = document.getElementById("mmTitle");
-const mmId = document.getElementById("mmId");
-const mmFullName = document.getElementById("mmFullName");
-const mmClientId = document.getElementById("mmClientId");
-const mmRate = document.getElementById("mmRate");
-const mmSave = document.getElementById("mmSave");
-const mmClose = document.getElementById("mmClose");
-const mmCancel = document.getElementById("mmCancel");
+let ALL_PARTNERS = [];
+let CURRENT_PARTNER_ID = null;
+let PARTNER_MEMBERS = [];
+let unsubPartners = null;
+let unsubMembers = null;
 
-const membersTable = document.getElementById("membersTable");
-const addMemberBtn = document.getElementById("addMemberBtn");
-
-let PARTNERS = [];
-let OPEN_PARTNER_ID = null;
-let OPEN_MEMBERS = [];
-
-function esc(t){
-  if(!t) return "";
-  const d = document.createElement("div");
-  d.textContent = String(t);
-  return d.innerHTML;
+function hideAllModals() {
+  elements.partnerModal.classList.add("hidden");
+  elements.addPartnerModal.classList.add("hidden");
+  elements.memberModal.classList.add("hidden");
 }
 
-function fmtDate(ts){
-  if(!ts) return "-";
+function fmtDate(ts) {
+  if (!ts) return "-";
+  if (ts.seconds === undefined && !(ts instanceof Date)) return "...";
   try {
-    const d = ts.toDate();
-    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  } catch { return "-"; }
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    return date.toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return "-";
+  }
 }
 
-function hideAllModals(){
-  partnerModal.classList.add("hidden");
-  addPartnerModal.classList.add("hidden");
-  memberModal.classList.add("hidden");
-}
+// --- PARTNERS ---
 
-[pmClose, pmCancel, apmClose, apmCancel, mmClose, mmCancel].forEach(btn => {
-  btn?.addEventListener("click", hideAllModals);
-});
+function initPartnersListener() {
+  if (unsubPartners) unsubPartners();
 
-async function loadPartners(){
-  partnersTable.innerHTML = `<tr><td colspan="6" class="muted">Chargement...</td></tr>`;
-  try {
-    const snap = await getDocs(collection(db, "partners"));
-    const list = [];
-    for (const d of snap.docs){
-      const data = d.id ? { id: d.id, ...d.data() } : null;
-      if (data) {
-        // Get members count
-        const mSnap = await getDocs(collection(db, "partners", d.id, "members"));
-        data.membersCount = mSnap.size;
-        list.push(data);
-      }
+  elements.partnersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
+
+  const q = query(collection(db, "partners"), orderBy("name", "asc"));
+
+  unsubPartners = onSnapshot(q, async (snap) => {
+    const partners = [];
+    for (const d of snap.docs) {
+      const data = { id: d.id, ...d.data() };
+      // Note: This could be optimized by storing count in partner doc
+      const mSnap = await getDocs(collection(db, "partners", d.id, "members"));
+      data.membersCount = mSnap.size;
+      partners.push(data);
     }
-    PARTNERS = list;
+    ALL_PARTNERS = partners;
     renderPartners();
-  } catch (e) {
-    console.error(e);
-    partnersTable.innerHTML = `<tr><td colspan="6" class="red">Erreur de chargement.</td></tr>`;
-  }
-}
-
-function renderPartners(){
-  const q = (search.value || "").trim().toLowerCase();
-  const list = PARTNERS.filter(p => (p.name || "").toLowerCase().includes(q))
-    .sort((a,b) => (a.name || "").localeCompare(b.name || ""));
-
-  statPartners.textContent = String(list.length);
-  statMembers.textContent = String(list.reduce((acc, p) => acc + (p.membersCount||0), 0));
-  statActive.textContent = String(list.filter(p=>p.active===true).length);
-
-  if(!list.length){
-    partnersTable.innerHTML = `<tr><td colspan="6" class="muted">Aucun partenaire trouvé.</td></tr>`;
-    return;
-  }
-
-  partnersTable.innerHTML = list.map(p => `
-    <tr>
-      <td>${esc(p.name || "-")}</td>
-      <td><span class="badge ${p.active ? "badge-success" : "badge-danger"}">${p.active ? "Oui" : "Non"}</span></td>
-      <td>${p.membersCount || 0}</td>
-      <td>${fmtDate(p.createdAt)}</td>
-      <td>${fmtDate(p.updatedAt)}</td>
-      <td style="text-align:right;">
-        <button class="btn btn-gold" data-open="${p.id}">Voir / Éditer</button>
-      </td>
-    </tr>
-    `).join("");
-
-  partnersTable.querySelectorAll("[data-open]").forEach(btn=>{
-    btn.addEventListener("click", ()=> openPartner(btn.getAttribute("data-open")));
+  }, (err) => {
+    console.error("Partners error:", err);
+    elements.partnersTable.innerHTML = '<tr><td colspan="6" class="red">Erreur Firestore.</td></tr>';
   });
 }
 
-async function openPartner(partnerId){
-  OPEN_PARTNER_ID = partnerId;
-  const p = PARTNERS.find(x => x.id === partnerId);
+function renderPartners() {
+  const searchTerm = (elements.search.value || "").trim().toLowerCase();
+  const filtered = ALL_PARTNERS.filter(p => (p.name || "").toLowerCase().includes(searchTerm));
 
-  pmTitle.textContent = p?.name ? `Partenaire : ${p.name}` : "Partenaire";
-  pmId.textContent = partnerId;
-  pmName.value = p?.name || "";
-  pmActive.checked = p?.active === true;
+  elements.statPartners.textContent = filtered.length;
+  elements.statMembers.textContent = filtered.reduce((acc, p) => acc + (p.membersCount || 0), 0);
+  elements.statActive.textContent = filtered.filter(p => p.active).length;
 
-  await loadMembers(partnerId);
-  partnerModal.classList.remove("hidden");
+  if (filtered.length === 0) {
+    elements.partnersTable.innerHTML = '<tr><td colspan="6" class="muted">Aucun partenaire trouvé.</td></tr>';
+    return;
+  }
+
+  elements.partnersTable.innerHTML = filtered.map(p => `
+    <tr>
+      <td style="font-weight:600; color:#fff;">${esc(p.name)}</td>
+      <td><span class="badge ${p.active ? "badge-success" : "badge-danger"}">${p.active ? "Actif" : "Inactif"}</span></td>
+      <td>${p.membersCount || 0} membres</td>
+      <td class="muted" style="font-size:12px;">${fmtDate(p.createdAt)}</td>
+      <td class="muted" style="font-size:12px;">${fmtDate(p.updatedAt)}</td>
+      <td style="text-align:right;">
+        <button class="btn btn-gold btn-sm" data-id="${p.id}" data-action="open">Gérer</button>
+      </td>
+    </tr>
+  `).join("");
+
+  elements.partnersTable.querySelectorAll('[data-action="open"]').forEach(btn => {
+    btn.addEventListener('click', () => openPartner(btn.dataset.id));
+  });
 }
 
-async function loadMembers(partnerId){
-  membersTable.innerHTML = `<tr><td colspan="6" class="muted">Chargement...</td></tr>`;
-  try {
-    const snap = await getDocs(collection(db, "partners", partnerId, "members"));
-    const members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+async function openPartner(id) {
+  CURRENT_PARTNER_ID = id;
+  const p = ALL_PARTNERS.find(x => x.id === id);
+  if (!p) return;
 
-    for (const m of members){
-      let displayName = m.fullName || "-";
-      if (m.clientId){
+  elements.pmTitle.textContent = `Partenaire : ${p.name}`;
+  elements.pmId.textContent = id;
+  elements.pmName.value = p.name || "";
+  elements.pmActive.checked = !!p.active;
+
+  elements.partnerModal.classList.remove("hidden");
+  initMembersListener(id);
+}
+
+// --- MEMBERS ---
+
+function initMembersListener(partnerId) {
+  if (unsubMembers) unsubMembers();
+
+  elements.membersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
+
+  const q = query(collection(db, "partners", partnerId, "members"), orderBy("createdAt", "desc"));
+
+  unsubMembers = onSnapshot(q, async (snap) => {
+    const members = [];
+    for (const d of snap.docs) {
+      const m = { id: d.id, ...d.data() };
+      if (m.clientId) {
         try {
-          const c = await getDoc(doc(db, "clients", m.clientId));
-          if (c.exists()){
-            const cd = c.data();
-            displayName = cd.name || cd.fullName || displayName;
+          const cSnap = await getDoc(doc(db, "clients", m.clientId));
+          if (cSnap.exists()) {
+            m.clientName = cSnap.data().name || cSnap.data().fullName || "Client Inconnu";
           }
-        } catch {}
+        } catch (e) {}
       }
-      m.displayName = displayName;
+      members.push(m);
     }
-
-    OPEN_MEMBERS = members.sort((a,b)=>{
-      const da = a.createdAt?.toDate?.()?.getTime?.() || 0;
-      const dbb = b.createdAt?.toDate?.()?.getTime?.() || 0;
-      return dbb - da;
-    });
-
+    PARTNER_MEMBERS = members;
     renderMembers();
-  } catch (e) {
-    console.error(e);
-    membersTable.innerHTML = `<tr><td colspan="6" class="red">Erreur.</td></tr>`;
-  }
+  });
 }
 
-function renderMembers(){
-  if(!OPEN_MEMBERS.length){
-    membersTable.innerHTML = `<tr><td colspan="6" class="muted">Aucun client partenaire</td></tr>`;
+function renderMembers() {
+  if (PARTNER_MEMBERS.length === 0) {
+    elements.membersTable.innerHTML = '<tr><td colspan="6" class="muted">Aucun membre pour ce partenaire.</td></tr>';
     return;
   }
 
-  membersTable.innerHTML = OPEN_MEMBERS.map(m => `
+  elements.membersTable.innerHTML = PARTNER_MEMBERS.map(m => `
     <tr>
-      <td>${esc(m.displayName || "-")}</td>
-      <td><span style="font-family: monospace; color: var(--accent-gold-soft);">${esc(m.clientId || "-")}</span></td>
-      <td>${esc(m.rate ?? 0)}%</td>
-      <td>${fmtDate(m.createdAt)}</td>
-      <td>${fmtDate(m.updatedAt)}</td>
+      <td>${esc(m.clientName || m.fullName || "Inconnu")}</td>
+      <td style="font-family:monospace; font-size:12px;">${esc(m.clientId || "-")}</td>
+      <td style="color:var(--accent-gold); font-weight:600;">${m.rate || 0}%</td>
+      <td class="muted" style="font-size:11px;">${fmtDate(m.createdAt)}</td>
+      <td class="muted" style="font-size:11px;">${fmtDate(m.updatedAt)}</td>
       <td style="text-align:right;">
-        <button class="btn btn-outline btn-sm" data-edit="${m.id}">Modifier</button>
-        <button class="btn btn-danger btn-sm" data-del="${m.id}">Supprimer</button>
+        <button class="btn btn-outline btn-sm" data-id="${m.id}" data-action="editMember">Modifier</button>
+        <button class="btn btn-danger btn-sm" data-id="${m.id}" data-action="deleteMember">✕</button>
       </td>
     </tr>
-    `).join("");
+  `).join("");
 
-  membersTable.querySelectorAll("[data-edit]").forEach(btn=>{
-    btn.addEventListener("click", ()=> openMemberModal(btn.getAttribute("data-edit")));
+  elements.membersTable.querySelectorAll('[data-action="editMember"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = PARTNER_MEMBERS.find(x => x.id === btn.dataset.id);
+      if (!m) return;
+      elements.mmTitle.textContent = "Modifier Membre";
+      elements.mmId.textContent = m.id;
+      elements.mmFullName.value = m.fullName || "";
+      elements.mmClientId.value = m.clientId || "";
+      elements.mmRate.value = m.rate || 0;
+      elements.memberModal.classList.remove("hidden");
+    });
   });
-  membersTable.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=> deleteMember(btn.getAttribute("data-del")));
+
+  elements.membersTable.querySelectorAll('[data-action="deleteMember"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm("Supprimer ce membre ?")) return;
+      try {
+        await deleteDoc(doc(db, "partners", CURRENT_PARTNER_ID, "members", btn.dataset.id));
+        await logAction("PARTNER_MEMBER_DELETE", `Membre supprimé du partenaire ${CURRENT_PARTNER_ID}`);
+      } catch (e) { alert("Erreur."); }
+    });
   });
 }
 
-// Partner Actions
-pmSave?.addEventListener("click", async ()=>{
-  if(!OPEN_PARTNER_ID) return;
-  const name = (pmName.value || "").trim();
-  if(!name) return alert("Nom obligatoire.");
+// --- EVENTS ---
 
-  try {
-    await updateDoc(doc(db, "partners", OPEN_PARTNER_ID), {
-      name,
-      nameKey: name.toLowerCase(),
-      active: pmActive.checked,
-      updatedAt: serverTimestamp(),
-    });
-    await logAction("PARTENAIRE_MODIF", `Modif partenaire ${OPEN_PARTNER_ID}`);
-    await loadPartners();
-    hideAllModals();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur lors de la sauvegarde.");
-  }
+elements.refreshBtn?.addEventListener("click", () => initPartnersListener());
+elements.search?.addEventListener("input", renderPartners);
+
+elements.addPartnerBtn?.addEventListener("click", () => {
+  elements.apmName.value = "";
+  elements.addPartnerModal.classList.remove("hidden");
 });
 
-pmDelete?.addEventListener("click", async ()=>{
-  if(!OPEN_PARTNER_ID) return;
-  if(!confirm("Supprimer ce partenaire ?")) return;
-  try {
-    await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID));
-    await logAction("PARTENAIRE_SUPPR", `Suppression partenaire ${OPEN_PARTNER_ID}`);
-    hideAllModals();
-    await loadPartners();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur lors de la suppression.");
-  }
-});
-
-addPartnerBtn?.addEventListener("click", () => {
-  apmName.value = "";
-  addPartnerModal.classList.remove("hidden");
-});
-
-apmSave?.addEventListener("click", async () => {
-  const name = apmName.value.trim();
-  if (!name) return alert("Le nom est obligatoire.");
-
+elements.apmSave?.addEventListener("click", async () => {
+  const name = elements.apmName.value.trim();
+  if (!name) return alert("Nom requis.");
   try {
     await addDoc(collection(db, "partners"), {
       name,
-      nameKey: name.toLowerCase(),
       active: true,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     });
-    await logAction("PARTENAIRE_AJOUT", `Ajout partenaire: ${name}`);
+    await logAction("PARTNER_ADD", `Partenaire ajouté: ${name}`);
     hideAllModals();
-    await loadPartners();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur lors de la création.");
-  }
+  } catch (e) { alert("Erreur."); }
 });
 
-// Member Actions
-function openMemberModal(memberId = null) {
-  if (memberId) {
-    const m = OPEN_MEMBERS.find(x => x.id === memberId);
-    if (!m) return;
-    mmTitle.textContent = "Modifier Membre";
-    mmId.textContent = m.id;
-    mmFullName.value = m.fullName || "";
-    mmClientId.value = m.clientId || "";
-    mmRate.value = m.rate || 0;
-  } else {
-    mmTitle.textContent = "Ajouter Membre";
-    mmId.textContent = "";
-    mmFullName.value = "";
-    mmClientId.value = "";
-    mmRate.value = 0;
-  }
-  memberModal.classList.remove("hidden");
-}
+elements.pmSave?.addEventListener("click", async () => {
+  const name = elements.pmName.value.trim();
+  if (!name) return alert("Nom requis.");
+  try {
+    await updateDoc(doc(db, "partners", CURRENT_PARTNER_ID), {
+      name,
+      active: elements.pmActive.checked,
+      updatedAt: serverTimestamp()
+    });
+    await logAction("PARTNER_UPDATE", `Partenaire modifié: ${name}`);
+    hideAllModals();
+  } catch (e) { alert("Erreur."); }
+});
 
-addMemberBtn?.addEventListener("click", () => openMemberModal());
+elements.pmDelete?.addEventListener("click", async () => {
+  if (!confirm("Supprimer ce partenaire et tous ses membres ?")) return;
+  try {
+    await deleteDoc(doc(db, "partners", CURRENT_PARTNER_ID));
+    await logAction("PARTNER_DELETE", `Partenaire supprimé: ${CURRENT_PARTNER_ID}`);
+    hideAllModals();
+  } catch (e) { alert("Erreur."); }
+});
 
-mmSave?.addEventListener("click", async () => {
-  if (!OPEN_PARTNER_ID) return;
-  const fullName = mmFullName.value.trim();
-  const clientId = mmClientId.value.trim();
-  const rate = Number(mmRate.value);
-  const mId = mmId.textContent;
+elements.addMemberBtn?.addEventListener("click", () => {
+  elements.mmTitle.textContent = "Ajouter Membre";
+  elements.mmId.textContent = "";
+  elements.mmFullName.value = "";
+  elements.mmClientId.value = "";
+  elements.mmRate.value = 0;
+  elements.memberModal.classList.remove("hidden");
+});
 
+elements.mmSave?.addEventListener("click", async () => {
+  const fullName = elements.mmFullName.value.trim();
+  const clientId = elements.mmClientId.value.trim();
+  const rate = Number(elements.mmRate.value || 0);
+  const mId = elements.mmId.textContent;
   if (!fullName && !clientId) return alert("Nom ou ID Client requis.");
-  if (isNaN(rate) || rate < 0) return alert("Taux invalide.");
-
   try {
     const data = {
       fullName,
       clientId: clientId || null,
       rate,
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
-
     if (mId) {
-      await updateDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", mId), data);
-      await logAction("PARTENAIRE_MEMBRE_MODIF", `Modif membre ${mId} (Partenaire ${OPEN_PARTNER_ID})`);
+      await updateDoc(doc(db, "partners", CURRENT_PARTNER_ID, "members", mId), data);
     } else {
       data.createdAt = serverTimestamp();
-      await addDoc(collection(db, "partners", OPEN_PARTNER_ID, "members"), data);
-      await logAction("PARTENAIRE_MEMBRE_AJOUT", `Ajout membre (Partenaire ${OPEN_PARTNER_ID})`);
+      await addDoc(collection(db, "partners", CURRENT_PARTNER_ID, "members"), data);
     }
-
-    hideAllModals();
-    await loadPartners(); // for counters
-    await loadMembers(OPEN_PARTNER_ID);
-    partnerModal.classList.remove("hidden"); // stay on partner view
-  } catch (e) {
-    console.error(e);
-    alert("Erreur de sauvegarde du membre.");
-  }
+    elements.memberModal.classList.add("hidden");
+  } catch (e) { alert("Erreur."); }
 });
 
-async function deleteMember(memberId){
-  if(!confirm("Supprimer ce client du partenaire ?")) return;
-  try {
-    await deleteDoc(doc(db, "partners", OPEN_PARTNER_ID, "members", memberId));
-    await logAction("PARTENAIRE_MEMBRE_SUPPR", `Suppression membre ${memberId} (Partenaire ${OPEN_PARTNER_ID})`);
-    await loadPartners();
-    await loadMembers(OPEN_PARTNER_ID);
-  } catch (e) {
-    console.error(e);
-    alert("Erreur de suppression du membre.");
-  }
-}
+[elements.pmClose, elements.pmCancel, elements.apmClose, elements.apmCancel, elements.mmClose, elements.mmCancel].forEach(btn => {
+  btn?.addEventListener("click", hideAllModals);
+});
 
-// Initialization & Auth
+elements.logoutBtn?.addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "pdm-staff.html";
+});
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "pdm-staff.html";
     return;
   }
   try {
-    const uSnap = await getDocs(query(collection(db, "users"), where("id", "==", user.uid)));
-    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
-    const ok = await checkIsAdmin(user.uid);
-    if (!ok) {
+    const isAdmin = await checkIsAdmin(user.uid);
+    if (!isAdmin) {
       showDenyScreen();
-    } else {
-      loadPartners();
+      return;
     }
-  } catch (e) {
-    console.error(e);
+    const qUser = query(collection(db, "users"), where("id", "==", user.uid));
+    const uSnap = await getDocs(qUser);
+    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
+    initPartnersListener();
+  } catch (err) {
+    console.error(err);
     showDenyScreen();
   }
 });
-
-search?.addEventListener("input", renderPartners);
-refreshBtn?.addEventListener("click", loadPartners);
-
-logoutBtn?.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "pdm-staff.html";
-});
-
-function showDenyScreen() {
-    document.body.innerHTML = `
-    <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000; color:#fff; font-family:sans-serif;">
-      <h1 style="color:var(--accent-gold);">Accès Refusé</h1>
-      <p>Vous n'avez pas les permissions pour accéder à cette page.</p>
-      <button onclick="window.location.href='dashboard.html'" class="btn btn-gold" style="margin-top:20px;">Retour au Dashboard</button>
-    </div>`;
-}
