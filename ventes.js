@@ -36,70 +36,58 @@ const fNotes = document.getElementById("fNotes");
 
 const modelsList = document.getElementById("modelsList");
 
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    await signOut(auth);
-    window.location.href = "pdm-staff.html";
-  });
-}
+let CACHE = {
+  tx: [], clients: [], partners: [], users: [], vehicles: [], stock: [], reservations: [],
+  me: null, role: "staff",
+  modelAlias: {}, modelSuffixAlias: {}
+};
+let editingId = null;
 
 function money(n){
   return "$" + Number(n || 0).toLocaleString("en-US");
 }
 function dateFR(ts){
-  try{ if(ts?.toDate) return ts.toDate().toLocaleDateString("fr-FR"); }catch(e){}
-  return "-";
-}
-
-let CACHE = { tx:[], clients:[], partners:[], users:[], vehicles:[], me:null, role:"staff", modelAlias:new Map() };
-let editingId = null;
-
-function normKey(s){
-  return String(s || "")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toUpperCase();
+  if(!ts) return "-";
+  const d = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds*1000) : new Date(ts));
+  return d.toLocaleDateString("fr-FR") + " " + d.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
 }
 
 function buildModelAlias(){
-  CACHE.modelAlias = new Map();
-  const list = CACHE.vehicles;
-  for(const v of list){
-    const brand = (v.brand || "").trim();
-    const model = (v.model || "").trim();
-    if(!model) continue;
-    const kModel = normKey(model);
-    if(!CACHE.modelAlias.has(kModel)) CACHE.modelAlias.set(kModel, v);
-    const kFull = normKey(`${brand} ${model}`);
-    if(!CACHE.modelAlias.has(kFull)) CACHE.modelAlias.set(kFull, v);
-  }
+  CACHE.modelAlias = {};
+  CACHE.modelSuffixAlias = {};
+  CACHE.vehicles.forEach(v => {
+    const brand = (v.brand || "").trim().toLowerCase();
+    const model = (v.model || "").trim().toLowerCase();
+    const full = `${brand} ${model}`;
+    CACHE.modelAlias[full] = v;
+    CACHE.modelSuffixAlias[model] = v;
+  });
 }
 
-function resolveModelDisplay(inputModel){
-  const key = normKey(inputModel);
-  if(!key) return null;
-  if(CACHE.modelAlias.has(key)) return CACHE.modelAlias.get(key);
+function resolveModelDisplay(str){
+  const s = (str || "").trim().toLowerCase();
+  if(CACHE.modelAlias[s]) return CACHE.modelAlias[s];
+  const words = s.split(" ");
+  const last = words[words.length - 1];
+  if(CACHE.modelSuffixAlias[last]) return CACHE.modelSuffixAlias[last];
   return null;
 }
 
 function buildModelDatalist(){
-  if(!modelsList) return;
-  const list = CACHE.vehicles;
-  const uniq = Array.from(new Set(
-    list.map(v => (v.model || "").trim()).filter(Boolean)
-  )).sort((a,b)=>a.localeCompare(b, "fr"));
-  modelsList.innerHTML = uniq.map(m => `<option value="${esc(m)}"></option>`).join("");
+  const items = CACHE.vehicles
+    .map(v => `<option value="${esc(v.brand)} ${esc(v.model)}">`)
+    .concat(Object.keys(CACHE.modelSuffixAlias).map(m => `<option value="${esc(m)}">`));
+  modelsList.innerHTML = [...new Set(items)].join("");
 }
 
 async function loadMe(){
-  const u = auth.currentUser;
-  if(!u) return;
   try {
-    const snap = await getDoc(doc(db,"users", u.uid));
+    const user = auth.currentUser;
+    if(!user) return;
+    const snap = await getDoc(doc(db, "users", user.uid));
     if(snap.exists()){
       CACHE.me = snap.data();
-      CACHE.role = snap.data().role || "staff";
+      CACHE.role = (CACHE.me.role || "staff").toLowerCase();
       renderUserBadge(CACHE.me);
     } else {
       CACHE.me = { name: "User", role: "staff" };
@@ -125,12 +113,14 @@ async function load(){
   await loadMe();
   txTable.innerHTML = `<tr><td colspan="8">Chargement...</td></tr>`;
   try {
-    const [txSnap, clientsSnap, partnersSnap, usersSnap, vehiclesSnap] = await Promise.all([
+    const [txSnap, clientsSnap, partnersSnap, usersSnap, vehiclesSnap, stockSnap, resSnap] = await Promise.all([
       getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))),
       getDocs(collection(db,"clients")),
       getDocs(collection(db,"partners")),
       getDocs(collection(db,"users")),
-      getDocs(collection(db,"vehicles"))
+      getDocs(collection(db,"vehicles")),
+      getDocs(collection(db,"stock")),
+      getDocs(collection(db,"reservations"))
     ]);
 
     CACHE.tx = txSnap.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -138,6 +128,8 @@ async function load(){
     CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     CACHE.users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
     CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.stock = stockSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.reservations = resSnap.docs.map(d => ({ id:d.id, ...d.data() }));
 
     for (const p of CACHE.partners) {
       const ms = await getDocs(collection(db, "partners", p.id, "members"));
@@ -261,6 +253,8 @@ function openAdd(){
   } else {
     sellerGroup.classList.add("hidden");
   }
+  const indicator = document.getElementById("saleTypeIndicator");
+  if(indicator) indicator.style.display = "none";
   modal.classList.remove("hidden");
 }
 
@@ -297,6 +291,8 @@ function openEdit(id){
     fDiscountRate.value = "";
   }
   fNotes.value = t.notes || "";
+  const indicator = document.getElementById("saleTypeIndicator");
+  if(indicator) indicator.style.display = "none";
   modal.classList.remove("hidden");
 }
 
@@ -306,20 +302,257 @@ if(cancelBtn) cancelBtn.addEventListener("click", close);
 if(addBtn) addBtn.addEventListener("click", openAdd);
 if(refreshBtn) refreshBtn.addEventListener("click", load);
 
-async function autoPrice() {
-  const modelStr = fModel.value.trim();
-  const clientId = fClient.value;
-  if (!modelStr) { fCatalogPrice.value = ""; fDiscountRate.value = ""; return; }
   const vInfo = resolveModelDisplay(modelStr);
-  if (!vInfo) { fCatalogPrice.value = ""; fDiscountRate.value = ""; return; }
+  if (!vInfo) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    if (indicator) indicator.style.display = "none";
+    return;
+  }
+
   const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
-  const buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
+  let buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
   const discountRate = await getClientDiscount(clientId);
   const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+
+  let saleType = "Vente directe";
+  const normModel = modelStr.toLowerCase();
+
+  // Check reservations first
+  const res = CACHE.reservations.find(r =>
+    (r.client || "").trim().toLowerCase() === clientName &&
+    ((r.model || "").toLowerCase().includes(normModel) || normModel.includes((r.model || "").toLowerCase()))
+  );
+
+  if (res) {
+    saleType = "Vente d'une réservation";
+    buyPrice = 0;
+  } else {
+    // Check stock
+    const stock = CACHE.stock.find(s =>
+      ((s.model || "").toLowerCase().includes(normModel) || normModel.includes((s.model || "").toLowerCase())) &&
+      (Number(s.qty) || 0) > 0
+    );
+    if (stock) {
+      saleType = "Vente depuis le stock";
+      buyPrice = 0;
+    }
+  }
+
   fCatalogPrice.value = cataloguePrice;
   fDiscountRate.value = discountRate;
   fBuy.value = buyPrice;
   fSell.value = sellPrice;
+  fDetail.value = saleType;
+
+  if (indicator) {
+    indicator.textContent = saleType;
+    indicator.style.display = "block";
+    if (saleType !== "Vente directe") {
+      indicator.style.background = "rgba(46, 204, 113, 0.1)";
+      indicator.style.color = "#2ecc71";
+      indicator.style.borderColor = "#2ecc71";
+    } else {
+      indicator.style.background = "rgba(212, 175, 55, 0.1)";
+      indicator.style.color = "var(--accent-gold)";
+      indicator.style.borderColor = "var(--accent-gold)";
+    }
+  }
+
+  if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
+}
+
+  const vInfo = resolveModelDisplay(modelStr);
+  if (!vInfo) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    if (indicator) indicator.style.display = "none";
+    return;
+  }
+
+  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+  let buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
+  const discountRate = await getClientDiscount(clientId);
+  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+
+  let saleType = "Vente directe";
+  const normModel = modelStr.toLowerCase();
+
+  // Check reservations first
+  const res = CACHE.reservations.find(r =>
+    (r.client || "").trim().toLowerCase() === clientName &&
+    ((r.model || "").toLowerCase().includes(normModel) || normModel.includes((r.model || "").toLowerCase()))
+  );
+
+  if (res) {
+    saleType = "Vente d'une réservation";
+    buyPrice = 0;
+  } else {
+    // Check stock
+    const stock = CACHE.stock.find(s =>
+      ((s.model || "").toLowerCase().includes(normModel) || normModel.includes((s.model || "").toLowerCase())) &&
+      (Number(s.qty) || 0) > 0
+    );
+    if (stock) {
+      saleType = "Vente depuis le stock";
+      buyPrice = 0;
+    }
+  }
+
+  fCatalogPrice.value = cataloguePrice;
+  fDiscountRate.value = discountRate;
+  fBuy.value = buyPrice;
+  fSell.value = sellPrice;
+  fDetail.value = saleType;
+
+  if (indicator) {
+    indicator.textContent = saleType;
+    indicator.style.display = "block";
+    if (saleType !== "Vente directe") {
+      indicator.style.background = "rgba(46, 204, 113, 0.1)";
+      indicator.style.color = "#2ecc71";
+      indicator.style.borderColor = "#2ecc71";
+    } else {
+      indicator.style.background = "rgba(212, 175, 55, 0.1)";
+      indicator.style.color = "var(--accent-gold)";
+      indicator.style.borderColor = "var(--accent-gold)";
+    }
+  }
+
+  if (discountRate > 0) fNotes.value = \`Remise partenaire appliquée : \${discountRate}%\`;
+}
+
+  const vInfo = resolveModelDisplay(modelStr);
+  if (!vInfo) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    if (indicator) indicator.style.display = "none";
+    return;
+  }
+
+  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+  let buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
+  const discountRate = await getClientDiscount(clientId);
+  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+
+  let saleType = "Vente directe";
+  const normModel = modelStr.toLowerCase();
+
+  // Check reservations first
+  const res = CACHE.reservations.find(r =>
+    (r.client || "").trim().toLowerCase() === clientName &&
+    ((r.model || "").toLowerCase().includes(normModel) || normModel.includes((r.model || "").toLowerCase()))
+  );
+
+  if (res) {
+    saleType = "Vente d'une réservation";
+    buyPrice = 0;
+  } else {
+    // Check stock
+    const stock = CACHE.stock.find(s =>
+      ((s.model || "").toLowerCase().includes(normModel) || normModel.includes((s.model || "").toLowerCase())) &&
+      (Number(s.qty) || 0) > 0
+    );
+    if (stock) {
+      saleType = "Vente depuis le stock";
+      buyPrice = 0;
+    }
+  }
+
+  fCatalogPrice.value = cataloguePrice;
+  fDiscountRate.value = discountRate;
+  fBuy.value = buyPrice;
+  fSell.value = sellPrice;
+  fDetail.value = saleType;
+
+  if (indicator) {
+    indicator.textContent = saleType;
+    indicator.style.display = "block";
+    if (saleType !== "Vente directe") {
+      indicator.style.background = "rgba(46, 204, 113, 0.1)";
+      indicator.style.color = "#2ecc71";
+      indicator.style.borderColor = "#2ecc71";
+    } else {
+      indicator.style.background = "rgba(212, 175, 55, 0.1)";
+      indicator.style.color = "var(--accent-gold)";
+      indicator.style.borderColor = "var(--accent-gold)";
+    }
+  }
+
+  if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
+}
+
+async function autoPrice() {
+  const modelStr = fModel.value.trim();
+  const clientId = fClient.value;
+  const clientObj = CACHE.clients.find(c => c.id === clientId);
+  const clientName = (clientObj?.name || "").trim().toLowerCase();
+  const indicator = document.getElementById("saleTypeIndicator");
+
+  if (!modelStr) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    if (indicator) indicator.style.display = "none";
+    return;
+  }
+
+  const vInfo = resolveModelDisplay(modelStr);
+  if (!vInfo) {
+    fCatalogPrice.value = "";
+    fDiscountRate.value = "";
+    if (indicator) indicator.style.display = "none";
+    return;
+  }
+
+  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+  let buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
+  const discountRate = await getClientDiscount(clientId);
+  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+
+  let saleType = "Vente directe";
+  const normModel = modelStr.toLowerCase();
+
+  // Check reservations first
+  const res = CACHE.reservations.find(r =>
+    (r.client || "").trim().toLowerCase() === clientName &&
+    ((r.model || "").toLowerCase().includes(normModel) || normModel.includes((r.model || "").toLowerCase()))
+  );
+
+  if (res) {
+    saleType = "Vente d'une réservation";
+    buyPrice = 0;
+  } else {
+    // Check stock
+    const stock = CACHE.stock.find(s =>
+      ((s.model || "").toLowerCase().includes(normModel) || normModel.includes((s.model || "").toLowerCase())) &&
+      (Number(s.qty) || 0) > 0
+    );
+    if (stock) {
+      saleType = "Vente depuis le stock";
+      buyPrice = 0;
+    }
+  }
+
+  fCatalogPrice.value = cataloguePrice;
+  fDiscountRate.value = discountRate;
+  fBuy.value = buyPrice;
+  fSell.value = sellPrice;
+  fDetail.value = saleType;
+
+  if (indicator) {
+    indicator.textContent = saleType;
+    indicator.style.display = "block";
+    if (saleType !== "Vente directe") {
+      indicator.style.background = "rgba(46, 204, 113, 0.1)";
+      indicator.style.color = "#2ecc71";
+      indicator.style.borderColor = "#2ecc71";
+    } else {
+      indicator.style.background = "rgba(212, 175, 55, 0.1)";
+      indicator.style.color = "var(--accent-gold)";
+      indicator.style.borderColor = "var(--accent-gold)";
+    }
+  }
+
   if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
 }
 fModel.addEventListener("change", autoPrice);
@@ -380,3 +613,62 @@ async function removeTx(id){
 }
 
 onAuthStateChanged(auth, u => { if(u) load(); else window.location.href = "pdm-staff.html"; });
+
+// --- CSV Import ---
+const csvInput = document.getElementById("csvInput");
+const importCsvBtn = document.getElementById("importCsvBtn");
+
+if (importCsvBtn && csvInput) {
+  importCsvBtn.addEventListener("click", () => csvInput.click());
+  csvInput.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (file) handleCSV(file);
+    e.target.value = "";
+  });
+}
+
+async function handleCSV(file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return alert("Fichier CSV vide ou invalide.");
+
+    const headers = lines[0].toLowerCase().split(",").map(h => h.trim());
+    let count = 0;
+    for (let i = 1; i < lines.length; i++) {
+      try {
+        const cols = lines[i].split(",").map(c => c.trim());
+        if (cols.length < headers.length) continue;
+        const row = {};
+        headers.forEach((h, idx) => row[h] = cols[idx]);
+
+        const clientName = (row.client || row.nom || "").trim();
+        const model = (row.modele || row.model || "").trim();
+        const buyPrice = Number(row.buy || row.achat || 0);
+        const sellPrice = Number(row.sell || row.vente || 0);
+        const dateStr = row.date || new Date().toISOString().slice(0,10);
+        const detail = (row.detail || "Import CSV").trim();
+
+        if (!clientName || !model) continue;
+
+        const client = CACHE.clients.find(c => (c.name || "").toLowerCase() === clientName.toLowerCase());
+        if (!client) { console.warn("Client non trouvé:", clientName); continue; }
+
+        await addDoc(collection(db, "transactions"), {
+          clientId: client.id, clientName: client.name,
+          model, buyPrice, sellPrice, detail,
+          sellerId: auth.currentUser?.uid,
+          sellerName: CACHE.me?.name || "Vendeur",
+          createdBy: auth.currentUser?.uid,
+          createdAt: Timestamp.fromDate(new Date(dateStr)),
+          updatedAt: serverTimestamp()
+        });
+        count++;
+      } catch (err) { console.error("Row error:", err); }
+    }
+    alert(`Import terminé : ${count} ventes ajoutées.`);
+    await load();
+  };
+  reader.readAsText(file);
+}
