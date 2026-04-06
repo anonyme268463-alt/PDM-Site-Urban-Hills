@@ -100,6 +100,18 @@ function render() {
     return (v.brand || "").toLowerCase().includes(searchTerm) ||
            (v.model || "").toLowerCase().includes(searchTerm) ||
            (v.type || "").toLowerCase().includes(searchTerm);
+  }).sort((a, b) => {
+    const modelA = (a.model || "").toLowerCase();
+    const modelB = (b.model || "").toLowerCase();
+    if (modelA < modelB) return -1;
+    if (modelA > modelB) return 1;
+    const brandA = (a.brand || "").toLowerCase();
+    const brandB = (b.brand || "").toLowerCase();
+    if (brandA < brandB) return -1;
+    if (brandA > brandB) return 1;
+    const priceA = a.sellPrice || a.price || 0;
+    const priceB = b.sellPrice || b.price || 0;
+    return priceA - priceB;
   });
 
   // Stats

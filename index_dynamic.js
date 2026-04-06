@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         else if (f.sort === "priceDesc") filtered.sort((a,b) => b.price - a.price);
         else if (f.sort === "speedDesc") filtered.sort((a,b) => b.vitessemax - a.vitessemax);
         else if (f.sort === "seatsDesc") filtered.sort((a,b) => b.places - a.places);
-        else filtered.sort((a,b) => a.type.localeCompare(b.type) || a.price - b.price || a.brand.localeCompare(b.brand));
+        else filtered.sort((a,b) => (a.model || "").localeCompare(b.model || "") || (a.brand || "").localeCompare(b.brand || "") || a.price - b.price);
 
         renderGrid(filtered);
         resultsCount.textContent = `${filtered.length} véhicule${filtered.length > 1 ? 's' : ''}`;
