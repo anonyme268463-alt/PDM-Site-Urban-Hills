@@ -1,26 +1,7 @@
 import { db, auth } from "./config.js";
 import {
-  addDoc,
-  auth,
-  checkIsAdmin,
-  collection,
-  deleteDoc,
-  doc,
-  esc } from "./common.js";
-import { db,
-  getDoc,
-  getDocs,
-  logAction } from "./config.js";
-import {
-  partners,
-  onSnapshot,
-  orderBy,
-  query,
-  renderUserBadge,
-  serverTimestamp,
-  showDenyScreen,
-  updateDoc,
-  where
+  collection, doc, addDoc, updateDoc, deleteDoc,
+  serverTimestamp, query, where, orderBy, onSnapshot, getDocs, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
