@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         allVehicles.forEach(v => {
             v.hay = `${v.brand} ${v.model} ${v.type} ${v.classe}`.toLowerCase();
             v.price = Number(v.sellPrice || v.price || 0);
+            v.type = (v.type || "Inconnu").trim();
             v.vitessemax = Number(v.vitessemax) || 0;
             v.places = Number(v.places) || 0;
         });
@@ -120,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         else if (f.sort === "priceDesc") filtered.sort((a,b) => b.price - a.price);
         else if (f.sort === "speedDesc") filtered.sort((a,b) => b.vitessemax - a.vitessemax);
         else if (f.sort === "seatsDesc") filtered.sort((a,b) => b.places - a.places);
-        else filtered.sort((a,b) => (a.model || "").localeCompare(b.model || "") || (a.brand || "").localeCompare(b.brand || "") || a.price - b.price);
+        else filtered.sort((a, b) => (a.type || "Inconnu").localeCompare(b.type || "Inconnu") || a.price - b.price);
 
         renderGrid(filtered);
         resultsCount.textContent = `${filtered.length} véhicule${filtered.length > 1 ? 's' : ''}`;
