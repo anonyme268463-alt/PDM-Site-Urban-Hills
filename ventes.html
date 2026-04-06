@@ -41,6 +41,8 @@
       </div>
       <div class="top-bar-actions flex-row">
         <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
+        <button id="importCsvBtn" class="btn btn-outline">Importer CSV</button>
+        <input type="file" id="csvInput" accept=".csv" class="hidden">
         <button id="addBtn" class="btn btn-gold">+ Nouvelle Vente</button>
       </div>
     </header>
@@ -99,36 +101,47 @@
       </div>
     </div>
     <div class="modal-body">
+      <div id="saleTypeIndicator" style="display: none; padding: 12px; border-radius: 6px; background: rgba(212, 175, 55, 0.1); color: var(--accent-gold); font-weight: 600; margin-bottom: 20px; text-align: center; border: 1px dashed var(--accent-gold);">
+        Vente directe
+      </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
         <div class="form-group">
           <label>Date</label>
           <input id="fDate" type="date" class="input">
         </div>
+
         <div class="form-group">
           <label>Client</label>
           <select id="fClient" class="input"></select>
         </div>
+
         <div class="form-group">
           <label>Modèle</label>
           <input id="fModel" type="text" class="input" placeholder="Ex: Toros" list="modelsList">
           <datalist id="modelsList"></datalist>
         </div>
+
         <div class="form-group">
           <label>Détail</label>
-          <input id="fDetail" type="text" class="input" placeholder="Ex: Vente directe">
+          <input id="fDetail" type="text" class="input" readonly placeholder="Ex: Vente directe">
         </div>
+
         <div class="form-group">
           <label>Prix d'achat (Buy)</label>
           <input id="fBuy" type="number" class="input" placeholder="90000">
         </div>
+
         <div class="form-group">
           <label>Prix de vente (Sell)</label>
           <input id="fSell" type="number" class="input" placeholder="180000">
         </div>
+
         <div class="form-group">
           <label>Taux de réduction (%)</label>
           <input id="fDiscountRate" type="number" class="input" readonly placeholder="0">
         </div>
+
         <div class="form-group">
           <label>Prix catalogue</label>
           <input id="fCatalogPrice" type="number" class="input" readonly placeholder="0">
