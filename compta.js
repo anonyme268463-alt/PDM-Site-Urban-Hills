@@ -116,8 +116,8 @@ function renderKpis() {
 
 function gradeRate(grade) {
   const g = String(grade || "").toLowerCase();
-  if (g.includes("Co") && g.includes("PDG")) return 0.12;
-  if (g.includes("PDG") || g.includes("patron") || g.includes("admin")) return 0.05;
+  if (g.includes("co") && g.includes("pdg")) return 0.12;
+  if (g.includes("pdg") || g.includes("patron") || g.includes("admin")) return 0.05;
   return 0.10;
 }
 
@@ -136,13 +136,13 @@ function renderSalaries() {
     const rate = gradeRate(s.grade);
     const lg = s.grade.toLowerCase();
     let count = 0, base = 0;
-    if ((lg.includes("PDG") || lg.includes("patron") || lg.includes("admin")) && !lg.includes("Co")) { count = txRows.length; base = totalBaseAll; }
+    if ((lg.includes("pdg") || lg.includes("patron") || lg.includes("admin")) && !lg.includes("co")) { count = txRows.length; base = totalBaseAll; }
     else {
       const userTxs = txRows.filter(tx => (tx.sellerId && tx.sellerId === s.id) || (norm(tx.sellerName || tx.importedSeller || tx.vendeur) === norm(s.name)));
       count = userTxs.length; base = userTxs.reduce((sum, tx) => sum + moneyBase(tx), 0);
     }
     return { ...s, count, salary: base * rate, rate };
-  }).filter(r => r.salary > 0 || r.count > 0 || String(r.grade).toLowerCase().includes("PDG") || String(r.grade).toLowerCase().includes("admin")).sort((a, b) => b.salary - a.salary);
+  }).filter(r => r.salary > 0 || r.count > 0 || String(r.grade).toLowerCase().includes("pdg") || String(r.grade).toLowerCase().includes("admin")).sort((a, b) => b.salary - a.salary);
 
   salaryTbody.innerHTML = finalRows.map(r => `
     <tr>
