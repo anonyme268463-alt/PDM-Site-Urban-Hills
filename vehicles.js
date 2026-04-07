@@ -81,7 +81,7 @@ function initFirestoreListener() {
 
   elements.rows.innerHTML = '<tr><td colspan="7" class="muted">Chargement...</td></tr>';
 
-  const q = query(collection(db, "vehicles"), orderBy("updatedAt", "desc"));
+  const q = collection(db, "vehicles");
 
   unsubscribe = onSnapshot(q, (snap) => {
     ALL_VEHICLES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
