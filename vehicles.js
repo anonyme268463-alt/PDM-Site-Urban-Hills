@@ -1,7 +1,7 @@
 import { db, auth } from "./config.js";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  serverTimestamp, query, where, orderBy, onSnapshot, getDocs
+  serverTimestamp, query, where, onSnapshot, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
@@ -81,7 +81,7 @@ function initFirestoreListener() {
 
   elements.rows.innerHTML = '<tr><td colspan="7" class="muted">Chargement...</td></tr>';
 
-  const q = query(collection(db, "vehicles"), orderBy("updatedAt", "desc"));
+  const q = collection(db, "vehicles");
 
   unsubscribe = onSnapshot(q, (snap) => {
     ALL_VEHICLES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -98,20 +98,7 @@ function render() {
   const filtered = ALL_VEHICLES.filter(v => {
     if (!searchTerm) return true;
     return (v.brand || "").toLowerCase().includes(searchTerm) ||
-           (v.model || "").toLowerCase().includes(searchTerm) ||
-           (v.type || "").toLowerCase().includes(searchTerm);
-  }).sort((a, b) => {
-    const modelA = (a.model || "").toLowerCase();
-    const modelB = (b.model || "").toLowerCase();
-    if (modelA < modelB) return -1;
-    if (modelA > modelB) return 1;
-    const brandA = (a.brand || "").toLowerCase();
-    const brandB = (b.brand || "").toLowerCase();
-    if (brandA < brandB) return -1;
-    if (brandA > brandB) return 1;
-    const priceA = a.sellPrice || a.price || 0;
-    const priceB = b.sellPrice || b.price || 0;
-    return priceA - priceB;
+           (v.model || "").toLowerCase().includes(searchTerm) || (v.type || "").toLowerCase().includes(searchTerm);
   });
 
   // Stats

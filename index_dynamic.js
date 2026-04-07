@@ -1,13 +1,11 @@
-
 import { db } from "./config.js";
-import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const grid = document.querySelector(".catalogue-grid");
     const qInput = document.getElementById("q");
     const typeSelect = document.getElementById("typeSelect");
     const classSelect = document.getElementById("classSelect");
-    const sortSelect = document.getElementById("sortSelect");
     const minPrice = document.getElementById("minPrice");
     const maxPrice = document.getElementById("maxPrice");
     const minSpeed = document.getElementById("minSpeed");
@@ -29,12 +27,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         const snap = await getDocs(colRef);
         allVehicles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        if (allVehicles.length === 0) {
-            console.warn("No vehicles found in 'vehicles' collection.");
-        }
-
-        // Prepare data for filtering
+        // Prepare and normalize data
         allVehicles.forEach(v => {
+            let t = (v.type && v.type.trim()) || "Inconnu";
+            // Capitalize first letter, rest lower
+            v.type = t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
             v.hay = `${v.brand} ${v.model} ${v.type} ${v.classe}`.toLowerCase();
             v.price = Number(v.sellPrice || v.price || 0);
             v.vitessemax = Number(v.vitessemax) || 0;
@@ -43,19 +40,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Initialize Type Select
         const types = [...new Set(allVehicles.map(v => v.type))].sort();
-        typeSelect.innerHTML = '<option value="all">Tous les types</option>';
-        types.forEach(t => {
-            const opt = document.createElement("option");
-            opt.value = t;
-            opt.textContent = t;
-            typeSelect.appendChild(opt);
-        });
+        if (typeSelect) {
+            typeSelect.innerHTML = '<option value="all">Tous les types</option>';
+            types.forEach(t => {
+                const opt = document.createElement("option");
+                opt.value = t;
+                opt.textContent = t;
+                typeSelect.appendChild(opt);
+            });
+        }
 
         renderDailySelection(allVehicles);
         applyFilters();
 
     } catch (e) {
-        console.error("Error loading vehicles from 'vehicles':", e);
+        console.error("Error loading vehicles:", e);
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--accent-red);">
                 Erreur lors du chargement des véhicules.<br>
@@ -72,11 +71,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         const v = list[dayIndex];
 
         const img = dailySelection.querySelector(".car-preview-main img");
-        img.src = v.urlimagevehicule;
-        img.onerror = () => { img.src = "https://via.placeholder.com/600x300.png?text=Image+non+disponible"; };
+        if (img) {
+            img.src = v.urlimagevehicule;
+            img.onerror = () => { img.src = "https://via.placeholder.com/600x300.png?text=Image+non+disponible"; };
+        }
 
-        dailySelection.querySelector(".car-preview-badge").textContent = v.brand;
-        dailySelection.querySelector(".car-preview-price strong").textContent = `€ ${v.price.toLocaleString()}`;
+        const badge = dailySelection.querySelector(".car-preview-badge");
+        if (badge) badge.textContent = v.brand;
+
+        const priceStrong = dailySelection.querySelector(".car-preview-price strong");
+        if (priceStrong) priceStrong.textContent = `€ ${v.price.toLocaleString()}`;
 
         dailySelection.onclick = () => {
             const el = document.querySelector(`[data-id="${v.id}"]`);
@@ -90,16 +94,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function applyFilters() {
         const f = {
-            text: qInput.value.toLowerCase().trim(),
-            type: typeSelect.value,
-            classe: classSelect.value,
-            sort: sortSelect.value,
-            pMin: minPrice.value ? Number(minPrice.value) : null,
-            pMax: maxPrice.value ? Number(maxPrice.value) : null,
-            sMin: minSpeed.value ? Number(minSpeed.value) : null,
-            sMax: maxSpeed.value ? Number(maxSpeed.value) : null,
-            seatsMin: minSeats.value ? Number(minSeats.value) : null,
-            seatsMax: maxSeats.value ? Number(maxSeats.value) : null
+            text: qInput?.value.toLowerCase().trim() || "",
+            type: typeSelect?.value || "all",
+            classe: classSelect?.value || "all",
+            pMin: minPrice?.value ? Number(minPrice.value) : null,
+            pMax: maxPrice?.value ? Number(maxPrice.value) : null,
+            sMin: minSpeed?.value ? Number(minSpeed.value) : null,
+            sMax: maxSpeed?.value ? Number(maxSpeed.value) : null,
+            seatsMin: minSeats?.value ? Number(minSeats.value) : null,
+            seatsMax: maxSeats?.value ? Number(maxSeats.value) : null
         };
 
         let filtered = allVehicles.filter(v => {
@@ -115,15 +118,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             return true;
         });
 
-        // Sort
-        if (f.sort === "priceAsc") filtered.sort((a,b) => a.price - b.price);
-        else if (f.sort === "priceDesc") filtered.sort((a,b) => b.price - a.price);
-        else if (f.sort === "speedDesc") filtered.sort((a,b) => b.vitessemax - a.vitessemax);
-        else if (f.sort === "seatsDesc") filtered.sort((a,b) => b.places - a.places);
-        else filtered.sort((a,b) => (a.model || "").localeCompare(b.model || "") || (a.brand || "").localeCompare(b.brand || "") || a.price - b.price);
+        // Forced Sort: Category (Type) ASC, then Price ASC
+        filtered.sort((a, b) => {
+            const typeCompare = a.type.localeCompare(b.type);
+            if (typeCompare !== 0) return typeCompare;
+            return a.price - b.price;
+        });
 
         renderGrid(filtered);
-        resultsCount.textContent = `${filtered.length} véhicule${filtered.length > 1 ? 's' : ''}`;
+        if (resultsCount) {
+            resultsCount.textContent = `${filtered.length} véhicule${filtered.length > 1 ? 's' : ''}`;
+        }
     }
 
     function renderGrid(vehicles) {
@@ -149,13 +154,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             article.innerHTML = `
                 <div class="car-card-header">
                     <div>
-                        <div class="car-brand">${v.brand}</div>
-                        <div class="car-name">${v.model}</div>
+                        <div class="car-brand">${v.brand || ""}</div>
+                        <div class="car-name">${v.model || ""}</div>
                     </div>
                     <div class="car-stock">Type : ${v.type}</div>
                 </div>
                 <div class="car-image">
-                    <img src="${v.urlimagevehicule}" alt="${v.brand} ${v.model}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x300.png?text=Image+non+disponible'">
+                    <img src="${v.urlimagevehicule || ""}" alt="${v.brand} ${v.model}" loading="lazy" onerror="this.src='https://via.placeholder.com/600x300.png?text=Image+non+disponible'">
                 </div>
                 <div class="car-infos">
                     <div class="car-price">
@@ -179,16 +184,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Events
-    [qInput, typeSelect, classSelect, sortSelect, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(el => {
+    [qInput, typeSelect, classSelect, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(el => {
         el?.addEventListener("input", applyFilters);
         el?.addEventListener("change", applyFilters);
     });
 
     resetBtn?.addEventListener("click", () => {
-        [qInput, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(x => x.value = "");
-        typeSelect.value = "all";
-        classSelect.value = "all";
-        sortSelect.value = "default";
+        [qInput, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(x => { if(x) x.value = ""; });
+        if (typeSelect) typeSelect.value = "all";
+        if (classSelect) classSelect.value = "all";
         applyFilters();
     });
 });
