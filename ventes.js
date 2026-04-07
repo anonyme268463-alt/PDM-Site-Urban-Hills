@@ -1,16 +1,21 @@
 import { db, auth } from "./config.js";
 import {
   collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc,
-  serverTimestamp, query, orderBy, Timestamp
+  serverTimestamp, query, orderBy, Timestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
-import { esc, renderUserBadge } from "./common.js";
+import { esc, renderUserBadge, normRole } from "./common.js";
 
 const txTable = document.getElementById("txTable");
 const search = document.getElementById("search");
 const addBtn = document.getElementById("addBtn");
 const refreshBtn = document.getElementById("refreshBtn");
+const importCsvBtn = document.getElementById("importCsvBtn");
+const dedupeBtn = document.getElementById("dedupeBtn");
+const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+const selectAll = document.getElementById("selectAll");
+const thSelect = document.getElementById("thSelect");
 
 const kpiCA = document.getElementById("kpiCA");
 const kpiProfit = document.getElementById("kpiProfit");
@@ -87,11 +92,23 @@ async function loadMe(){
     const snap = await getDoc(doc(db, "users", user.uid));
     if(snap.exists()){
       CACHE.me = snap.data();
-      CACHE.role = (CACHE.me.role || "staff").toLowerCase();
+      CACHE.role = normRole(CACHE.me.role || CACHE.me.rank || "staff");
       renderUserBadge(CACHE.me);
     } else {
       CACHE.me = { name: "User", role: "staff" };
       CACHE.role = "staff";
+    }
+
+    if(CACHE.role === "admin") {
+      importCsvBtn?.classList.remove("hidden");
+      dedupeBtn?.classList.remove("hidden");
+      deleteSelectedBtn?.classList.remove("hidden");
+      thSelect?.classList.remove("hidden");
+    } else {
+      importCsvBtn?.classList.add("hidden");
+      dedupeBtn?.classList.add("hidden");
+      deleteSelectedBtn?.classList.add("hidden");
+      thSelect?.classList.add("hidden");
     }
   } catch(e) { console.error("Error loading user info:", e); }
 }
@@ -111,7 +128,7 @@ async function getClientDiscount(clientId) {
 
 async function load(){
   await loadMe();
-  txTable.innerHTML = `<tr><td colspan="8">Chargement...</td></tr>`;
+  txTable.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
   try {
     const [txSnap, clientsSnap, partnersSnap, usersSnap, vehiclesSnap, stockSnap, resSnap] = await Promise.all([
       getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))),
@@ -143,7 +160,7 @@ async function load(){
     render();
   } catch(e) {
     console.error(e);
-    txTable.innerHTML = `<tr><td colspan="8" class="red">Erreur de chargement.</td></tr>`;
+    txTable.innerHTML = `<tr><td colspan="9" class="red">Erreur de chargement.</td></tr>`;
   }
 }
 
@@ -203,7 +220,7 @@ function render(){
   kpiCount.textContent = String(rows.length);
 
   if(rows.length === 0){
-    txTable.innerHTML = `<tr><td colspan="8">Aucune vente</td></tr>`;
+    txTable.innerHTML = `<tr><td colspan="${CACHE.role === 'admin' ? 9 : 8}">Aucune vente</td></tr>`;
     return;
   }
 
@@ -212,8 +229,14 @@ function render(){
       ? `<button class="btn btn-gold" data-edit="${t.id}">Edit</button>
          <button class="btn" data-del="${t.id}">Suppr</button>`
       : `<span class="badge badge-no">LOCK</span>`;
+
+    const checkbox = CACHE.role === "admin"
+      ? `<td><input type="checkbox" class="row-select" data-id="${t.id}"></td>`
+      : "";
+
     return `
       <tr>
+        ${checkbox}
         <td>${dateFR(t.createdAt)}</td>
         <td>${esc(t._clientName)}</td>
         <td title="${esc(t._modelDisplay)}">${esc(t._modelDisplay)}</td>
@@ -231,6 +254,15 @@ function render(){
   });
   txTable.querySelectorAll("[data-del]").forEach(b=>{
     b.addEventListener("click", ()=> removeTx(b.getAttribute("data-del")));
+  });
+
+  if(selectAll) selectAll.checked = false;
+}
+
+if(selectAll) {
+  selectAll.addEventListener("change", () => {
+    const checkboxes = txTable.querySelectorAll(".row-select");
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
   });
 }
 
@@ -432,14 +464,88 @@ async function removeTx(id){
   } catch(e) { console.error(e); alert("Erreur lors de la suppression."); }
 }
 
+async function dedupeSales() {
+  if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+  if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;
+
+  dedupeBtn.disabled = true;
+  dedupeBtn.textContent = "Nettoyage...";
+
+  try {
+    const groups = {};
+    CACHE.tx.forEach(t => {
+      const d = t.createdAt?.toDate ? t.createdAt.toDate() : (t.createdAt?.seconds ? new Date(t.createdAt.seconds*1000) : new Date(t.createdAt));
+      const dateKey = d ? d.toISOString().split('T')[0] : "no-date";
+      const key = `${(t.clientId||'').toLowerCase()}|${(t.model||'').toLowerCase()}|${t.buyPrice}|${t.sellPrice}|${dateKey}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(t);
+    });
+
+    let deleted = 0;
+    for (const key in groups) {
+      const list = groups[key];
+      if (list.length > 1) {
+        list.sort((a, b) => {
+          const ta = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0;
+          const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
+          return tb - ta;
+        });
+        for (let i = 1; i < list.length; i++) {
+          await deleteDoc(doc(db, "transactions", list[i].id));
+          deleted++;
+        }
+      }
+    }
+    alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
+    await load();
+  } catch (err) {
+    console.error("Dedupe error:", err);
+    alert("Erreur lors du nettoyage.");
+  } finally {
+    dedupeBtn.disabled = false;
+    dedupeBtn.textContent = "Supprimer Doublons";
+  }
+}
+if(dedupeBtn) dedupeBtn.addEventListener("click", dedupeSales);
+
+async function deleteSelected() {
+  if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+  const selected = Array.from(txTable.querySelectorAll(".row-select:checked")).map(cb => cb.dataset.id);
+  if (selected.length === 0) { alert("Aucune vente sélectionnée."); return; }
+  if (!confirm(`Supprimer les ${selected.length} ventes sélectionnées ?`)) return;
+
+  deleteSelectedBtn.disabled = true;
+  deleteSelectedBtn.textContent = "Suppression...";
+
+  try {
+    const batch = writeBatch(db);
+    selected.forEach(id => {
+      batch.delete(doc(db, "transactions", id));
+    });
+    await batch.commit();
+    await logAction("VENTE_BATCH_SUPPR", `Suppression de ${selected.length} ventes`);
+    alert(`Success: ${selected.length} ventes supprimées.`);
+    await load();
+  } catch (e) {
+    console.error(e);
+    alert("Erreur lors de la suppression groupée.");
+  } finally {
+    deleteSelectedBtn.disabled = false;
+    deleteSelectedBtn.textContent = "Supprimer Sélection";
+  }
+}
+if(deleteSelectedBtn) deleteSelectedBtn.addEventListener("click", deleteSelected);
+
 onAuthStateChanged(auth, u => { if(u) load(); else window.location.href = "pdm-staff.html"; });
 
 // --- CSV Import ---
 const csvInput = document.getElementById("csvInput");
-const importCsvBtn = document.getElementById("importCsvBtn");
 
 if (importCsvBtn && csvInput) {
-  importCsvBtn.addEventListener("click", () => csvInput.click());
+  importCsvBtn.addEventListener("click", () => {
+    if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+    csvInput.click();
+  });
   csvInput.addEventListener("change", e => {
     const file = e.target.files[0];
     if (file) handleCSV(file);
@@ -448,6 +554,7 @@ if (importCsvBtn && csvInput) {
 }
 
 async function handleCSV(file) {
+  if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
   const reader = new FileReader();
   reader.onload = async (e) => {
     const text = e.target.result;
@@ -467,7 +574,7 @@ async function handleCSV(file) {
         const model = (row.modele || row.model || "").trim();
         const buyPrice = Number(row.buy || row.achat || 0);
         const sellPrice = Number(row.sell || row.vente || 0);
-        const dateStr = row.date || new Date().toISOString().slice(0,10);
+        const dateStr = row.date || "";
         const detail = (row.detail || "Import CSV").trim();
 
         if (!clientName || !model) continue;
@@ -475,13 +582,25 @@ async function handleCSV(file) {
         const client = CACHE.clients.find(c => (c.name || "").toLowerCase() === clientName.toLowerCase());
         if (!client) { console.warn("Client non trouvé:", clientName); continue; }
 
+        let createdAt = new Date();
+        if (dateStr) {
+          const parts = dateStr.split(/[\/\-]/);
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            const d = new Date(year, month, day, 12, 0, 0);
+            if (!isNaN(d.getTime())) createdAt = d;
+          }
+        }
+
         await addDoc(collection(db, "transactions"), {
           clientId: client.id, clientName: client.name,
           model, buyPrice, sellPrice, detail,
           sellerId: auth.currentUser?.uid,
           sellerName: CACHE.me?.name || "Vendeur",
           createdBy: auth.currentUser?.uid,
-          createdAt: Timestamp.fromDate(new Date(dateStr)),
+          createdAt: Timestamp.fromDate(createdAt),
           updatedAt: serverTimestamp()
         });
         count++;

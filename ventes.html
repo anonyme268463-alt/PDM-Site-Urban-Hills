@@ -41,7 +41,9 @@
       </div>
       <div class="top-bar-actions flex-row">
         <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
-        <button id="importCsvBtn" class="btn btn-outline">Importer CSV</button>
+        <button id="importCsvBtn" class="btn btn-outline hidden">Importer CSV</button>
+        <button id="dedupeBtn" class="btn btn-outline hidden">Supprimer Doublons</button>
+        <button id="deleteSelectedBtn" class="btn btn-danger hidden">Supprimer Sélection</button>
         <input type="file" id="csvInput" accept=".csv" class="hidden">
         <button id="addBtn" class="btn btn-gold">+ Nouvelle Vente</button>
       </div>
@@ -72,6 +74,7 @@
           <table class="table">
             <thead>
               <tr>
+                <th id="thSelect" class="hidden" style="width: 40px;"><input type="checkbox" id="selectAll"></th>
                 <th>Date</th>
                 <th>Client</th>
                 <th>Modèle</th>
@@ -83,7 +86,7 @@
               </tr>
             </thead>
             <tbody id="txTable">
-              <tr><td colspan="8" class="muted">Chargement...</td></tr>
+              <tr><td colspan="9" class="muted">Chargement...</td></tr>
             </tbody>
           </table>
         </div>
