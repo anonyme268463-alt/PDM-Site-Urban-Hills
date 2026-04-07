@@ -1,7 +1,7 @@
 import { db, auth } from "./config.js";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
-  serverTimestamp, query, where, orderBy, onSnapshot, getDocs
+  serverTimestamp, query, where, onSnapshot, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
