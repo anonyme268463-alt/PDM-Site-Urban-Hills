@@ -1,35 +1,33 @@
 import { db, auth } from "./config.js";
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc,
-  serverTimestamp, query, where, orderBy, onSnapshot, getDocs, getDoc
+  collection, addDoc, doc, getDoc, updateDoc, deleteDoc,
+  serverTimestamp, query, where, orderBy, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import {
-  esc, checkIsAdmin, showDenyScreen, renderUserBadge
-} from "./common.js";
 import { logAction } from "./logger.js";
+import { esc, checkIsAdmin, showDenyScreen, renderUserBadge } from "./common.js";
 
-// DOM Elements
 const elements = {
-  statPartners: document.getElementById("statPartners"),
-  statMembers: document.getElementById("statMembers"),
-  statActive: document.getElementById("statActive"),
   search: document.getElementById("search"),
   refreshBtn: document.getElementById("refreshBtn"),
   addPartnerBtn: document.getElementById("addPartnerBtn"),
+  statPartners: document.getElementById("statPartners"),
+  statMembers: document.getElementById("statMembers"),
+  statActive: document.getElementById("statActive"),
   partnersTable: document.getElementById("partnersTable"),
 
   partnerModal: document.getElementById("partnerModal"),
   pmTitle: document.getElementById("pmTitle"),
-  pmClose: document.getElementById("pmClose"),
+  pmId: document.getElementById("pmId"),
   pmName: document.getElementById("pmName"),
   pmActive: document.getElementById("pmActive"),
+  pmClose: document.getElementById("pmClose"),
+  pmCancel: document.getElementById("pmCancel"),
   pmSave: document.getElementById("pmSave"),
   pmDelete: document.getElementById("pmDelete"),
-  pmId: document.getElementById("pmId"),
-  pmCancel: document.getElementById("pmCancel"),
-  addMemberBtn: document.getElementById("addMemberBtn"),
+
   membersTable: document.getElementById("membersTable"),
+  addMemberBtn: document.getElementById("addMemberBtn"),
 
   addPartnerModal: document.getElementById("addPartnerModal"),
   apmClose: document.getElementById("apmClose"),
@@ -53,8 +51,6 @@ const elements = {
 let ALL_PARTNERS = [];
 let CURRENT_PARTNER_ID = null;
 let PARTNER_MEMBERS = [];
-let unsubPartners = null;
-let unsubMembers = null;
 
 function hideAllModals() {
   elements.partnerModal.classList.add("hidden");
@@ -75,28 +71,24 @@ function fmtDate(ts) {
 
 // --- PARTNERS ---
 
-function initPartnersListener() {
-  if (unsubPartners) unsubPartners();
-
+async function loadPartners() {
   elements.partnersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
-
-  const q = query(collection(db, "partners"), orderBy("name", "asc"));
-
-  unsubPartners = onSnapshot(q, async (snap) => {
+  try {
+    const q = query(collection(db, "partners"), orderBy("name", "asc"));
+    const snap = await getDocs(q);
     const partners = [];
     for (const d of snap.docs) {
       const data = { id: d.id, ...d.data() };
-      // Note: This could be optimized by storing count in partner doc
       const mSnap = await getDocs(collection(db, "partners", d.id, "members"));
       data.membersCount = mSnap.size;
       partners.push(data);
     }
     ALL_PARTNERS = partners;
     renderPartners();
-  }, (err) => {
+  } catch (err) {
     console.error("Partners error:", err);
     elements.partnersTable.innerHTML = '<tr><td colspan="6" class="red">Erreur Firestore.</td></tr>';
-  });
+  }
 }
 
 function renderPartners() {
@@ -141,19 +133,16 @@ async function openPartner(id) {
   elements.pmActive.checked = !!p.active;
 
   elements.partnerModal.classList.remove("hidden");
-  initMembersListener(id);
+  await loadMembers(id);
 }
 
 // --- MEMBERS ---
 
-function initMembersListener(partnerId) {
-  if (unsubMembers) unsubMembers();
-
+async function loadMembers(partnerId) {
   elements.membersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
-
-  const q = query(collection(db, "partners", partnerId, "members"), orderBy("createdAt", "desc"));
-
-  unsubMembers = onSnapshot(q, async (snap) => {
+  try {
+    const q = query(collection(db, "partners", partnerId, "members"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
     const members = [];
     for (const d of snap.docs) {
       const m = { id: d.id, ...d.data() };
@@ -169,7 +158,10 @@ function initMembersListener(partnerId) {
     }
     PARTNER_MEMBERS = members;
     renderMembers();
-  });
+  } catch (err) {
+    console.error("Members error:", err);
+    elements.membersTable.innerHTML = '<tr><td colspan="6" class="red">Erreur Firestore.</td></tr>';
+  }
 }
 
 function renderMembers() {
@@ -211,6 +203,8 @@ function renderMembers() {
       try {
         await deleteDoc(doc(db, "partners", CURRENT_PARTNER_ID, "members", btn.dataset.id));
         await logAction("PARTNER_MEMBER_DELETE", `Membre supprimé du partenaire ${CURRENT_PARTNER_ID}`);
+        await loadMembers(CURRENT_PARTNER_ID);
+        await loadPartners();
       } catch (e) { alert("Erreur."); }
     });
   });
@@ -218,7 +212,7 @@ function renderMembers() {
 
 // --- EVENTS ---
 
-elements.refreshBtn?.addEventListener("click", () => initPartnersListener());
+elements.refreshBtn?.addEventListener("click", () => loadPartners());
 elements.search?.addEventListener("input", renderPartners);
 
 elements.addPartnerBtn?.addEventListener("click", () => {
@@ -238,6 +232,7 @@ elements.apmSave?.addEventListener("click", async () => {
     });
     await logAction("PARTNER_ADD", `Partenaire ajouté: ${name}`);
     hideAllModals();
+    await loadPartners();
   } catch (e) { alert("Erreur."); }
 });
 
@@ -252,6 +247,7 @@ elements.pmSave?.addEventListener("click", async () => {
     });
     await logAction("PARTNER_UPDATE", `Partenaire modifié: ${name}`);
     hideAllModals();
+    await loadPartners();
   } catch (e) { alert("Erreur."); }
 });
 
@@ -261,6 +257,7 @@ elements.pmDelete?.addEventListener("click", async () => {
     await deleteDoc(doc(db, "partners", CURRENT_PARTNER_ID));
     await logAction("PARTNER_DELETE", `Partenaire supprimé: ${CURRENT_PARTNER_ID}`);
     hideAllModals();
+    await loadPartners();
   } catch (e) { alert("Erreur."); }
 });
 
@@ -293,6 +290,8 @@ elements.mmSave?.addEventListener("click", async () => {
       await addDoc(collection(db, "partners", CURRENT_PARTNER_ID, "members"), data);
     }
     elements.memberModal.classList.add("hidden");
+    await loadMembers(CURRENT_PARTNER_ID);
+    await loadPartners();
   } catch (e) { alert("Erreur."); }
 });
 
@@ -316,10 +315,9 @@ onAuthStateChanged(auth, async (user) => {
       showDenyScreen();
       return;
     }
-    const qUser = query(collection(db, "users"), where("id", "==", user.uid));
-    const uSnap = await getDocs(qUser);
-    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
-    initPartnersListener();
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) renderUserBadge(uSnap.data());
+    await loadPartners();
   } catch (err) {
     console.error(err);
     showDenyScreen();

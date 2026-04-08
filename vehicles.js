@@ -1,95 +1,59 @@
 import { db, auth } from "./config.js";
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc,
-  serverTimestamp, query, where, onSnapshot, getDocs
+  collection, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc,
+  serverTimestamp, query, where, orderBy, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import {
-  esc, checkIsAdmin, showDenyScreen, renderUserBadge
-} from "./common.js";
+import { logAction } from "./logger.js";
+import { esc, fmtDate, checkIsAdmin, showDenyScreen, renderUserBadge, normRole } from "./common.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { mergeCatalogueToVehicles } from "./merge_collections.js";
-import { logAction } from "./logger.js";
 
-// DOM Elements
 const elements = {
-  statTotal: document.getElementById("statTotal"),
-  statCats: document.getElementById("statCats"),
-  statMonth: document.getElementById("statMonth"),
+  rows: document.getElementById("vehicleRows"),
   search: document.getElementById("search"),
+  addBtn: document.getElementById("addBtn"),
   refreshBtn: document.getElementById("refreshBtn"),
   enrichBtn: document.getElementById("enrichBtn"),
   dedupeBtn: document.getElementById("dedupeBtn"),
-  addBtn: document.getElementById("addBtn"),
-  rows: document.getElementById("rows"),
-  vehModal: document.getElementById("vehModal"),
-  vmTitle: document.getElementById("vmTitle"),
-  vmClose: document.getElementById("vmClose"),
+  statTotal: document.getElementById("statTotal"),
+  statCats: document.getElementById("statCats"),
+  statMonth: document.getElementById("statMonth"),
+  modal: document.getElementById("vehicleModal"),
+  mTitle: document.getElementById("modalTitle"),
+  vmClose: document.getElementById("closeModal"),
+  vmCancel: document.getElementById("cancelVm"),
+  vmSave: document.getElementById("saveVm"),
+  vmDelete: document.getElementById("deleteVm"),
+  vmId: document.getElementById("vmId"),
   vmBrand: document.getElementById("vmBrand"),
   vmModel: document.getElementById("vmModel"),
   vmCategory: document.getElementById("vmCategory"),
-  vmPrice: document.getElementById("vmPrice"),
-  vmSellPrice: document.getElementById("vmSellPrice"),
   vmClasse: document.getElementById("vmClasse"),
   vmPlaces: document.getElementById("vmPlaces"),
   vmVitesse: document.getElementById("vmVitesse"),
-  vmFile: document.getElementById("vmFile"),
+  vmPrice: document.getElementById("vmPrice"),
+  vmSellPrice: document.getElementById("vmSellPrice"),
   vmUrl: document.getElementById("vmUrl"),
-  vmId: document.getElementById("vmId"),
-  vmDelete: document.getElementById("vmDelete"),
-  vmCancel: document.getElementById("vmCancel"),
-  vmSave: document.getElementById("vmSave"),
+  vmFile: document.getElementById("vmFile"),
   logoutBtn: document.getElementById("logoutBtn")
 };
 
 let ALL_VEHICLES = [];
 let OPEN_ID = null;
-let unsubscribe = null;
+let USER_ROLE = "staff";
 
-function closeModal() {
-  elements.vehModal.classList.add("hidden");
-  OPEN_ID = null;
-}
-
-function openModal(title = "Nouveau Véhicule") {
-  elements.vmTitle.textContent = title;
-  elements.vehModal.classList.remove("hidden");
-}
-
-function fmtDate(ts) {
-  if (!ts) return "-";
-  if (ts.seconds === undefined && !(ts instanceof Date)) return "...";
-  try {
-    const date = ts.toDate ? ts.toDate() : new Date(ts);
-    return date.toLocaleDateString("fr-FR");
-  } catch (e) {
-    return "-";
-  }
-}
-
-async function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-}
-
-function initFirestoreListener() {
-  if (unsubscribe) unsubscribe();
-
+async function initData() {
   elements.rows.innerHTML = '<tr><td colspan="7" class="muted">Chargement...</td></tr>';
-
-  const q = collection(db, "vehicles");
-
-  unsubscribe = onSnapshot(q, (snap) => {
+  try {
+    const q = collection(db, "vehicles");
+    const snap = await getDocs(q);
     ALL_VEHICLES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
-  }, (err) => {
+  } catch (err) {
     console.error("Firestore error:", err);
     elements.rows.innerHTML = '<tr><td colspan="7" class="red">Erreur de connexion Firestore. Vérifiez vos permissions.</td></tr>';
-  });
+  }
 }
 
 function render() {
@@ -101,7 +65,6 @@ function render() {
            (v.model || "").toLowerCase().includes(searchTerm) || (v.type || "").toLowerCase().includes(searchTerm);
   });
 
-  // Stats
   elements.statTotal.textContent = filtered.length;
   const categories = new Set(filtered.map(v => (v.type || "").trim().toLowerCase()).filter(Boolean));
   elements.statCats.textContent = categories.size;
@@ -119,7 +82,12 @@ function render() {
     return;
   }
 
-  elements.rows.innerHTML = filtered.map(v => `
+  elements.rows.innerHTML = filtered.map(v => {
+    const editBtn = USER_ROLE === "admin"
+      ? `<button class="btn btn-gold btn-sm" data-id="${v.id}" data-action="edit">Éditer</button>`
+      : `<span class="badge badge-no">LECTURE</span>`;
+
+    return `
     <tr>
       <td>
         <div style="display:flex; align-items:center; gap:12px;">
@@ -144,10 +112,10 @@ function render() {
       <td style="font-family:monospace; color:var(--accent-gold); font-weight:600;">$${(v.sellPrice || v.price || 0).toLocaleString()}</td>
       <td class="muted" style="font-size:12px;">${fmtDate(v.createdAt)}</td>
       <td style="text-align:right;">
-        <button class="btn btn-gold btn-sm" data-id="${v.id}" data-action="edit">Éditer</button>
+        ${editBtn}
       </td>
     </tr>
-  `).join("");
+  `}).join("");
 
   elements.rows.querySelectorAll('[data-action="edit"]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -171,7 +139,16 @@ function render() {
   });
 }
 
-elements.refreshBtn?.addEventListener("click", () => initFirestoreListener());
+function openModal(title) {
+  elements.mTitle.textContent = title;
+  elements.modal.classList.remove("hidden");
+}
+
+function closeModal() {
+  elements.modal.classList.add("hidden");
+}
+
+elements.refreshBtn?.addEventListener("click", () => initData());
 elements.search?.addEventListener("input", render);
 
 elements.addBtn?.addEventListener("click", () => {
@@ -213,7 +190,17 @@ elements.vmSellPrice?.addEventListener("input", () => {
   });
 });
 
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 elements.vmSave?.addEventListener("click", async () => {
+  if (USER_ROLE !== "admin") return alert("Accès refusé. Seul un administrateur peut modifier les véhicules.");
   const brand = elements.vmBrand.value.trim();
   const model = elements.vmModel.value.trim();
   if (!brand || !model) return alert("Marque et Modèle sont requis.");
@@ -251,6 +238,7 @@ elements.vmSave?.addEventListener("click", async () => {
       await logAction("VEHICLE_ADD", `Ajouté: ${brand} ${model}`);
     }
     closeModal();
+    await initData();
   } catch (err) {
     console.error("Save error:", err);
     alert("Erreur lors de l'enregistrement.");
@@ -261,6 +249,7 @@ elements.vmSave?.addEventListener("click", async () => {
 });
 
 elements.vmDelete?.addEventListener("click", async () => {
+  if (USER_ROLE !== "admin") return alert("Accès refusé.");
   if (!OPEN_ID) return;
   if (!confirm("Supprimer ce véhicule définitivement ?")) return;
   try {
@@ -268,6 +257,7 @@ elements.vmDelete?.addEventListener("click", async () => {
     await deleteDoc(doc(db, "vehicles", OPEN_ID));
     await logAction("VEHICLE_DELETE", `Supprimé: ${v?.brand} ${v?.model}`);
     closeModal();
+    await initData();
   } catch (err) {
     console.error("Delete error:", err);
     alert("Erreur lors de la suppression.");
@@ -275,12 +265,14 @@ elements.vmDelete?.addEventListener("click", async () => {
 });
 
 elements.enrichBtn?.addEventListener("click", async () => {
+  if (USER_ROLE !== "admin") return alert("Accès refusé.");
   if (!confirm("Importer les véhicules du catalogue vers la base de données ?")) return;
   elements.enrichBtn.disabled = true;
   elements.enrichBtn.textContent = "Fusion en cours...";
   try {
     const res = await mergeCatalogueToVehicles();
     alert(`Migration terminée : ${res.createdCount} créés, ${res.updatedCount} mis à jour.`);
+    await initData();
   } catch (err) {
     console.error("Enrich error:", err);
     alert("Erreur lors de la fusion.");
@@ -291,6 +283,7 @@ elements.enrichBtn?.addEventListener("click", async () => {
 });
 
 elements.dedupeBtn?.addEventListener("click", async () => {
+  if (USER_ROLE !== "admin") return alert("Accès refusé.");
   if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;
   elements.dedupeBtn.disabled = true;
   elements.dedupeBtn.textContent = "Nettoyage...";
@@ -302,6 +295,9 @@ elements.dedupeBtn?.addEventListener("click", async () => {
       groups[key].push(v);
     });
     let deleted = 0;
+    const batch = writeBatch(db);
+    let batchCount = 0;
+
     for (const key in groups) {
       const list = groups[key];
       if (list.length > 1) {
@@ -311,12 +307,20 @@ elements.dedupeBtn?.addEventListener("click", async () => {
           return tb - ta;
         });
         for (let i = 1; i < list.length; i++) {
-          await deleteDoc(doc(db, "vehicles", list[i].id));
+          batch.delete(doc(db, "vehicles", list[i].id));
           deleted++;
+          batchCount++;
+          // Firestore batch limit is 500
+          if (batchCount >= 400) {
+            await batch.commit();
+            batchCount = 0;
+          }
         }
       }
     }
+    if (batchCount > 0) await batch.commit();
     alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
+    await initData();
   } catch (err) {
     console.error("Dedupe error:", err);
     alert("Erreur lors du nettoyage.");
@@ -337,17 +341,28 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   try {
-    const isAdmin = await checkIsAdmin(user.uid);
-    if (!isAdmin) {
-      showDenyScreen();
-      return;
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) {
+      const userData = uSnap.data();
+      renderUserBadge(userData);
+      USER_ROLE = normRole(userData.role || userData.rank);
+    } else {
+      USER_ROLE = "staff";
     }
-    const qUser = query(collection(db, "users"), where("id", "==", user.uid));
-    const uSnap = await getDocs(qUser);
-    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
-    initFirestoreListener();
+
+    if (USER_ROLE === "admin") {
+      elements.addBtn?.classList.remove("hidden");
+      elements.enrichBtn?.classList.remove("hidden");
+      elements.dedupeBtn?.classList.remove("hidden");
+    } else {
+      elements.addBtn?.classList.add("hidden");
+      elements.enrichBtn?.classList.add("hidden");
+      elements.dedupeBtn?.classList.add("hidden");
+    }
+
+    initData();
   } catch (err) {
     console.error("Auth init error:", err);
-    showDenyScreen();
+    initData();
   }
 });
