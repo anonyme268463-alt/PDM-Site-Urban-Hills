@@ -1,7 +1,7 @@
 import { db, auth } from "./config.js";
 import {
-  collection, getDocs, addDoc, doc, updateDoc, deleteDoc,
-  serverTimestamp, query, where, orderBy
+  collection, getDocs, addDoc, doc, updateDoc, deleteDoc, getDoc,
+  serverTimestamp, query, where, orderBy, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
@@ -295,6 +295,9 @@ elements.dedupeBtn?.addEventListener("click", async () => {
       groups[key].push(v);
     });
     let deleted = 0;
+    const batch = writeBatch(db);
+    let batchCount = 0;
+
     for (const key in groups) {
       const list = groups[key];
       if (list.length > 1) {
@@ -304,11 +307,18 @@ elements.dedupeBtn?.addEventListener("click", async () => {
           return tb - ta;
         });
         for (let i = 1; i < list.length; i++) {
-          await deleteDoc(doc(db, "vehicles", list[i].id));
+          batch.delete(doc(db, "vehicles", list[i].id));
           deleted++;
+          batchCount++;
+          // Firestore batch limit is 500
+          if (batchCount >= 400) {
+            await batch.commit();
+            batchCount = 0;
+          }
         }
       }
     }
+    if (batchCount > 0) await batch.commit();
     alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
     await initData();
   } catch (err) {
@@ -331,10 +341,9 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   try {
-    const qUser = query(collection(db, "users"), where("id", "==", user.uid));
-    const uSnap = await getDocs(qUser);
-    if (!uSnap.empty) {
-      const userData = uSnap.docs[0].data();
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) {
+      const userData = uSnap.data();
       renderUserBadge(userData);
       USER_ROLE = normRole(userData.role || userData.rank);
     } else {

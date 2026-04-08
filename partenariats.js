@@ -315,9 +315,8 @@ onAuthStateChanged(auth, async (user) => {
       showDenyScreen();
       return;
     }
-    const qUser = query(collection(db, "users"), where("id", "==", user.uid));
-    const uSnap = await getDocs(qUser);
-    if (!uSnap.empty) renderUserBadge(uSnap.docs[0].data());
+    const uSnap = await getDoc(doc(db, "users", user.uid));
+    if (uSnap.exists()) renderUserBadge(uSnap.data());
     await loadPartners();
   } catch (err) {
     console.error(err);
