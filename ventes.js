@@ -128,7 +128,8 @@ async function getClientDiscount(clientId) {
 
 async function load(){
   await loadMe();
-  txTable.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
+  const colSpan = CACHE.role === "admin" ? 9 : 8;
+  txTable.innerHTML = `<tr><td colspan="${colSpan}">Chargement...</td></tr>`;
   try {
     const [txSnap, clientsSnap, partnersSnap, usersSnap, vehiclesSnap, stockSnap, resSnap] = await Promise.all([
       getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))),
@@ -160,7 +161,7 @@ async function load(){
     render();
   } catch(e) {
     console.error(e);
-    txTable.innerHTML = `<tr><td colspan="9" class="red">Erreur de chargement.</td></tr>`;
+    txTable.innerHTML = `<tr><td colspan="${colSpan}" class="red">Erreur de chargement.</td></tr>`;
   }
 }
 

@@ -1,8 +1,8 @@
 import { auth, db } from "./config.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import {
-  collection, addDoc, deleteDoc, doc, updateDoc, getDoc,
-  onSnapshot, query, orderBy, serverTimestamp
+  collection, addDoc, deleteDoc, doc, updateDoc, getDoc, getDocs,
+  query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { esc, renderUserBadge } from "./common.js";
 
@@ -123,25 +123,23 @@ function applyFilter() {
   renderRes(r);
 }
 
-let unsubStock=null, unsubRes=null;
-function startListeners() {
-  const qStock = query(collection(db, "stock"), orderBy("createdAt", "desc"));
-  const qRes   = query(collection(db, "reservations"), orderBy("createdAt", "desc"));
-
-  unsubStock = onSnapshot(qStock, (snap) => {
-    rowsStock = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+async function loadData() {
+  stockTbody.innerHTML = `<tr><td colspan="5" class="muted">Chargement...</td></tr>`;
+  resTbody.innerHTML = `<tr><td colspan="7" class="muted">Chargement...</td></tr>`;
+  try {
+    const qStock = query(collection(db, "stock"), orderBy("createdAt", "desc"));
+    const qRes   = query(collection(db, "reservations"), orderBy("createdAt", "desc"));
+    const [sSnap, rSnap] = await Promise.all([getDocs(qStock), getDocs(qRes)]);
+    rowsStock = sSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    rowsRes = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     applyFilter(); refreshStats();
-  }, (err) => console.error("Stock listener error:", err));
-
-  unsubRes = onSnapshot(qRes, (snap) => {
-    rowsRes = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    applyFilter(); refreshStats();
-  }, (err) => console.error("Res listener error:", err));
+  } catch (err) {
+    console.error("Load error:", err);
+  }
 }
-function stopListeners(){ try{unsubStock?.()}catch{} try{unsubRes?.()}catch{} unsubStock=unsubRes=null; }
 
 searchInput.addEventListener("input", applyFilter);
-refreshBtn.addEventListener("click", () => { applyFilter(); refreshStats(); });
+refreshBtn.addEventListener("click", () => loadData());
 addStockBtn.addEventListener("click", () => openDialog("stock"));
 addResBtn.addEventListener("click", () => openDialog("res"));
 dClose.addEventListener("click", closeDialog);
@@ -182,10 +180,11 @@ dSave.addEventListener("click", async () => {
       }
     }
     closeDialog();
+    await loadData();
   } catch (e) { console.error(e); alert("Erreur lors de l'enregistrement."); }
 });
 
-function onTableClick(e) {
+async function onTableClick(e) {
   const b = e.target.closest("button");
   if (!b) return;
   const id = b.dataset.id;
@@ -198,7 +197,10 @@ function onTableClick(e) {
   if (b.classList.contains("btn-del")) {
     if (!confirm("Supprimer ?")) return;
     const col = kind === "res" ? "reservations" : "stock";
-    deleteDoc(doc(db, col, id)).catch(err => { console.error(err); alert("Erreur suppression."); });
+    try {
+      await deleteDoc(doc(db, col, id));
+      await loadData();
+    } catch (err) { console.error(err); alert("Erreur suppression."); }
   }
 }
 stockTbody.addEventListener("click", onTableClick);
@@ -211,7 +213,6 @@ logoutBtn?.addEventListener("click", async () => {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    stopListeners();
     window.location.href = "pdm-staff.html";
     return;
   }
@@ -220,5 +221,5 @@ onAuthStateChanged(auth, async (user) => {
     if (snap.exists()) renderUserBadge(snap.data());
   } catch(e) { console.error("Error loading user badge:", e); }
 
-  if (!unsubStock && !unsubRes) startListeners();
+  await loadData();
 });
