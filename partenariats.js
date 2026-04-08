@@ -5,7 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
-import { esc, checkIsAdmin, showDenyScreen, renderUserBadge } from "./common.js";
+import { esc, checkIsAdmin, showDenyScreen, renderUserBadge, fmtDate } from "./common.js";
 
 const elements = {
   search: document.getElementById("search"),
@@ -56,17 +56,6 @@ function hideAllModals() {
   elements.partnerModal.classList.add("hidden");
   elements.addPartnerModal.classList.add("hidden");
   elements.memberModal.classList.add("hidden");
-}
-
-function fmtDate(ts) {
-  if (!ts) return "-";
-  if (ts.seconds === undefined && !(ts instanceof Date)) return "...";
-  try {
-    const date = ts.toDate ? ts.toDate() : new Date(ts);
-    return date.toLocaleDateString("fr-FR", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  } catch (e) {
-    return "-";
-  }
 }
 
 // --- PARTNERS ---

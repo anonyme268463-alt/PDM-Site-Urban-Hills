@@ -5,7 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
-import { esc, fmtDate, checkIsAdmin, showDenyScreen, renderUserBadge, normRole } from "./common.js";
+import { esc, fmtDate, checkIsAdmin, showDenyScreen, renderUserBadge, normRole, getCachedCollection, clearPdmCache } from "./common.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { mergeCatalogueToVehicles } from "./merge_collections.js";
 
@@ -43,12 +43,10 @@ let ALL_VEHICLES = [];
 let OPEN_ID = null;
 let USER_ROLE = "staff";
 
-async function initData() {
+async function initData(force = false) {
   elements.rows.innerHTML = '<tr><td colspan="7" class="muted">Chargement...</td></tr>';
   try {
-    const q = collection(db, "vehicles");
-    const snap = await getDocs(q);
-    ALL_VEHICLES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    ALL_VEHICLES = await getCachedCollection("vehicles", force);
     render();
   } catch (err) {
     console.error("Firestore error:", err);
@@ -148,7 +146,7 @@ function closeModal() {
   elements.modal.classList.add("hidden");
 }
 
-elements.refreshBtn?.addEventListener("click", () => initData());
+elements.refreshBtn?.addEventListener("click", () => initData(true));
 elements.search?.addEventListener("input", render);
 
 elements.addBtn?.addEventListener("click", () => {
@@ -237,8 +235,9 @@ elements.vmSave?.addEventListener("click", async () => {
       await addDoc(collection(db, "vehicles"), data);
       await logAction("VEHICLE_ADD", `Ajouté: ${brand} ${model}`);
     }
+    clearPdmCache("vehicles");
     closeModal();
-    await initData();
+    await initData(true);
   } catch (err) {
     console.error("Save error:", err);
     alert("Erreur lors de l'enregistrement.");
@@ -256,8 +255,9 @@ elements.vmDelete?.addEventListener("click", async () => {
     const v = ALL_VEHICLES.find(x => x.id === OPEN_ID);
     await deleteDoc(doc(db, "vehicles", OPEN_ID));
     await logAction("VEHICLE_DELETE", `Supprimé: ${v?.brand} ${v?.model}`);
+    clearPdmCache("vehicles");
     closeModal();
-    await initData();
+    await initData(true);
   } catch (err) {
     console.error("Delete error:", err);
     alert("Erreur lors de la suppression.");
@@ -272,7 +272,8 @@ elements.enrichBtn?.addEventListener("click", async () => {
   try {
     const res = await mergeCatalogueToVehicles();
     alert(`Migration terminée : ${res.createdCount} créés, ${res.updatedCount} mis à jour.`);
-    await initData();
+    clearPdmCache("vehicles");
+    await initData(true);
   } catch (err) {
     console.error("Enrich error:", err);
     alert("Erreur lors de la fusion.");
@@ -295,7 +296,7 @@ elements.dedupeBtn?.addEventListener("click", async () => {
       groups[key].push(v);
     });
     let deleted = 0;
-    const batch = writeBatch(db);
+    let currentBatch = writeBatch(db);
     let batchCount = 0;
 
     for (const key in groups) {
@@ -307,20 +308,21 @@ elements.dedupeBtn?.addEventListener("click", async () => {
           return tb - ta;
         });
         for (let i = 1; i < list.length; i++) {
-          batch.delete(doc(db, "vehicles", list[i].id));
+          currentBatch.delete(doc(db, "vehicles", list[i].id));
           deleted++;
           batchCount++;
-          // Firestore batch limit is 500
           if (batchCount >= 400) {
-            await batch.commit();
+            await currentBatch.commit();
+            currentBatch = writeBatch(db);
             batchCount = 0;
           }
         }
       }
     }
-    if (batchCount > 0) await batch.commit();
+    if (batchCount > 0) await currentBatch.commit();
     alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
-    await initData();
+    clearPdmCache("vehicles");
+    await initData(true);
   } catch (err) {
     console.error("Dedupe error:", err);
     alert("Erreur lors du nettoyage.");
