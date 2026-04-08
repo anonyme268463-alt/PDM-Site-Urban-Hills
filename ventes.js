@@ -424,7 +424,8 @@ async function save(){
   const modelRaw = fModel.value.trim();
   const vInfo = resolveModelDisplay(modelRaw);
   const modelNormalized = vInfo ? `${vInfo.brand} ${vInfo.model}` : modelRaw;
-  const selectedDate = fDate.value ? new Date(fDate.value) : new Date();
+  let selectedDate = fDate.value ? new Date(fDate.value) : new Date();
+  if (selectedDate > new Date()) selectedDate = new Date();
   const createdAt = Timestamp.fromDate(selectedDate);
 
   let sellerId = uid;
@@ -491,10 +492,12 @@ async function dedupeSales() {
           const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
           return tb - ta;
         });
+        const batch = writeBatch(db);
         for (let i = 1; i < list.length; i++) {
-          await deleteDoc(doc(db, "transactions", list[i].id));
+          batch.delete(doc(db, "transactions", list[i].id));
           deleted++;
         }
+        await batch.commit();
       }
     }
     alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
@@ -589,9 +592,20 @@ async function handleCSV(file) {
           if (parts.length === 3) {
             const day = parseInt(parts[0], 10);
             const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
+            let year = parseInt(parts[2], 10);
+
+            // Handle YY vs YYYY
+            if (year < 100) year += 2000;
+
             const d = new Date(year, month, day, 12, 0, 0);
-            if (!isNaN(d.getTime())) createdAt = d;
+            if (!isNaN(d.getTime())) {
+              // Future date prevention: if date is in the future, cap it at now
+              if (d > new Date()) {
+                createdAt = new Date();
+              } else {
+                createdAt = d;
+              }
+            }
           }
         }
 

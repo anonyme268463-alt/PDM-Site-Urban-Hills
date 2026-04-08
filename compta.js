@@ -148,8 +148,9 @@ function renderKpis() {
 
 function gradeRate(grade) {
   const g = String(grade || "").toLowerCase();
-  if (g.includes("co") && g.includes("pdg")) return 0.12;
-  // PDG/Patron/Admin gets 5% of total sales
+  // Co-PDG / Patron / Direction etc. (matches "co" and "pdg" or "patron")
+  if (g.includes("co") && (g.includes("pdg") || g.includes("patron"))) return 0.12;
+  // PDG/Patron/Admin (Main owner) gets 5% of total sales
   if (g.includes("pdg") || g.includes("patron") || g.includes("admin")) return 0.05;
   // Default Vendeur rate
   return 0.10;

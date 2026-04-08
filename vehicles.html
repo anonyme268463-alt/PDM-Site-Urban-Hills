@@ -80,7 +80,7 @@
                 <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
-            <tbody id="rows">
+            <tbody id="vehicleRows">
               <tr><td colspan="7" class="muted">Chargement...</td></tr>
             </tbody>
           </table>
@@ -91,12 +91,12 @@
 </div>
 
 <!-- Modal véhicule -->
-<div id="vehModal" class="modal-overlay hidden">
+<div id="vehicleModal" class="modal-overlay hidden">
   <div class="modal-container">
     <div class="modal-header">
       <div class="flex-row" style="justify-content: space-between; width: 100%;">
-        <h2 id="vmTitle">Véhicule</h2>
-        <button class="btn btn-outline btn-sm" id="vmClose">✕</button>
+        <h2 id="modalTitle">Véhicule</h2>
+        <button class="btn btn-outline btn-sm" id="closeModal">✕</button>
       </div>
     </div>
     <div class="modal-body">
@@ -134,10 +134,10 @@
           <input id="vmVitesse" type="number" class="input" placeholder="200">
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
-        <div class="form-group" style="grid-column: 1 / -1;">
           <label>Image Locale (PNG/JPG)</label>
           <input id="vmFile" type="file" class="input" accept="image/png, image/jpeg">
         </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
           <label>URL Image</label>
           <input id="vmUrl" type="text" class="input" placeholder="https://...">
         </div>
@@ -147,9 +147,9 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button id="vmDelete" class="btn btn-danger" style="margin-right: auto;">Supprimer</button>
-      <button id="vmCancel" class="btn btn-outline">Annuler</button>
-      <button id="vmSave" class="btn btn-gold">Enregistrer</button>
+      <button id="deleteVm" class="btn btn-danger" style="margin-right: auto;">Supprimer</button>
+      <button id="cancelVm" class="btn btn-outline">Annuler</button>
+      <button id="saveVm" class="btn btn-gold">Enregistrer</button>
     </div>
   </div>
 </div>
