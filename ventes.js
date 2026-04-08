@@ -5,7 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
-import { esc, renderUserBadge, normRole } from "./common.js";
+import { esc, renderUserBadge, normRole, getCachedCollection, clearPdmCache } from "./common.js";
 
 const txTable = document.getElementById("txTable");
 const search = document.getElementById("search");
@@ -126,28 +126,28 @@ async function getClientDiscount(clientId) {
   return 0;
 }
 
-async function load(){
+async function load(force = false){
   await loadMe();
   const colSpan = CACHE.role === "admin" ? 9 : 8;
   txTable.innerHTML = `<tr><td colspan="${colSpan}">Chargement...</td></tr>`;
   try {
-    const [txSnap, clientsSnap, partnersSnap, usersSnap, vehiclesSnap, stockSnap, resSnap] = await Promise.all([
-      getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))),
-      getDocs(collection(db,"clients")),
-      getDocs(collection(db,"partners")),
-      getDocs(collection(db,"users")),
-      getDocs(collection(db,"vehicles")),
-      getDocs(collection(db,"stock")),
-      getDocs(collection(db,"reservations"))
+    const [txData, clientsData, partnersData, usersData, vehiclesData, stockData, resData] = await Promise.all([
+      getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))).then(s => s.docs.map(d => ({id:d.id, ...d.data()}))),
+      getCachedCollection("clients", force),
+      getCachedCollection("partners", force),
+      getCachedCollection("users", force),
+      getCachedCollection("vehicles", force),
+      getCachedCollection("stock", force),
+      getCachedCollection("reservations", force)
     ]);
 
-    CACHE.tx = txSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-    CACHE.clients = clientsSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-    CACHE.partners = partnersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-    CACHE.users = usersSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-    CACHE.vehicles = vehiclesSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-    CACHE.stock = stockSnap.docs.map(d => ({ id:d.id, ...d.data() }));
-    CACHE.reservations = resSnap.docs.map(d => ({ id:d.id, ...d.data() }));
+    CACHE.tx = txData;
+    CACHE.clients = clientsData;
+    CACHE.partners = partnersData;
+    CACHE.users = usersData;
+    CACHE.vehicles = vehiclesData;
+    CACHE.stock = stockData;
+    CACHE.reservations = resData;
 
     for (const p of CACHE.partners) {
       const ms = await getDocs(collection(db, "partners", p.id, "members"));
@@ -333,7 +333,7 @@ function close(){ modal.classList.add("hidden"); }
 if(closeModal) closeModal.addEventListener("click", close);
 if(cancelBtn) cancelBtn.addEventListener("click", close);
 if(addBtn) addBtn.addEventListener("click", openAdd);
-if(refreshBtn) refreshBtn.addEventListener("click", load);
+if(refreshBtn) refreshBtn.addEventListener("click", () => load(true));
 
 async function autoPrice() {
   const modelStr = fModel.value.trim();
@@ -452,7 +452,7 @@ async function save(){
       await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
     }
     close();
-    await load();
+    await load(true);
   } catch(e) { console.error(e); alert("Erreur lors de l'enregistrement."); }
 }
 if(saveBtn) saveBtn.addEventListener("click", save);
@@ -462,7 +462,7 @@ async function removeTx(id){
   try {
     await deleteDoc(doc(db,"transactions",id));
     await logAction("VENTE_SUPPR", `Suppression vente ${id}`);
-    await load();
+    await load(true);
   } catch(e) { console.error(e); alert("Erreur lors de la suppression."); }
 }
 
@@ -484,6 +484,9 @@ async function dedupeSales() {
     });
 
     let deleted = 0;
+    let currentBatch = writeBatch(db);
+    let batchCount = 0;
+
     for (const key in groups) {
       const list = groups[key];
       if (list.length > 1) {
@@ -492,16 +495,21 @@ async function dedupeSales() {
           const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
           return tb - ta;
         });
-        const batch = writeBatch(db);
         for (let i = 1; i < list.length; i++) {
-          batch.delete(doc(db, "transactions", list[i].id));
+          currentBatch.delete(doc(db, "transactions", list[i].id));
           deleted++;
+          batchCount++;
+          if (batchCount >= 400) {
+            await currentBatch.commit();
+            currentBatch = writeBatch(db);
+            batchCount = 0;
+          }
         }
-        await batch.commit();
       }
     }
+    if (batchCount > 0) await currentBatch.commit();
     alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
-    await load();
+    await load(true);
   } catch (err) {
     console.error("Dedupe error:", err);
     alert("Erreur lors du nettoyage.");
@@ -529,7 +537,7 @@ async function deleteSelected() {
     await batch.commit();
     await logAction("VENTE_BATCH_SUPPR", `Suppression de ${selected.length} ventes`);
     alert(`Success: ${selected.length} ventes supprimées.`);
-    await load();
+    await load(true);
   } catch (e) {
     console.error(e);
     alert("Erreur lors de la suppression groupée.");
@@ -622,7 +630,7 @@ async function handleCSV(file) {
       } catch (err) { console.error("Row error:", err); }
     }
     alert(`Import terminé : ${count} ventes ajoutées.`);
-    await load();
+    await load(true);
   };
   reader.readAsText(file);
 }

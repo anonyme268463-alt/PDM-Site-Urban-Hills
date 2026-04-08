@@ -1,3 +1,8 @@
+import { db } from "./config.js";
+import {
+  doc, getDoc, collection, getDocs
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
@@ -18,13 +23,18 @@ export function fmtMoney(n, currency = "$") {
   return `${currency}${Math.round(v).toLocaleString("en-US")}`;
 }
 
-export function fmtDate(d) {
-  const dd = (d instanceof Date) ? d : new Date(d);
-  if (isNaN(dd.getTime())) return "-";
-  const day = String(dd.getDate()).padStart(2, "0");
-  const mon = String(dd.getMonth() + 1).padStart(2, "0");
-  const y = dd.getFullYear();
-  return `${day}/${mon}/${y}`;
+export function fmtDate(ts) {
+  if (!ts) return "-";
+  try {
+    const d = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
+    if (isNaN(d.getTime())) return "-";
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = String(d.getMonth() + 1).padStart(2, "0");
+    const y = d.getFullYear();
+    return `${day}/${mon}/${y}`;
+  } catch (e) {
+    return "-";
+  }
 }
 
 export function toDateInputValue(d) {
@@ -65,9 +75,6 @@ export function toBool(v, def = false) {
   const s = String(v).toLowerCase();
   return s === "true" || s === "1" || s === "yes" || s === "oui" || s === "actif";
 }
-
-import { db } from "./config.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 export async function checkIsAdmin(uid) {
   try {
@@ -123,4 +130,38 @@ export function renderUserBadge(userData) {
   `;
 
   topBar.appendChild(badge);
+}
+
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes for staff data
+
+export async function getCachedCollection(collectionName, forceRefresh = false) {
+  const CACHE_KEY = `pdm_cache_${collectionName}`;
+  const TIME_KEY = `pdm_cache_time_${collectionName}`;
+
+  if (!forceRefresh) {
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    const cachedTime = sessionStorage.getItem(TIME_KEY);
+    if (cached && cachedTime && (Date.now() - Number(cachedTime) < CACHE_TTL)) {
+      return JSON.parse(cached);
+    }
+  }
+
+  const snap = await getDocs(collection(db, collectionName));
+  const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  sessionStorage.setItem(TIME_KEY, Date.now().toString());
+  return data;
+}
+
+export function clearPdmCache(collectionName) {
+  if (collectionName) {
+    sessionStorage.removeItem(`pdm_cache_${collectionName}`);
+    sessionStorage.removeItem(`pdm_cache_time_${collectionName}`);
+  } else {
+    // Clear all
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith("pdm_cache")) sessionStorage.removeItem(key);
+    });
+  }
 }

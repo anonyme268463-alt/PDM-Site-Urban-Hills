@@ -22,10 +22,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let allVehicles = [];
 
-    try {
+    async function getVehicles() {
+        const CACHE_KEY = "pdm_catalog_cache";
+        const CACHE_TIME_KEY = "pdm_catalog_cache_time";
+        const TTL = 5 * 60 * 1000; // 5 minutes
+
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
+
+        if (cached && cachedTime && (Date.now() - Number(cachedTime) < TTL)) {
+            console.log("Using cached catalog data");
+            return JSON.parse(cached);
+        }
+
         const colRef = collection(db, "vehicles");
         const snap = await getDocs(colRef);
-        allVehicles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        return data;
+    }
+
+    try {
+        allVehicles = await getVehicles();
 
         // Prepare and normalize data
         allVehicles.forEach(v => {
@@ -183,9 +203,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Debounce helper
+    function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fn(...args), delay);
+        };
+    }
+
+    const debouncedApplyFilters = debounce(applyFilters, 250);
+
     // Events
-    [qInput, typeSelect, classSelect, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(el => {
-        el?.addEventListener("input", applyFilters);
+    [qInput, minPrice, maxPrice, minSpeed, maxSpeed, minSeats, maxSeats].forEach(el => {
+        el?.addEventListener("input", debouncedApplyFilters);
+    });
+
+    [typeSelect, classSelect].forEach(el => {
         el?.addEventListener("change", applyFilters);
     });
 
