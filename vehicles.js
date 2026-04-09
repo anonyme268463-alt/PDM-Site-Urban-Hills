@@ -265,7 +265,10 @@ elements.vmDelete?.addEventListener("click", async () => {
 });
 
 elements.enrichBtn?.addEventListener("click", async () => {
-  if (USER_ROLE !== "admin") return alert("Accès refusé.");
+  if (USER_ROLE !== "admin") {
+    alert("Accès refusé : Action réservée aux administrateurs.");
+    return;
+  }
   if (!confirm("Importer les véhicules du catalogue vers la base de données ?")) return;
   elements.enrichBtn.disabled = true;
   elements.enrichBtn.textContent = "Fusion en cours...";
@@ -284,14 +287,19 @@ elements.enrichBtn?.addEventListener("click", async () => {
 });
 
 elements.dedupeBtn?.addEventListener("click", async () => {
-  if (USER_ROLE !== "admin") return alert("Accès refusé.");
+  if (USER_ROLE !== "admin") {
+    alert("Accès refusé : Action réservée aux administrateurs.");
+    return;
+  }
   if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;
   elements.dedupeBtn.disabled = true;
   elements.dedupeBtn.textContent = "Nettoyage...";
   try {
     const groups = {};
     ALL_VEHICLES.forEach(v => {
-      const key = `${v.brand?.toLowerCase()}|${v.model?.toLowerCase()}`;
+      const b = (v.brand || "").trim().toLowerCase();
+      const m = (v.model || "").trim().toLowerCase();
+      const key = `${b}|${m}`;
       if (!groups[key]) groups[key] = [];
       groups[key].push(v);
     });

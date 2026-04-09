@@ -467,7 +467,10 @@ async function removeTx(id){
 }
 
 async function dedupeSales() {
-  if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+  if (CACHE.role !== "admin") {
+    alert("Accès refusé : Action réservée aux administrateurs.");
+    return;
+  }
   if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;
 
   dedupeBtn.disabled = true;
@@ -478,7 +481,9 @@ async function dedupeSales() {
     CACHE.tx.forEach(t => {
       const d = t.createdAt?.toDate ? t.createdAt.toDate() : (t.createdAt?.seconds ? new Date(t.createdAt.seconds*1000) : new Date(t.createdAt));
       const dateKey = d ? d.toISOString().split('T')[0] : "no-date";
-      const key = `${(t.clientId||'').toLowerCase()}|${(t.model||'').toLowerCase()}|${t.buyPrice}|${t.sellPrice}|${dateKey}`;
+      const client = (t.clientId || "").trim().toLowerCase();
+      const model = (t.model || "").trim().toLowerCase();
+      const key = `${client}|${model}|${t.buyPrice}|${t.sellPrice}|${dateKey}`;
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     });
@@ -521,7 +526,10 @@ async function dedupeSales() {
 if(dedupeBtn) dedupeBtn.addEventListener("click", dedupeSales);
 
 async function deleteSelected() {
-  if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+  if (CACHE.role !== "admin") {
+    alert("Accès refusé : Action réservée aux administrateurs.");
+    return;
+  }
   const selected = Array.from(txTable.querySelectorAll(".row-select:checked")).map(cb => cb.dataset.id);
   if (selected.length === 0) { alert("Aucune vente sélectionnée."); return; }
   if (!confirm(`Supprimer les ${selected.length} ventes sélectionnées ?`)) return;
@@ -530,11 +538,18 @@ async function deleteSelected() {
   deleteSelectedBtn.textContent = "Suppression...";
 
   try {
-    const batch = writeBatch(db);
-    selected.forEach(id => {
-      batch.delete(doc(db, "transactions", id));
-    });
-    await batch.commit();
+    let currentBatch = writeBatch(db);
+    let count = 0;
+    for (const id of selected) {
+      currentBatch.delete(doc(db, "transactions", id));
+      count++;
+      if (count >= 400) {
+        await currentBatch.commit();
+        currentBatch = writeBatch(db);
+        count = 0;
+      }
+    }
+    if (count > 0) await currentBatch.commit();
     await logAction("VENTE_BATCH_SUPPR", `Suppression de ${selected.length} ventes`);
     alert(`Success: ${selected.length} ventes supprimées.`);
     await load(true);
@@ -555,7 +570,10 @@ const csvInput = document.getElementById("csvInput");
 
 if (importCsvBtn && csvInput) {
   importCsvBtn.addEventListener("click", () => {
-    if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+    if (CACHE.role !== "admin") {
+      alert("Accès refusé : Action réservée aux administrateurs.");
+      return;
+    }
     csvInput.click();
   });
   csvInput.addEventListener("change", e => {
@@ -566,7 +584,10 @@ if (importCsvBtn && csvInput) {
 }
 
 async function handleCSV(file) {
-  if (CACHE.role !== "admin") { alert("Accès refusé."); return; }
+  if (CACHE.role !== "admin") {
+    alert("Accès refusé : Action réservée aux administrateurs.");
+    return;
+  }
   const reader = new FileReader();
   reader.onload = async (e) => {
     const text = e.target.result;
@@ -582,12 +603,12 @@ async function handleCSV(file) {
         const row = {};
         headers.forEach((h, idx) => row[h] = cols[idx]);
 
-        const clientName = (row.client || row.nom || "").trim();
-        const model = (row.modele || row.model || "").trim();
-        const buyPrice = Number(row.buy || row.achat || 0);
-        const sellPrice = Number(row.sell || row.vente || 0);
-        const dateStr = row.date || "";
-        const detail = (row.detail || "Import CSV").trim();
+        const clientName = (row.client || row.nom || row["nom client"] || "").trim();
+        const model = (row.modele || row.model || row["modèle"] || row["véhicule"] || "").trim();
+        const buyPrice = Number(row.buy || row.achat || row["prix achat"] || row["achat ($)"] || 0);
+        const sellPrice = Number(row.sell || row.vente || row["prix vente"] || row["vente ($)"] || 0);
+        const dateStr = (row.date || row["date de vente"] || "").trim();
+        const detail = (row.detail || row.détail || row["détails"] || "Import CSV").trim();
 
         if (!clientName || !model) continue;
 
@@ -596,22 +617,28 @@ async function handleCSV(file) {
 
         let createdAt = new Date();
         if (dateStr) {
-          const parts = dateStr.split(/[\/\-]/);
+          let parts = dateStr.split(/[\/\-\s]/);
+          let d, m, y;
           if (parts.length === 3) {
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            let year = parseInt(parts[2], 10);
+            if (parts[0].length === 4) { // YYYY-MM-DD
+              y = parseInt(parts[0], 10);
+              m = parseInt(parts[1], 10) - 1;
+              d = parseInt(parts[2], 10);
+            } else { // DD/MM/YYYY
+              d = parseInt(parts[0], 10);
+              m = parseInt(parts[1], 10) - 1;
+              y = parseInt(parts[2], 10);
+              if (y < 100) y += 2000;
+            }
 
-            // Handle YY vs YYYY
-            if (year < 100) year += 2000;
-
-            const d = new Date(year, month, day, 12, 0, 0);
-            if (!isNaN(d.getTime())) {
-              // Future date prevention: if date is in the future, cap it at now
-              if (d > new Date()) {
-                createdAt = new Date();
+            const testDate = new Date(y, m, d, 12, 0, 0);
+            if (!isNaN(testDate.getTime())) {
+              const now = new Date();
+              // Future date cap: if date is in the future, cap it at now
+              if (testDate.getTime() > now.getTime()) {
+                createdAt = now;
               } else {
-                createdAt = d;
+                createdAt = testDate;
               }
             }
           }
