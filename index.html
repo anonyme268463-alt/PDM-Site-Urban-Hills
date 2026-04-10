@@ -1267,7 +1267,7 @@
         <section id="contact" class="reveal">
             <div class="section-header">
                 <h2 class="section-title">
-                    Contact & <span>Réservations</span>
+                    Contact <span>PDM</span>
                 </h2>
             </div>
             <div class="contact-layout">
@@ -1357,10 +1357,8 @@
 <script>
 /*
   PDM -> Discord Webhook
-  1) Crée un webhook dans ton salon Discord tickets
-  2) Colle l'URL ici :
 */
-const DISCORD_WEBHOOK_URL = "https://wispy-field-2a39.anonyme268463.workers.dev";
+const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1491997061724373074/p9G4n7fBcwRB3XWXM5AiNCsFPsKfS9pwqbAnrl1iaakzS7_X-I8U0wC5jiRNO7PaXNtd";
 
 async function sendToDiscord() {
   const nom = document.getElementById("nom")?.value.trim();
@@ -1410,6 +1408,197 @@ async function sendToDiscord() {
 </script>
 
 
+
+    <!-- PANIER FLOATING BUTTON -->
+    <div id="cartToggle" class="cart-toggle hidden">
+        <div class="cart-icon-bg">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        </div>
+        <span id="cartCount" class="cart-badge">0</span>
+    </div>
+
+    <!-- MODAL PANIER -->
+    <div id="cartModal" class="modal-overlay hidden">
+        <div class="modal-container cart-modal">
+            <div class="modal-header">
+                <h2>Votre Panier</h2>
+                <button class="close-modal" onclick="document.getElementById('cartModal').classList.add('hidden')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="cartItems" class="cart-items-list">
+                    <!-- Items dynamic -->
+                </div>
+                <div class="cart-summary">
+                    <div class="summary-line">
+                        <span>Total</span>
+                        <strong id="cartTotal">€ 0</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" onclick="document.getElementById('cartModal').classList.add('hidden')">Retour aux achats</button>
+                <button id="goReservation" class="btn-gold">Continuer vers la réservation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RÉSERVATION -->
+    <div id="reservationModal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Finaliser la réservation</h2>
+                <button class="close-modal" onclick="document.getElementById('reservationModal').classList.add('hidden')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="reservation-recap">
+                    <h3>Récapitulatif</h3>
+                    <div id="resRecapList"></div>
+                    <div class="res-total">Total : <strong id="resTotal">€ 0</strong></div>
+                </div>
+                <div class="form-group" style="margin-top:20px;">
+                    <label>Nom Prénom (Identité RP)</label>
+                    <input type="text" id="resName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Date de récupération souhaitée</label>
+                    <input type="date" id="resDate">
+                </div>
+                <div id="resError" class="res-error hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" onclick="document.getElementById('reservationModal').classList.add('hidden')">Annuler</button>
+                <button id="confirmReservation" class="btn-gold">Confirmer la réservation</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .cart-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .cart-toggle:hover { transform: scale(1.1); }
+        .cart-toggle.hidden { display: none; }
+        .cart-icon-bg {
+            width: 60px;
+            height: 60px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+        .cart-badge {
+            background: #fff;
+            color: #000;
+            font-weight: 800;
+            font-size: 14px;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 2px solid var(--accent-gold);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal-container {
+            background: #111319;
+            width: min(600px, 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 25px 80px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 { font-size: 1.4rem; color: var(--accent-gold-soft); }
+        .close-modal { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.6; }
+        .close-modal:hover { opacity: 1; }
+        .modal-body { padding: 24px; overflow-y: auto; }
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .cart-items-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .cart-item img { width: 80px; height: 45px; object-fit: cover; border-radius: 6px; }
+        .cart-item-info { flex: 1; }
+        .cart-item-name { font-weight: 600; font-size: 0.95rem; }
+        .cart-item-price { color: var(--accent-gold-soft); font-size: 0.9rem; font-family: monospace; }
+        .remove-item { color: var(--accent-red); cursor: pointer; font-size: 0.8rem; text-transform: uppercase; margin-top: 4px; display: inline-block; }
+
+        .cart-summary { margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); }
+        .summary-line { display: flex; justify-content: space-between; font-size: 1.1rem; }
+        .summary-line strong { color: var(--accent-gold); }
+
+        .reservation-recap { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(212,175,55,0.2); }
+        .res-recap-item { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-muted); }
+        .res-total { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; text-align: right; }
+        .res-total strong { color: var(--accent-gold); font-size: 1.2rem; }
+
+        .res-error { margin-top: 15px; padding: 12px; border-radius: 8px; background: rgba(227,27,35,0.1); color: #ff6b6b; font-size: 0.85rem; border: 1px solid rgba(227,27,35,0.3); }
+
+        .buy-msg {
+            position: absolute; bottom: 45px; left: 10px; right: 10px;
+            background: var(--accent-gold); color: #000;
+            padding: 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            animation: slideInUp 0.3s ease-out;
+            z-index: 10;
+        }
+        @keyframes slideInUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .car-cta-wrap { display: flex; gap: 8px; align-items: center; position: relative; }
+        .btn-reserve {
+            background: var(--accent-gold); color: #000;
+            padding: 0.3rem 0.8rem; border-radius: 999px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            cursor: pointer; border: none; transition: 0.2s;
+        }
+        .btn-reserve:hover { filter: brightness(1.1); transform: scale(1.05); }
+    </style>
 
 <script type="module" src="index_dynamic.js"></script>
 </body>
