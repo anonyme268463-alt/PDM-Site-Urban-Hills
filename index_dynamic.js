@@ -1,5 +1,5 @@
 import { db } from "./config.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const grid = document.querySelector(".catalogue-grid");
@@ -21,6 +21,177 @@ document.addEventListener("DOMContentLoaded", async () => {
     grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px;">Chargement du catalogue...</div>';
 
     let allVehicles = [];
+    let CART = JSON.parse(localStorage.getItem("pdm_cart") || "[]");
+
+    const cartToggle = document.getElementById("cartToggle");
+    const cartCount = document.getElementById("cartCount");
+    const cartModal = document.getElementById("cartModal");
+    const cartItems = document.getElementById("cartItems");
+    const cartTotal = document.getElementById("cartTotal");
+    const goReservation = document.getElementById("goReservation");
+
+    const reservationModal = document.getElementById("reservationModal");
+    const resRecapList = document.getElementById("resRecapList");
+    const resTotal = document.getElementById("resTotal");
+    const resNameInput = document.getElementById("resName");
+    const resDateInput = document.getElementById("resDate");
+    const resError = document.getElementById("resError");
+    const confirmReservation = document.getElementById("confirmReservation");
+
+    function saveCart() {
+        localStorage.setItem("pdm_cart", JSON.stringify(CART));
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        if (CART.length > 0) {
+            cartToggle.classList.remove("hidden");
+            cartCount.textContent = CART.length;
+        } else {
+            cartToggle.classList.add("hidden");
+        }
+    }
+
+    function addToCart(vehicle) {
+        if (CART.find(item => item.id === vehicle.id)) {
+            alert("Ce véhicule est déjà dans votre panier.");
+            return;
+        }
+        CART.push(vehicle);
+        saveCart();
+    }
+
+    function removeFromCart(id) {
+        CART = CART.filter(item => item.id !== id);
+        saveCart();
+        renderCart();
+    }
+
+    function renderCart() {
+        cartItems.innerHTML = CART.map(v => `
+            <div class="cart-item">
+                <img src="${v.urlimagevehicule}" onerror="this.src='https://via.placeholder.com/100x50?text=?'">
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${v.brand} ${v.model}</div>
+                    <div class="cart-item-price">€ ${v.price.toLocaleString()}</div>
+                    <span class="remove-item" data-id="${v.id}">Retirer</span>
+                </div>
+            </div>
+        `).join("");
+
+        const total = CART.reduce((sum, v) => sum + v.price, 0);
+        cartTotal.textContent = `€ ${total.toLocaleString()}`;
+
+        cartItems.querySelectorAll(".remove-item").forEach(btn => {
+            btn.onclick = () => removeFromCart(btn.dataset.id);
+        });
+    }
+
+    cartToggle.onclick = () => {
+        renderCart();
+        cartModal.classList.remove("hidden");
+    };
+
+    goReservation.onclick = () => {
+        cartModal.classList.add("hidden");
+        renderReservation();
+        reservationModal.classList.remove("hidden");
+    };
+
+    function renderReservation() {
+        resRecapList.innerHTML = CART.map(v => `
+            <div class="res-recap-item">
+                <span>${v.brand} ${v.model}</span>
+                <span>€ ${v.price.toLocaleString()}</span>
+            </div>
+        `).join("");
+        const total = CART.reduce((sum, v) => sum + v.price, 0);
+        resTotal.textContent = `€ ${total.toLocaleString()}`;
+        resError.classList.add("hidden");
+    }
+
+    async function checkLicense(name, vehicles) {
+        const q = query(collection(db, "clients"), where("name", "==", name));
+        const snap = await getDocs(q);
+        if (snap.empty) return { ok: false, msg: "Client non trouvé dans notre base. Veuillez contacter un staff." };
+
+        const client = snap.docs[0].data();
+        if (client.license === "Non" || client.license === false) return { ok: false, msg: "Vous n'avez pas de permis de conduire valide." };
+
+        for (const v of vehicles) {
+            const type = (v.type || "").toLowerCase();
+            if (type.includes("motorcyles") || type.includes("moto")) {
+                if (!client.moto) return { ok: false, msg: `Vous n'avez pas le permis Moto pour le véhicule ${v.brand} ${v.model}.` };
+            } else if (type.includes("van") || type.includes("entreprise") || type.includes("truck")) {
+                if (!client.truck) return { ok: false, msg: `Vous n'avez pas le permis Poids Lourd pour le véhicule ${v.brand} ${v.model}.` };
+            } else {
+                if (!client.car) return { ok: false, msg: `Vous n'avez pas le permis Voiture pour le véhicule ${v.brand} ${v.model}.` };
+            }
+        }
+        return { ok: true };
+    }
+
+    confirmReservation.onclick = async () => {
+        const name = resNameInput.value.trim();
+        const date = resDateInput.value;
+        if (!name || !date) {
+            resError.textContent = "Veuillez remplir votre nom et la date souhaitée.";
+            resError.classList.remove("hidden");
+            return;
+        }
+
+        confirmReservation.disabled = true;
+        confirmReservation.textContent = "Vérification...";
+
+        try {
+            const license = await checkLicense(name, CART);
+            if (!license.ok) {
+                resError.textContent = license.msg;
+                resError.classList.remove("hidden");
+                confirmReservation.disabled = false;
+                confirmReservation.textContent = "Confirmer la réservation";
+                return;
+            }
+
+            // Webhook send
+            const webhookUrl = "https://discordapp.com/api/webhooks/1491997061724373074/p9G4n7fBcwRB3XWXM5AiNCsFPsKfS9pwqbAnrl1iaakzS7_X-I8U0wC5jiRNO7PaXNtd";
+            const total = CART.reduce((sum, v) => sum + v.price, 0);
+            const itemsList = CART.map(v => `- ${v.brand} ${v.model} (€ ${v.price.toLocaleString()})`).join("\n");
+
+            const payload = {
+                username: "PDM Réservations",
+                embeds: [{
+                    title: "🆕 Nouvelle Réservation Catalogue",
+                    color: 0xD4AF37,
+                    fields: [
+                        { name: "👤 Client", value: name, inline: true },
+                        { name: "📅 Date prévue", value: date, inline: true },
+                        { name: "🛒 Véhicules", value: itemsList },
+                        { name: "💰 Total", value: `€ ${total.toLocaleString()}`, inline: true }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            await fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            alert("Votre réservation a été validée et envoyée aux équipes PDM !");
+            CART = [];
+            saveCart();
+            reservationModal.classList.add("hidden");
+        } catch (e) {
+            console.error(e);
+            resError.textContent = "Erreur lors de la réservation. Réessayez.";
+            resError.classList.remove("hidden");
+        } finally {
+            confirmReservation.disabled = false;
+            confirmReservation.textContent = "Confirmer la réservation";
+        }
+    };
 
     async function getVehicles() {
         const CACHE_KEY = "pdm_catalog_cache";
@@ -70,6 +241,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
         }
 
+        updateCartUI();
         renderDailySelection(allVehicles);
         applyFilters();
 
@@ -196,10 +368,34 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="car-badges">
                         <span class="badge">Classe ${v.classe || '-'}</span>
                     </div>
-                    <div class="car-cta-link">Acheter</div>
+                    <div class="car-cta-wrap">
+                        <div class="car-cta-link btn-buy">Acheter</div>
+                        <button class="btn-reserve" data-id="${v.id}">Réserver</button>
+                    </div>
                 </div>
             `;
             grid.appendChild(article);
+        });
+
+        // Add events to Buy/Reserve buttons
+        grid.querySelectorAll(".btn-buy").forEach(btn => {
+            btn.onclick = (e) => {
+                const existing = btn.parentElement.querySelector(".buy-msg");
+                if (existing) existing.remove();
+
+                const msg = document.createElement("div");
+                msg.className = "buy-msg";
+                msg.textContent = "À acheter directement sur place ou à réserver";
+                btn.parentElement.appendChild(msg);
+                setTimeout(() => msg.remove(), 3000);
+            };
+        });
+
+        grid.querySelectorAll(".btn-reserve").forEach(btn => {
+            btn.onclick = () => {
+                const v = allVehicles.find(x => x.id === btn.dataset.id);
+                if (v) addToCart(v);
+            };
         });
     }
 
