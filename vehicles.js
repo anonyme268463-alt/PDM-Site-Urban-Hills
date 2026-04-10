@@ -8,6 +8,7 @@ import { logAction } from "./logger.js";
 import { esc, fmtDate, checkIsAdmin, showDenyScreen, renderUserBadge, normRole, getCachedCollection, clearPdmCache } from "./common.js";
 import { VEHICLE_MAPPING } from "./vehicle_mapping.js";
 import { mergeCatalogueToVehicles } from "./merge_collections.js";
+import { REFERENCE_VEHICLES } from "./vehicles_reference.js";
 
 const elements = {
   rows: document.getElementById("vehicleRows"),
@@ -36,7 +37,8 @@ const elements = {
   vmSellPrice: document.getElementById("vmSellPrice"),
   vmUrl: document.getElementById("vmUrl"),
   vmFile: document.getElementById("vmFile"),
-  logoutBtn: document.getElementById("logoutBtn")
+  logoutBtn: document.getElementById("logoutBtn"),
+  syncRefBtn: document.getElementById("syncRefBtn")
 };
 
 let ALL_VEHICLES = [];
@@ -286,6 +288,91 @@ elements.enrichBtn?.addEventListener("click", async () => {
   }
 });
 
+elements.syncRefBtn?.addEventListener("click", async () => {
+  if (USER_ROLE !== "admin") {
+    alert("Accès refusé.");
+    return;
+  }
+  if (!confirm("Synchroniser la base avec la liste de référence ? Cela supprimera les véhicules hors-liste et les doublons (priorité aux images).")) return;
+
+  elements.syncRefBtn.disabled = true;
+  elements.syncRefBtn.textContent = "Sync...";
+
+  try {
+    const refKeys = new Set(REFERENCE_VEHICLES.map(r => `${(r.brand||"").trim().toLowerCase()}|${(r.model||"").trim().toLowerCase()}`));
+
+    const groups = {};
+    const toDelete = [];
+
+    ALL_VEHICLES.forEach(v => {
+      const b = (v.brand || "").trim().toLowerCase();
+      const m = (v.model || "").trim().toLowerCase();
+      const key = `${b}|${m}`;
+
+      if (!refKeys.has(key)) {
+        toDelete.push(v.id);
+      } else {
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(v);
+      }
+    });
+
+    let deleted = 0;
+    let batch = writeBatch(db);
+    let count = 0;
+
+    // Delete non-reference vehicles
+    for (const id of toDelete) {
+      batch.delete(doc(db, "vehicles", id));
+      deleted++;
+      count++;
+      if (count >= 400) {
+        await batch.commit();
+        batch = writeBatch(db);
+        count = 0;
+      }
+    }
+
+    // Deduplicate reference vehicles
+    for (const key in groups) {
+      const list = groups[key];
+      if (list.length > 1) {
+        list.sort((a, b) => {
+          const imgA = (a.urlimagevehicule && String(a.urlimagevehicule).length > 20) ? 1 : 0;
+          const imgB = (b.urlimagevehicule && String(b.urlimagevehicule).length > 20) ? 1 : 0;
+          if (imgA !== imgB) return imgB - imgA;
+
+          const ta = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0;
+          const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
+          return tb - ta;
+        });
+
+        for (let i = 1; i < list.length; i++) {
+          batch.delete(doc(db, "vehicles", list[i].id));
+          deleted++;
+          count++;
+          if (count >= 400) {
+            await batch.commit();
+            batch = writeBatch(db);
+            count = 0;
+          }
+        }
+      }
+    }
+
+    if (count > 0) await batch.commit();
+    alert(`Sync terminé : ${deleted} véhicules supprimés (hors-liste ou doublons).`);
+    clearPdmCache("vehicles");
+    await initData(true);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur sync.");
+  } finally {
+    elements.syncRefBtn.disabled = false;
+    elements.syncRefBtn.textContent = "Sync Référence";
+  }
+});
+
 elements.dedupeBtn?.addEventListener("click", async () => {
   if (USER_ROLE !== "admin") {
     alert("Accès refusé : Action réservée aux administrateurs.");
@@ -310,7 +397,12 @@ elements.dedupeBtn?.addEventListener("click", async () => {
     for (const key in groups) {
       const list = groups[key];
       if (list.length > 1) {
+        // Prioritize: 1. Has Image, 2. Most recent
         list.sort((a, b) => {
+          const imgA = (a.urlimagevehicule && a.urlimagevehicule.length > 10) ? 1 : 0;
+          const imgB = (b.urlimagevehicule && b.urlimagevehicule.length > 10) ? 1 : 0;
+          if (imgA !== imgB) return imgB - imgA;
+
           const ta = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0;
           const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0;
           return tb - ta;
@@ -364,10 +456,12 @@ onAuthStateChanged(auth, async (user) => {
       elements.addBtn?.classList.remove("hidden");
       elements.enrichBtn?.classList.remove("hidden");
       elements.dedupeBtn?.classList.remove("hidden");
+      elements.syncRefBtn?.classList.remove("hidden");
     } else {
       elements.addBtn?.classList.add("hidden");
       elements.enrichBtn?.classList.add("hidden");
       elements.dedupeBtn?.classList.add("hidden");
+      elements.syncRefBtn?.classList.add("hidden");
     }
 
     initData();

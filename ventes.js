@@ -617,32 +617,39 @@ async function handleCSV(file) {
 
         let createdAt = new Date();
         if (dateStr) {
+          const now = new Date();
           let parts = dateStr.split(/[\/\-\s]/);
-          let d, m, y;
           if (parts.length === 3) {
             if (parts[0].length === 4) { // YYYY-MM-DD
-              y = parseInt(parts[0], 10);
-              m = parseInt(parts[1], 10) - 1;
-              d = parseInt(parts[2], 10);
-            } else { // DD/MM/YYYY
-              d = parseInt(parts[0], 10);
-              m = parseInt(parts[1], 10) - 1;
-              y = parseInt(parts[2], 10);
-              if (y < 100) y += 2000;
-            }
+              let y = parseInt(parts[0]);
+              let m = parseInt(parts[1]) - 1;
+              let d = parseInt(parts[2]);
+              let t = new Date(y, m, d, 12, 0, 0);
+              if (!isNaN(t.getTime())) createdAt = t;
+            } else {
+              let p0 = parseInt(parts[0]);
+              let p1 = parseInt(parts[1]);
+              let p2 = parseInt(parts[2]);
+              if (p2 < 100) p2 += 2000;
 
-            const testDate = new Date(y, m, d, 12, 0, 0);
-            if (!isNaN(testDate.getTime())) {
-              const now = new Date();
-              // Future date cap: if date is in the future, cap it at now
-              if (testDate.getTime() > now.getTime()) {
-                createdAt = now;
-              } else {
-                createdAt = testDate;
+              // Attempt A: DD/MM/YYYY
+              let dateA = new Date(p2, p1 - 1, p0, 12, 0, 0);
+              // Attempt B: MM/DD/YYYY
+              let dateB = (p0 <= 12) ? new Date(p2, p0 - 1, p1, 12, 0, 0) : null;
+
+              if (dateB && !isNaN(dateB.getTime()) && !isNaN(dateA.getTime())) {
+                // If A is in the future but B is not, prefer B (likely US format or entry error)
+                if (dateA > now && dateB <= now) createdAt = dateB;
+                else createdAt = dateA;
+              } else if (!isNaN(dateA.getTime())) {
+                createdAt = dateA;
+              } else if (dateB && !isNaN(dateB.getTime())) {
+                createdAt = dateB;
               }
             }
           }
         }
+        if (createdAt > new Date()) createdAt = new Date(); // Safety cap
 
         await addDoc(collection(db, "transactions"), {
           clientId: client.id, clientName: client.name,
