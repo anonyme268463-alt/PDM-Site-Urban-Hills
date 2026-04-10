@@ -1274,29 +1274,20 @@
                 <div class="contact-card">
                     <form>
                         <div>
-                            <label for="nom">Nom / Pseudo </label>
-                            <input type="text" id="nom" placeholder="Samy, Kévin, etc.">
+                            <label for="nom">Nom Prénom</label>
+                            <input type="text" id="nom" placeholder="Samy Kévin">
                         </div>
                         <div>
-                            <label for="serveur">Serveur / ville</label>
-                            <input type="text" id="serveur" placeholder="Urban Hills">
+                            <label for="raison">Raison</label>
+                            <input type="text" id="raison" placeholder="Question, Partenariat, etc.">
                         </div>
                         <div>
-                            <label for="vehicule">Véhicule souhaité</label>
-                            <input type="text" id="vehicule" placeholder="Ex : Tempesta GT, Buffalo STX...">
+                            <label for="date_souhaitee">Date souhaitée</label>
+                            <input type="text" id="date_souhaitee" placeholder="Dès que possible, ou une date précise">
                         </div>
                         <div>
-                            <label for="budget">Budget approximatif</label>
-                            <select id="budget">
-                                <option>Moins de 50 000 €</option>
-                                <option>50 000 € - 100 000 €</option>
-                                <option>100 000 € - 200 000 €</option>
-                                <option>Plus de 200 000 €</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="message">Détails / informations </label>
-                            <textarea id="message" placeholder="Explique ton projet, les options souhaitées, le moyen de contact (Discord, etc.)."></textarea>
+                            <label for="message">Détails</label>
+                            <textarea id="message" placeholder="Précisez votre demande ici..."></textarea>
                         </div>
                         <div style="margin-top:0.3rem;">
                             <button type="button" class="btn-gold" style="width:100%;" onclick="sendToDiscord()">Envoyer la demande</button>
@@ -1356,41 +1347,39 @@
 
 <script>
 /*
-  PDM -> Discord Webhook
+  PDM -> Discord Webhook Contact
 */
-const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1491997061724373074/p9G4n7fBcwRB3XWXM5AiNCsFPsKfS9pwqbAnrl1iaakzS7_X-I8U0wC5jiRNO7PaXNtd";
+const DISCORD_CONTACT_WEBHOOK = "https://discordapp.com/api/webhooks/1449813594228396083/GMtuiqc1jZ6UoeFh6fc85AT405-g9VJXAk7ysc47tvqLbDxysQlVE1gAvrBZRY0wNtNW";
 
 async function sendToDiscord() {
   const nom = document.getElementById("nom")?.value.trim();
-  const serveur = document.getElementById("serveur")?.value.trim();
-  const vehicule = document.getElementById("vehicule")?.value.trim();
-  const budget = document.getElementById("budget")?.value;
+  const raison = document.getElementById("raison")?.value.trim();
+  const date_souhaitee = document.getElementById("date_souhaitee")?.value.trim();
   const message = document.getElementById("message")?.value.trim();
 
-  if (!nom || !vehicule) {
-    alert("Remplis au minimum Nom/Pseudo RP et Véhicule souhaité.");
+  if (!nom || !raison) {
+    alert("Remplis au minimum ton Nom Prénom et la Raison de ton contact.");
     return;
   }
 
   const payload = {
-    username: "PDM Tickets",
+    username: "PDM Contact",
     embeds: [{
-      title: "📩 Nouveau ticket - Premium Deluxe Motorsport",
+      title: "📞 Nouveau Contact - Premium Deluxe Motorsport",
       color: 0xD4AF37,
       fields: [
-        { name: "👤 Nom / Pseudo RP", value: nom || "—", inline: true },
-        { name: "🏙️ Serveur / Ville", value: serveur || "—", inline: true },
-        { name: "🚗 Véhicule", value: vehicule || "—", inline: false },
-        { name: "💰 Budget", value: budget || "—", inline: true },
-        { name: "📝 Message", value: message || "—", inline: false }
+        { name: "👤 Nom Prénom", value: nom || "—", inline: true },
+        { name: "❓ Raison", value: raison || "—", inline: true },
+        { name: "📅 Date souhaitée", value: date_souhaitee || "—", inline: false },
+        { name: "📝 Détails", value: message || "—", inline: false }
       ],
-      footer: { text: "Premium Deluxe Motorsport - Ticket auto" },
+      footer: { text: "Premium Deluxe Motorsport - Contact auto" },
       timestamp: new Date().toISOString()
     }]
   };
 
   try {
-    const res = await fetch(DISCORD_WEBHOOK_URL, {
+    const res = await fetch(DISCORD_CONTACT_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
