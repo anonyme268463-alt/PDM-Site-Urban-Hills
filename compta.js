@@ -69,7 +69,7 @@ const moneyBase = (tx) => Number(tx.sellPrice || 0);
 
 function renderTransactions(list) {
   if (!list.length) {
-    txTbody.innerHTML = `<tr><td colspan="7" class="muted">Aucune vente.</td></tr>`;
+    txTbody.innerHTML = `<tr><td colspan="8" class="muted">Aucune vente.</td></tr>`;
     return;
   }
   txTbody.innerHTML = list.map(tx => `
@@ -77,8 +77,9 @@ function renderTransactions(list) {
       <td>${tx.createdAt?.toDate ? tx.createdAt.toDate().toLocaleDateString() : "-"}</td>
       <td>${esc(tx.clientName || tx.client || "-")}</td>
       <td>${esc(tx.model || tx.vehicle || "-")}</td>
-      <td>${fmtMoney(tx.buyPrice)}</td>
+      <td><span class="badge badge-info">${esc(tx.detail || "Vente directe")}</span></td>
       <td>${fmtMoney(tx.sellPrice)}</td>
+      <td>${fmtMoney(tx.buyPrice)}</td>
       <td>${fmtMoney(tx.profit)}</td>
       <td>${esc(tx.sellerName || tx.importedSeller || tx.vendeur || "-")}</td>
     </tr>
@@ -296,7 +297,7 @@ function generateReportHTML() {
   };
 
   const salariesHtml = cloneTable("#salaryTbody", false);
-  const salesHtml = cloneTable("#txTbody", true);
+  const salesHtml = cloneTable("#txTbody", false); // Keep Vendeur for sales
   const cashbookHtml = cloneTable("#cashTbody", true);
 
   return `
@@ -315,17 +316,19 @@ function generateReportHTML() {
         .pdf-report .report-meta b { color: #000; }
 
         .pdf-report .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .pdf-report .kpi-box { border: 1px solid #eee; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #ffffff, #fafafa); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .pdf-report .kpi-box { border: 1px solid #eee; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #ffffff, #fcfcfc); box-shadow: 0 4px 10px rgba(0,0,0,0.03); border-top: 4px solid #d4af37; }
         .pdf-report .kpi-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 8px; font-weight: 700; }
         .pdf-report .kpi-value { font-size: 24px; font-weight: 800; color: #000; }
         .pdf-report .kpi-value.gold { color: #b08d1a; }
 
-        .pdf-report h2 { font-size: 16px; border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px; color: #111; }
+        .pdf-report h2 { font-size: 15px; border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px; color: #111; font-weight: 800; }
 
-        .pdf-report table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
-        .pdf-report th { background: #f8f8f8; text-align: left; padding: 10px; border-bottom: 2px solid #eee; text-transform: uppercase; color: #666; font-size: 10px; }
-        .pdf-report td { padding: 10px; border-bottom: 1px solid #eee; color: #333; }
+        .pdf-report table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
+        .pdf-report th { background: #fdfdfd; text-align: left; padding: 12px 10px; border-bottom: 2px solid #d4af37; text-transform: uppercase; color: #444; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; }
+        .pdf-report td { padding: 12px 10px; border-bottom: 1px solid #eee; color: #333; }
         .pdf-report tr:nth-child(even) { background: #fafafa; }
+        .pdf-report .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; background: #f0f0f0; color: #666; border: 1px solid #ddd; }
+        .pdf-report .badge-info { background: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
 
         .pdf-report .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; }
 
