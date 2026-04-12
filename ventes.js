@@ -565,6 +565,12 @@ if(deleteSelectedBtn) deleteSelectedBtn.addEventListener("click", deleteSelected
 
 onAuthStateChanged(auth, u => { if(u) load(); else window.location.href = "pdm-staff.html"; });
 
+if (search) {
+  search.addEventListener("input", () => {
+    render();
+  });
+}
+
 // --- CSV Import ---
 const csvInput = document.getElementById("csvInput");
 
