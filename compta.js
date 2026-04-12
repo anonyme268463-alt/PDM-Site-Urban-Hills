@@ -36,6 +36,10 @@ const cashAmount = document.getElementById("cashAmount");
 const btnPdf = document.getElementById("btnPdf");
 const btnLogout = document.getElementById("btnLogout");
 
+const reportModal = document.getElementById("reportModal");
+const reportPreviewContent = document.getElementById("reportPreviewContent");
+const btnPrintReport = document.getElementById("btnPrintReport");
+
 let range = { from: null, to: null };
 let txRows = [];
 let cashRows = [];
@@ -274,9 +278,130 @@ cashSave?.addEventListener("click", async () => {
   } catch(e) { console.error(e); }
 });
 
+function generateReportHTML() {
+  const dateStr = new Date().toLocaleDateString("fr-FR");
+  const period = periodLabel.textContent;
+
+  // Clone tables to remove action columns for the report
+  const cloneTable = (selector, removeLast = true) => {
+    const table = document.querySelector(selector).closest("table").cloneNode(true);
+    if (removeLast) {
+      table.querySelectorAll("tr").forEach(tr => {
+        if (tr.lastElementChild) tr.lastElementChild.remove();
+      });
+    }
+    return table.outerHTML;
+  };
+
+  const salariesHtml = cloneTable("#salaryTbody", false);
+  const salesHtml = cloneTable("#txTbody", true);
+  const cashbookHtml = cloneTable("#cashTbody", true);
+
+  return `
+    <div class="pdf-report" style="font-family: 'Poppins', sans-serif; color: #000; padding: 40px; background: #fff;">
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        .pdf-report h1, .pdf-report h2, .pdf-report h3 { color: #000; margin-top: 0; }
+        .pdf-report .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #d4af37; padding-bottom: 20px; }
+        .pdf-report .logo-box { display: flex; align-items: center; gap: 15px; }
+        .pdf-report .logo-box img { height: 60px; }
+        .pdf-report .brand-info { line-height: 1.2; }
+        .pdf-report .brand-info b { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+        .pdf-report .brand-info span { color: #d4af37; font-size: 14px; text-transform: uppercase; display: block; }
+
+        .pdf-report .report-meta { text-align: right; font-size: 13px; color: #666; }
+
+        .pdf-report .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .pdf-report .kpi-box { border: 1px solid #eee; padding: 15px; border-radius: 8px; background: #fcfcfc; }
+        .pdf-report .kpi-title { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 5px; font-weight: 600; }
+        .pdf-report .kpi-value { font-size: 20px; font-weight: 800; color: #000; }
+        .pdf-report .kpi-value.gold { color: #b08d1a; }
+
+        .pdf-report h2 { font-size: 18px; border-left: 4px solid #d4af37; padding-left: 12px; margin-bottom: 15px; margin-top: 30px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .pdf-report table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+        .pdf-report th { background: #f8f8f8; text-align: left; padding: 10px; border-bottom: 2px solid #eee; text-transform: uppercase; color: #666; font-size: 10px; }
+        .pdf-report td { padding: 10px; border-bottom: 1px solid #eee; color: #333; }
+        .pdf-report tr:nth-child(even) { background: #fafafa; }
+
+        .pdf-report .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; }
+
+        @media print {
+          body * { visibility: hidden; }
+          .pdf-report, .pdf-report * { visibility: visible; }
+          .pdf-report { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 0 !important; margin: 0 !important; background: #fff !important; }
+          .modal-overlay { background: none !important; backdrop-filter: none !important; position: static !important; }
+          .modal-container { box-shadow: none !important; border: none !important; width: 100% !important; max-width: none !important; position: static !important; transform: none !important; }
+          .modal-header, .modal-footer, .modal-body { padding: 0 !important; }
+          .modal-header, .modal-footer { display: none !important; }
+          .main-content, .app-container, .sidebar { display: none !important; }
+          @page { margin: 1cm; }
+        }
+      </style>
+
+      <div class="header">
+        <div class="logo-box">
+          <img src="PDM_Logo_Site.png" alt="PDM Logo">
+          <div class="brand-info">
+            <b>Premium Deluxe Motorsport</b>
+            <span>Concessionnaire Urban Hills</span>
+          </div>
+        </div>
+        <div class="report-meta">
+          <div>Document financier officiel</div>
+          <div>Édité le : <b>${dateStr}</b></div>
+          <div style="margin-top: 5px; color: #000; font-weight: 600;">Période : ${esc(period)}</div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-box">
+          <div class="kpi-title">Chiffre d'Affaires</div>
+          <div class="kpi-value gold">${kpiCa.textContent}</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-title">Profit Brut</div>
+          <div class="kpi-value gold">${kpiProfit.textContent}</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-title">Dépenses & Frais</div>
+          <div class="kpi-value" style="color: #c0392b;">${kpiExpense.textContent}</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-title">Résultat Net</div>
+          <div class="kpi-value gold">${kpiNet.textContent}</div>
+        </div>
+      </div>
+
+      <h2>Rapport des Salaires & Commissions</h2>
+      ${salariesHtml}
+
+      <div style="page-break-before: always;"></div>
+
+      <h2>Détail des Ventes du Stock</h2>
+      ${salesHtml}
+
+      <h2>Opérations de Trésorerie (Cashbook)</h2>
+      ${cashbookHtml}
+
+      <div class="footer">
+        © ${new Date().getFullYear()} Premium Deluxe Motorsport — Document confidentiel à l'usage exclusif du département des finances publiques d'Urban Hills.
+      </div>
+    </div>
+  `;
+}
+
 btnPdf?.addEventListener("click", () => {
-  const html = `<html><head><meta charset="utf-8"/><title>Compta — Export</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#f4f4f4;}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}.kpi{border:1px solid #ddd;padding:10px;border-radius:8px;}@media print{button{display:none;}}</style></head><body><h1>Comptabilité</h1><div class="muted">Période : ${esc(periodLabel.textContent)}</div><div class="kpis"><div class="kpi">CA total<b>${kpiCa.textContent}</b></div><div class="kpi">Profit total<b>${kpiProfit.textContent}</b></div><div class="kpi">Dépenses<b>${kpiExpense.textContent}</b></div><div class="kpi">Résultat net<b>${kpiNet.textContent}</b></div></div><h2>Salaires</h2>${document.querySelector("#salaryTbody").closest("table").outerHTML}<h2>Ventes</h2>${document.querySelector("#txTbody").closest("table").outerHTML}<h2>Cashbook</h2>${document.querySelector("#cashTbody").closest("table").outerHTML}<script>window.onload=()=>window.print();</script></body></html>`;
-  const w = window.open("", "_blank"); w.document.write(html); w.document.close();
+  reportPreviewContent.innerHTML = generateReportHTML();
+  reportModal.classList.remove("hidden");
+});
+
+btnPrintReport?.addEventListener("click", () => {
+  window.print();
+});
+
+document.querySelectorAll("[data-close-report]").forEach(b => {
+  b.addEventListener("click", () => reportModal.classList.add("hidden"));
 });
 
 btnLogout?.addEventListener("click", async () => { await signOut(auth); window.location.href = "pdm-staff.html"; });

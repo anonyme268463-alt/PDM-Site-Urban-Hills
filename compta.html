@@ -171,6 +171,29 @@
     </main>
   </div>
 
+  <!-- Modal Report Preview -->
+  <div id="reportModal" class="modal-overlay hidden">
+    <div class="modal-container" style="max-width: 1000px; width: 95vw;">
+      <div class="modal-header">
+        <div class="flex-row" style="justify-content: space-between; width: 100%;">
+          <h2>Aperçu du rapport</h2>
+          <div class="flex-row">
+            <button id="btnPrintReport" class="btn btn-gold">Imprimer / Enregistrer PDF</button>
+            <button class="btn btn-outline" data-close-report="1">Fermer</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-body" style="background: #fff; padding: 0;">
+        <div id="reportPreviewContent" style="color: #000; min-height: 500px;">
+          <!-- Generated Report Content -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" data-close-report="1">Fermer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Cashbook -->
   <div id="cashModal" class="modal-overlay hidden">
     <div class="modal-container" style="max-width: 500px;">
