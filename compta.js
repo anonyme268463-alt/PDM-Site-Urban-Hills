@@ -281,6 +281,8 @@ cashSave?.addEventListener("click", async () => {
 function generateReportHTML() {
   const dateStr = new Date().toLocaleDateString("fr-FR");
   const period = periodLabel.textContent;
+  const treasuryPrev = document.getElementById("kpiTreasuryPrev")?.textContent || "$0";
+  const treasuryTotal = document.getElementById("kpiTreasuryTotal")?.textContent || "$0";
 
   // Clone tables to remove action columns for the report
   const cloneTable = (selector, removeLast = true) => {
@@ -302,22 +304,23 @@ function generateReportHTML() {
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
         .pdf-report h1, .pdf-report h2, .pdf-report h3 { color: #000; margin-top: 0; }
-        .pdf-report .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #d4af37; padding-bottom: 20px; }
-        .pdf-report .logo-box { display: flex; align-items: center; gap: 15px; }
-        .pdf-report .logo-box img { height: 60px; }
-        .pdf-report .brand-info { line-height: 1.2; }
-        .pdf-report .brand-info b { font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
-        .pdf-report .brand-info span { color: #d4af37; font-size: 14px; text-transform: uppercase; display: block; }
+        .pdf-report .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 3px double #d4af37; padding-bottom: 20px; }
+        .pdf-report .logo-box { display: flex; align-items: center; gap: 20px; }
+        .pdf-report .logo-box img { height: 75px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .pdf-report .brand-info { line-height: 1.1; }
+        .pdf-report .brand-info b { font-size: 24px; text-transform: uppercase; letter-spacing: 1.5px; display: block; }
+        .pdf-report .brand-info span { color: #b08d1a; font-size: 13px; font-weight: 600; text-transform: uppercase; display: block; margin-top: 2px; }
 
-        .pdf-report .report-meta { text-align: right; font-size: 13px; color: #666; }
+        .pdf-report .report-meta { text-align: right; font-size: 12px; color: #777; }
+        .pdf-report .report-meta b { color: #000; }
 
-        .pdf-report .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-        .pdf-report .kpi-box { border: 1px solid #eee; padding: 15px; border-radius: 8px; background: #fcfcfc; }
-        .pdf-report .kpi-title { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 5px; font-weight: 600; }
-        .pdf-report .kpi-value { font-size: 20px; font-weight: 800; color: #000; }
+        .pdf-report .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        .pdf-report .kpi-box { border: 1px solid #eee; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #ffffff, #fafafa); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .pdf-report .kpi-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 8px; font-weight: 700; }
+        .pdf-report .kpi-value { font-size: 24px; font-weight: 800; color: #000; }
         .pdf-report .kpi-value.gold { color: #b08d1a; }
 
-        .pdf-report h2 { font-size: 18px; border-left: 4px solid #d4af37; padding-left: 12px; margin-bottom: 15px; margin-top: 30px; text-transform: uppercase; letter-spacing: 1px; }
+        .pdf-report h2 { font-size: 16px; border-left: 5px solid #d4af37; padding-left: 15px; margin-bottom: 20px; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px; color: #111; }
 
         .pdf-report table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
         .pdf-report th { background: #f8f8f8; text-align: left; padding: 10px; border-bottom: 2px solid #eee; text-transform: uppercase; color: #666; font-size: 10px; }
@@ -354,7 +357,7 @@ function generateReportHTML() {
         </div>
       </div>
 
-      <div class="kpi-grid">
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
         <div class="kpi-box">
           <div class="kpi-title">Chiffre d'Affaires</div>
           <div class="kpi-value gold">${kpiCa.textContent}</div>
@@ -368,8 +371,16 @@ function generateReportHTML() {
           <div class="kpi-value" style="color: #c0392b;">${kpiExpense.textContent}</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-title">Résultat Net</div>
+          <div class="kpi-title">Résultat Net Période</div>
           <div class="kpi-value gold">${kpiNet.textContent}</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-title">Trésorerie S-1</div>
+          <div class="kpi-value">${treasuryPrev}</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-title">Trésorerie Actuelle</div>
+          <div class="kpi-value gold" style="border-bottom: 2px solid #d4af37; display: inline-block;">${treasuryTotal}</div>
         </div>
       </div>
 

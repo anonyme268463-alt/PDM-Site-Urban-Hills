@@ -30,8 +30,8 @@
   --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.7);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
 
-  --transition-fast: 0.2s ease-out;
-  --transition-slow: 0.4s ease-out;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
   --sidebar-width: 280px;
@@ -132,6 +132,7 @@ button, input, select, textarea {
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   transform: translateX(4px);
+  will-change: transform;
 }
 
 .nav-link.active {
@@ -199,6 +200,7 @@ button, input, select, textarea {
   box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
   border-color: rgba(212, 175, 55, 0.3);
+  will-change: transform, box-shadow;
 }
 
 .card-header {
@@ -301,6 +303,7 @@ button, input, select, textarea {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
   filter: brightness(1.1);
+  will-change: transform, box-shadow;
 }
 
 .btn-outline {
@@ -360,6 +363,7 @@ button, input, select, textarea {
   border-color: var(--accent-gold);
   background: rgba(0, 0, 0, 0.5);
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  will-change: border-color, box-shadow;
 }
 
 /* Badges */
@@ -460,7 +464,8 @@ button, input, select, textarea {
 }
 
 .content-body > * {
-  animation: fadeIn 0.5s ease-out both;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: opacity, transform;
 }
 
 .card:nth-child(2) { animation-delay: 0.1s; }
