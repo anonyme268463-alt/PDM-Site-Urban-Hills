@@ -51,7 +51,10 @@
       <div class="stats-grid">
         <div class="card stat-card">
           <div class="card-title">Prix du ticket</div>
-          <div class="stat-value" id="ticketPrice">$500</div>
+          <div class="stat-value" style="display: flex; align-items: center; gap: 5px;">
+            <span>$</span>
+            <input type="number" id="ticketPrice" class="input" value="500" style="width: 100px; background: transparent; border: none; font-size: 28px; font-weight: 800; color: #fff; padding: 0;">
+          </div>
         </div>
         <div class="card stat-card">
           <div class="card-title">Participations totales</div>
@@ -116,7 +119,11 @@
             </table>
           </div>
           <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-              <div class="muted">Valeur unitaire du bon: <strong id="voucherValue">$100,000</strong></div>
+              <div class="muted" style="display: flex; align-items: center; gap: 5px;">
+                Valeur unitaire du bon:
+                <strong>$</strong>
+                <input type="number" id="voucherValue" class="input" value="100000" style="width: 120px; background: transparent; border: none; color: #fff; font-weight: 800; padding: 0;">
+              </div>
               <button id="saveVouchersBtn" class="btn btn-outline btn-sm hidden">Distribuer les bons</button>
           </div>
         </div>

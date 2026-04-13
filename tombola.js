@@ -60,7 +60,8 @@ async function loadData(force = false) {
 function renderStats() {
   const totalTickets = STATE.participants.reduce((sum, p) => sum + (Number(p.tickets) || 0), 0);
   elements.totalTickets.textContent = totalTickets;
-  elements.totalPot.textContent = fmtMoney(totalTickets * STATE.ticketPrice);
+  const price = Number(elements.ticketPrice.value || 500);
+  elements.totalPot.textContent = fmtMoney(totalTickets * price);
   elements.totalParticipants.textContent = STATE.participants.length;
 }
 
@@ -123,6 +124,10 @@ function updateSearchDropdown() {
 
 elements.pName.addEventListener("input", updateSearchDropdown);
 elements.pName.addEventListener("focus", updateSearchDropdown);
+elements.ticketPrice.addEventListener("input", renderStats);
+elements.voucherValue.addEventListener("input", () => {
+  STATE.voucherValue = Number(elements.voucherValue.value || 100000);
+});
 
 elements.pSearchDropdown.addEventListener("click", e => {
   const div = e.target.closest("div");
@@ -170,15 +175,26 @@ async function resetTombola() {
   if (!confirm("Réinitialiser toute la tombola (participants et gagnants) ?")) return;
 
   try {
-    const batch = writeBatch(db);
-
     const pSnap = await getDocs(collection(db, "tombola_participants"));
-    pSnap.forEach(d => batch.delete(d.ref));
-
     const wSnap = await getDocs(collection(db, "tombola_winners"));
-    wSnap.forEach(d => batch.delete(d.ref));
 
-    await batch.commit();
+    let batch = writeBatch(db);
+    let count = 0;
+
+    const allDocs = [...pSnap.docs, ...wSnap.docs];
+
+    for (const d of allDocs) {
+      batch.delete(d.ref);
+      count++;
+      if (count >= 400) {
+        await batch.commit();
+        batch = writeBatch(db);
+        count = 0;
+      }
+    }
+
+    if (count > 0) await batch.commit();
+
     STATE.participants = [];
     STATE.winners = [];
     renderParticipants();
@@ -194,6 +210,8 @@ async function resetTombola() {
 function runWeightedDraw() {
     if (STATE.participants.length < 1) return alert("Il faut au moins un participant.");
     if (STATE.role !== "admin") return alert("Accès réservé aux administrateurs.");
+
+    const vVal = Number(elements.voucherValue.value || 100000);
 
     // Pool creation: each participant appears 'tickets' times
     let pool = [];
@@ -228,7 +246,7 @@ function runWeightedDraw() {
     STATE.winners = winners.map((name, index) => ({
         place: index + 1,
         name: name,
-        voucherValue: STATE.voucherValue,
+        voucherValue: vVal,
         used: 0
     }));
 
@@ -240,11 +258,20 @@ async function saveWinners() {
     if (STATE.role !== "admin") return;
 
     try {
-        const batch = writeBatch(db);
+        let batch = writeBatch(db);
+        let count = 0;
 
         // Clear old winners first
         const wSnap = await getDocs(collection(db, "tombola_winners"));
-        wSnap.forEach(d => batch.delete(d.ref));
+        for (const d of wSnap.docs) {
+          batch.delete(d.ref);
+          count++;
+          if (count >= 400) {
+            await batch.commit();
+            batch = writeBatch(db);
+            count = 0;
+          }
+        }
 
         // Add new winners and create Vouchers
         for (const w of STATE.winners) {
@@ -253,6 +280,7 @@ async function saveWinners() {
                 ...w,
                 createdAt: serverTimestamp()
             });
+            count++;
 
             // Find client ID for voucher if exists
             const client = STATE.clients.find(c => c.name.toLowerCase() === w.name.toLowerCase());
@@ -267,10 +295,35 @@ async function saveWinners() {
                 createdAt: serverTimestamp(),
                 active: true
             });
+            count++;
+
+            if (count >= 400) {
+              await batch.commit();
+              batch = writeBatch(db);
+              count = 0;
+            }
         }
 
-        await batch.commit();
-        await logAction("TOMBOLA_DRAW", `Tirage effectué: ${STATE.winners.length} gagnants.`);
+        if (count > 0) await batch.commit();
+
+        // Calculate Revenue and record in Cashbook
+        const totalTickets = STATE.participants.reduce((sum, p) => sum + (Number(p.tickets) || 0), 0);
+        const price = Number(elements.ticketPrice.value || 500);
+        const revenue = totalTickets * price;
+
+        if (revenue > 0) {
+          await addDoc(collection(db, "cashbook"), {
+            date: serverTimestamp(),
+            type: "other",
+            reason: `Revenus Tombola (${totalTickets} tickets)`,
+            amount: revenue,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: auth.currentUser?.uid || null
+          });
+        }
+
+        await logAction("TOMBOLA_DRAW", `Tirage effectué: ${STATE.winners.length} gagnants. Revenus: ${revenue}`);
         alert("Gagnants enregistrés et Bons d'achat générés !");
     } catch (err) {
         console.error(err);
@@ -291,6 +344,8 @@ onAuthStateChanged(auth, async (user) => {
   if (STATE.role !== "admin") {
       elements.drawBtn.classList.add("hidden");
       elements.resetBtn.classList.add("hidden");
+      elements.ticketPrice.readOnly = true;
+      elements.voucherValue.readOnly = true;
   }
 
   loadData();
