@@ -445,8 +445,43 @@ async function save(){
 
   try {
     if(!editingId){
-      await addDoc(collection(db,"transactions"), payload);
+      const docRef = await addDoc(collection(db,"transactions"), payload);
       await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
+
+      // Automatic Inventory Management
+      const detail = payload.detail;
+      const normModel = payload.model.toLowerCase();
+      const normClient = payload.clientName.toLowerCase();
+
+      if (detail === "Vente depuis le stock") {
+        const stockSnap = await getDocs(collection(db, "stock"));
+        const stockItem = stockSnap.docs.find(d => {
+          const s = d.data();
+          const sModel = (s.brand + " " + s.model).toLowerCase();
+          return sModel.includes(normModel) || normModel.includes(sModel) || (s.model.toLowerCase() === normModel);
+        });
+        if (stockItem) {
+          const currentQty = Number(stockItem.data().qty || 0);
+          if (currentQty <= 1) {
+            await deleteDoc(doc(db, "stock", stockItem.id));
+          } else {
+            await updateDoc(doc(db, "stock", stockItem.id), { qty: currentQty - 1 });
+          }
+        }
+      } else if (detail === "Vente d'une réservation") {
+        const resSnap = await getDocs(collection(db, "reservations"));
+        const resItem = resSnap.docs.find(d => {
+          const r = d.data();
+          const rModel = (r.brand + " " + r.model).toLowerCase();
+          const rClient = (r.client || "").toLowerCase();
+          const modelMatch = rModel.includes(normModel) || normModel.includes(rModel) || (r.model.toLowerCase() === normModel);
+          const clientMatch = rClient.includes(normClient) || normClient.includes(rClient);
+          return modelMatch && clientMatch;
+        });
+        if (resItem) {
+          await deleteDoc(doc(db, "reservations", resItem.id));
+        }
+      }
     } else {
       await updateDoc(doc(db,"transactions", editingId), payload);
       await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
