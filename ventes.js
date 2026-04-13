@@ -503,7 +503,7 @@ async function removeTx(id){
 
 async function dedupeSales() {
   if (CACHE.role !== "admin") {
-    alert("Accès refusé : Action réservée aux administrateurs.");
+    alert("Accès refusé : Seul un administrateur peut supprimer les doublons.");
     return;
   }
   if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;
@@ -562,7 +562,7 @@ if(dedupeBtn) dedupeBtn.addEventListener("click", dedupeSales);
 
 async function deleteSelected() {
   if (CACHE.role !== "admin") {
-    alert("Accès refusé : Action réservée aux administrateurs.");
+    alert("Accès refusé : Seul un administrateur peut supprimer plusieurs ventes.");
     return;
   }
   const selected = Array.from(txTable.querySelectorAll(".row-select:checked")).map(cb => cb.dataset.id);
@@ -626,7 +626,7 @@ if (importCsvBtn && csvInput) {
 
 async function handleCSV(file) {
   if (CACHE.role !== "admin") {
-    alert("Accès refusé : Action réservée aux administrateurs.");
+    alert("Accès refusé : Seul un administrateur peut importer des ventes.");
     return;
   }
   const reader = new FileReader();
@@ -661,7 +661,8 @@ async function handleCSV(file) {
           const now = new Date();
           let parts = dateStr.split(/[\/\-\s]/);
           if (parts.length === 3) {
-            if (parts[0].length === 4) { // YYYY-MM-DD
+            // Check for YYYY-MM-DD first
+            if (parts[0].length === 4) {
               let y = parseInt(parts[0]);
               let m = parseInt(parts[1]) - 1;
               let d = parseInt(parts[2]);
@@ -673,18 +674,23 @@ async function handleCSV(file) {
               let p2 = parseInt(parts[2]);
               if (p2 < 100) p2 += 2000;
 
-              // Attempt A: DD/MM/YYYY
-              let dateA = new Date(p2, p1 - 1, p0, 12, 0, 0);
-              // Attempt B: MM/DD/YYYY
-              let dateB = (p0 <= 12) ? new Date(p2, p0 - 1, p1, 12, 0, 0) : null;
+              // Heuristic: DD/MM vs MM/DD. Prefer past date.
+              let dateA = new Date(p2, p1 - 1, p0, 12, 0, 0); // DD/MM/YYYY
+              let dateB = (p0 <= 12) ? new Date(p2, p0 - 1, p1, 12, 0, 0) : null; // MM/DD/YYYY
 
-              if (dateB && !isNaN(dateB.getTime()) && !isNaN(dateA.getTime())) {
-                // If A is in the future but B is not, prefer B (likely US format or entry error)
-                if (dateA > now && dateB <= now) createdAt = dateB;
-                else createdAt = dateA;
-              } else if (!isNaN(dateA.getTime())) {
+              const validA = !isNaN(dateA.getTime());
+              const validB = dateB && !isNaN(dateB.getTime());
+
+              if (validA && validB) {
+                // If one is in the future and the other is in the past, pick the past one.
+                if (dateA > now && dateB <= now) {
+                  createdAt = dateB;
+                } else {
+                  createdAt = dateA;
+                }
+              } else if (validA) {
                 createdAt = dateA;
-              } else if (dateB && !isNaN(dateB.getTime())) {
+              } else if (validB) {
                 createdAt = dateB;
               }
             }
