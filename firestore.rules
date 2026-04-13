@@ -12,8 +12,8 @@ service cloud.firestore {
       return isSignedIn() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              (
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction'] ||
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction']
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').toLower() in ['admin', 'pdg', 'patron', 'direction'] ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').toLower() in ['admin', 'pdg', 'patron', 'direction']
              );
     }
 
