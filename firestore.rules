@@ -2,74 +2,197 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Is the user authenticated?
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Helper: Does the user have an administrative role?
-    function hasAdminRole() {
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userPath() {
+      return /databases/$(database)/documents/users/$(uid());
+    }
+
+    function userExists() {
+      return isSignedIn() && exists(userPath());
+    }
+
+    function userData() {
+      return get(userPath()).data;
+    }
+
+    function rawRole() {
+      return userExists()
+        ? (userData().get('role', userData().get('rank', 'staff'))).lower()
+        : 'guest';
+    }
+
+    function isAdmin() {
       return isSignedIn() &&
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             (
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction'] ||
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction']
-             );
+        rawRole() in ['admin', 'pdg', 'patron', 'direction'];
     }
 
-    // --- COLLECTIONS ---
+    function isEmployee() {
+      return isSignedIn() && userExists();
+    }
 
-    // Users: Auth users can read, only admins or owner can write.
+    function canReadStaffData() {
+      return isEmployee();
+    }
+
+    function txAllowedKeys() {
+      return request.resource.data.keys().hasOnly([
+        'clientId',
+        'clientName',
+        'model',
+        'detail',
+        'notes',
+        'buyPrice',
+        'sellPrice',
+        'sellerId',
+        'sellerName',
+        'createdBy',
+        'createdAt',
+        'updatedAt'
+      ]);
+    }
+
+    function txRequiredKeys() {
+      return request.resource.data.keys().hasAll([
+        'model',
+        'sellerId',
+        'sellerName',
+        'createdBy',
+        'createdAt'
+      ]);
+    }
+
+    function txValidTypes() {
+      return
+        request.resource.data.model is string &&
+        request.resource.data.sellerId is string &&
+        request.resource.data.sellerName is string &&
+        request.resource.data.createdBy is string &&
+        request.resource.data.createdAt is timestamp &&
+        (
+          !('buyPrice' in request.resource.data) ||
+          request.resource.data.buyPrice is number
+        ) &&
+        (
+          !('sellPrice' in request.resource.data) ||
+          request.resource.data.sellPrice is number
+        ) &&
+        (
+          !('clientName' in request.resource.data) ||
+          request.resource.data.clientName is string
+        ) &&
+        (
+          !('clientId' in request.resource.data) ||
+          request.resource.data.clientId is string
+        ) &&
+        (
+          !('detail' in request.resource.data) ||
+          request.resource.data.detail is string
+        ) &&
+        (
+          !('notes' in request.resource.data) ||
+          request.resource.data.notes is string
+        ) &&
+        (
+          !('updatedAt' in request.resource.data) ||
+          request.resource.data.updatedAt is timestamp
+        );
+    }
+
+    function txCreateAllowed() {
+      return isEmployee()
+        && txAllowedKeys()
+        && txRequiredKeys()
+        && txValidTypes()
+        && (
+          (
+            isAdmin() &&
+            request.resource.data.createdBy == uid()
+          ) ||
+          (
+            !isAdmin() &&
+            request.resource.data.sellerId == uid() &&
+            request.resource.data.createdBy == uid()
+          )
+        );
+    }
+
+    function txEmployeeUpdateAllowed() {
+      return isEmployee()
+        && (
+          resource.data.sellerId == uid() ||
+          resource.data.createdBy == uid()
+        )
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'sellerId',
+          'sellerName',
+          'createdBy',
+          'createdAt'
+        ])
+        && txValidTypes();
+    }
+
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if hasAdminRole() || (isSignedIn() && request.auth.uid == userId);
+      allow read: if canReadStaffData();
+      allow create, update, delete: if isAdmin();
     }
 
-    // Vehicles: Publicly readable (for catalogue), staff-write, admin-delete.
     match /vehicles/{docId} {
       allow read: if true;
-      allow create, update: if isSignedIn();
-      allow delete: if hasAdminRole();
+      allow create, update, delete: if isAdmin();
     }
 
-    // Transactions, Clients, Stock: Readable/Writable by staff (signed in), Deletable by admin.
     match /transactions/{docId} {
-      allow read, create: if isSignedIn();
-      allow update: if hasAdminRole() ||
-                       (resource.data.sellerId == request.auth.uid) ||
-                       (resource.data.createdBy == request.auth.uid);
-      allow delete: if hasAdminRole();
+      allow read: if canReadStaffData();
+      allow create: if txCreateAllowed();
+      allow update: if isAdmin() || txEmployeeUpdateAllowed();
+      allow delete: if isAdmin();
     }
 
     match /clients/{docId} {
-      allow read, create, update: if isSignedIn();
-      allow delete: if hasAdminRole();
+      allow read: if canReadStaffData();
+      allow create, update: if isEmployee();
+      allow delete: if isAdmin();
     }
 
     match /stock/{docId} {
-      allow read, create, update: if isSignedIn();
-      allow delete: if hasAdminRole();
+      allow read: if canReadStaffData();
+      allow create, update: if isEmployee();
+      allow delete: if isAdmin();
+    }
+
+    match /reservations/{docId} {
+      allow read: if canReadStaffData();
+      allow create, update: if isEmployee();
+      allow delete: if isAdmin();
     }
 
     match /partners/{docId} {
-      allow read: if isSignedIn();
-      allow write: if hasAdminRole();
+      allow read: if canReadStaffData();
+      allow write: if isAdmin();
     }
 
     match /partners/{partnerId}/members/{docId} {
-       allow read: if isSignedIn();
-       allow write: if hasAdminRole();
+      allow read: if canReadStaffData();
+      allow write: if isAdmin();
     }
 
-    // Cashbook: Only Admins can read/write.
     match /cashbook/{docId} {
-      allow read, write: if hasAdminRole();
+      allow read, write: if isAdmin();
     }
 
-    // Logs: ONLY readable by admin, create by anyone signed in
     match /logs/{docId} {
-      allow read: if hasAdminRole();
-      allow create: if isSignedIn();
+      allow read: if isAdmin();
+      allow create: if isEmployee()
+        && request.resource.data.keys().hasAll(['action', 'createdAt'])
+        && request.resource.data.action is string;
+      allow update, delete: if false;
     }
 
     match /tombola_participants/{docId} {
@@ -89,8 +212,7 @@ service cloud.firestore {
 
     // Default: Authenticated read, Admin write.
     match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if hasAdminRole();
+      allow read, write: if false;
     }
   }
 }
