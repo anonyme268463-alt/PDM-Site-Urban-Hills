@@ -733,7 +733,7 @@ async function handleCSV(file) {
         if (dateStr) {
           const now = new Date();
           let parts = dateStr.split(/[\/\-\s]/);
-          if (parts.length === 3) {
+          if (parts.length >= 3) {
             // Check for YYYY-MM-DD first
             if (parts[0].length === 4) {
               let y = parseInt(parts[0]);
@@ -758,7 +758,10 @@ async function handleCSV(file) {
                 // If one is in the future and the other is in the past, pick the past one.
                 if (dateA > now && dateB <= now) {
                   createdAt = dateB;
+                } else if (dateB > now && dateA <= now) {
+                  createdAt = dateA;
                 } else {
+                  // Both past or both future, default to dateA (DD/MM)
                   createdAt = dateA;
                 }
               } else if (validA) {
