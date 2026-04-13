@@ -20,7 +20,7 @@ const elements = {
   addParticipantBtn: document.getElementById("addParticipantBtn"),
   pName: document.getElementById("pName"),
   pTickets: document.getElementById("pTickets"),
-  clientsList: document.getElementById("clientsList"),
+  pSearchDropdown: document.getElementById("pSearchDropdown"),
   voucherValue: document.getElementById("voucherValue"),
   saveVouchersBtn: document.getElementById("saveVouchersBtn"),
   logoutBtn: document.getElementById("logoutBtn")
@@ -47,7 +47,6 @@ async function loadData(force = false) {
 
     renderParticipants();
     renderStats();
-    buildClientsDatalist();
 
     // Load last winners if any
     const wSnap = await getDocs(query(collection(db, "tombola_winners"), orderBy("place", "asc")));
@@ -101,11 +100,43 @@ function renderWinners() {
   }
 }
 
-function buildClientsDatalist() {
-  elements.clientsList.innerHTML = STATE.clients
-    .map(c => `<option value="${esc(c.name)}">`)
+function updateSearchDropdown() {
+  const q = elements.pName.value.trim().toLowerCase();
+  if (!q) {
+    elements.pSearchDropdown.classList.add("hidden");
+    return;
+  }
+  const filtered = STATE.clients
+    .filter(c => (c.name || "").toLowerCase().includes(q))
+    .slice(0, 8);
+
+  if (filtered.length === 0) {
+    elements.pSearchDropdown.classList.add("hidden");
+    return;
+  }
+
+  elements.pSearchDropdown.innerHTML = filtered
+    .map(c => `<div data-name="${esc(c.name)}">${esc(c.name)}</div>`)
     .join("");
+  elements.pSearchDropdown.classList.remove("hidden");
 }
+
+elements.pName.addEventListener("input", updateSearchDropdown);
+elements.pName.addEventListener("focus", updateSearchDropdown);
+
+elements.pSearchDropdown.addEventListener("click", e => {
+  const div = e.target.closest("div");
+  if (div && div.dataset.name) {
+    elements.pName.value = div.dataset.name;
+    elements.pSearchDropdown.classList.add("hidden");
+  }
+});
+
+document.addEventListener("click", e => {
+  if (!elements.pName.contains(e.target) && !elements.pSearchDropdown.contains(e.target)) {
+    elements.pSearchDropdown.classList.add("hidden");
+  }
+});
 
 async function addParticipant() {
   const name = elements.pName.value.trim();
