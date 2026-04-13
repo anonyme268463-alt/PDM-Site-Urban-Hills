@@ -121,11 +121,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         for (const v of vehicles) {
             const type = (v.type || "").toLowerCase();
             if (type.includes("motorcyles") || type.includes("moto")) {
-                if (!client.moto) return { ok: false, msg: `Vous n'avez pas le permis Moto pour le véhicule, si votre situation à changée, merci de votre rapprocher de la concession pour procéder au changement ! ${v.brand} ${v.model}.` };
+                if (!client.moto) return { ok: false, msg: `Vous n'avez pas le permis Moto pour le véhicule ${v.brand} ${v.model}.` };
             } else if (type.includes("van") || type.includes("entreprise") || type.includes("truck")) {
-                if (!client.truck) return { ok: false, msg: `Vous n'avez pas le permis Poids Lourd pour le véhicule, si votre situation à changée, merci de votre rapprocher de la concession pour procéder au changement ! ${v.brand} ${v.model}.` };
+                if (!client.truck) return { ok: false, msg: `Vous n'avez pas le permis Poids Lourd pour le véhicule ${v.brand} ${v.model}.` };
             } else {
-                if (!client.car) return { ok: false, msg: `Vous n'avez pas le permis Voiture pour le véhicule, si votre situation à changée, merci de votre rapprocher de la concession pour procéder au changement ! ${v.brand} ${v.model}.` };
+                if (!client.car) return { ok: false, msg: `Vous n'avez pas le permis Voiture pour le véhicule ${v.brand} ${v.model}.` };
             }
         }
         return { ok: true };
