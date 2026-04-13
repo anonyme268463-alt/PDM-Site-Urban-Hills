@@ -1,3 +1,10 @@
+if (window.location.pathname.includes(".html") &&
+    !window.location.pathname.includes("index.html") &&
+    !window.location.pathname.includes("pdm-staff.html") &&
+    !localStorage.getItem("pdm_logged_in")) {
+  window.location.href = "pdm-staff.html";
+}
+
 import { db } from "./config.js";
 import {
   doc, getDoc, collection, getDocs
@@ -66,6 +73,11 @@ export function normRole(r) {
   const admins = ["admin", "pdg", "patron", "direction"];
   if (admins.includes(s)) return "admin";
   return "staff";
+}
+
+export function handleSignOut(auth) {
+  localStorage.removeItem("pdm_logged_in");
+  return auth.signOut();
 }
 
 export function toBool(v, def = false) {

@@ -3,7 +3,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   collection, getDocs, doc, deleteDoc, addDoc, query, where, orderBy, Timestamp, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-import { checkIsAdmin, showDenyScreen, fmtMoney, esc, renderUserBadge, getWeekRange, toDateInputValue } from "./common.js";
+import { checkIsAdmin, showDenyScreen, fmtMoney, esc, renderUserBadge, getWeekRange, toDateInputValue, handleSignOut } from "./common.js";
 
 const periodLabel = document.getElementById("periodLabel");
 const btnWeek = document.getElementById("btnWeek");
@@ -418,7 +418,7 @@ document.querySelectorAll("[data-close-report]").forEach(b => {
   b.addEventListener("click", () => reportModal.classList.add("hidden"));
 });
 
-btnLogout?.addEventListener("click", async () => { await signOut(auth); window.location.href = "pdm-staff.html"; });
+btnLogout?.addEventListener("click", async () => { await handleSignOut(auth); window.location.href = "pdm-staff.html"; });
 btnWeek?.addEventListener("click", async () => { setRange(getWeekRange(new Date())); await refreshAll(); });
 btnApply?.addEventListener("click", async () => { const r = parseDateInputs(); if (!r) return alert("Dates requises."); setRange(r); await refreshAll(); });
 btnRefresh?.addEventListener("click", forceRefresh);

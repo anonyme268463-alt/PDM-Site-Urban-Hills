@@ -3,7 +3,7 @@ import {
   doc, getDoc, collection, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import { esc, renderUserBadge } from "./common.js";
+import { esc, renderUserBadge, handleSignOut } from "./common.js";
 
 const caTotalEl = document.getElementById("caTotal");
 const profitTotalEl = document.getElementById("profitTotal");
@@ -13,7 +13,7 @@ const lastSalesEl = document.getElementById("lastSales");
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
-    await signOut(auth);
+    await handleSignOut(auth);
     window.location.href = "pdm-staff.html";
   });
 }

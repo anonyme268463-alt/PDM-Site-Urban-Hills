@@ -82,9 +82,14 @@
     const password = document.getElementById("password");
 
     onAuthStateChanged(auth, (user) => {
-      if (!user || redirected) return;
+      if (!user) {
+        localStorage.removeItem("pdm_logged_in");
+        return;
+      }
+      if (redirected) return;
       redirected = true;
 
+      localStorage.setItem("pdm_logged_in", "true");
       const displayName = user.displayName || user.email || user.uid.slice(0, 8);
       showToast(`UID reconnu. Bienvenue <strong>${displayName}</strong>`);
       setTimeout(() => (window.location.href = "./dashboard.html"), 900);
@@ -95,6 +100,7 @@
       msg.classList.remove("err");
       try {
         await signInWithEmailAndPassword(auth, email.value.trim(), password.value);
+        localStorage.setItem("pdm_logged_in", "true");
         window.location.href = "./dashboard.html";
       } catch (e) {
         msg.textContent = "Connexion refusée. Vérifie l’identifiant et le mot de passe.";
