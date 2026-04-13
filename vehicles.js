@@ -268,7 +268,7 @@ elements.vmDelete?.addEventListener("click", async () => {
 
 elements.enrichBtn?.addEventListener("click", async () => {
   if (USER_ROLE !== "admin") {
-    alert("Accès refusé : Action réservée aux administrateurs.");
+    alert("Accès refusé : Seul un administrateur peut fusionner le catalogue.");
     return;
   }
   if (!confirm("Importer les véhicules du catalogue vers la base de données ?")) return;
@@ -290,7 +290,7 @@ elements.enrichBtn?.addEventListener("click", async () => {
 
 elements.syncRefBtn?.addEventListener("click", async () => {
   if (USER_ROLE !== "admin") {
-    alert("Accès refusé.");
+    alert("Accès refusé : Seul un administrateur peut synchroniser la référence.");
     return;
   }
   if (!confirm("Synchroniser la base avec la liste de référence ? Cela supprimera les véhicules hors-liste et les doublons (priorité aux images).")) return;
@@ -375,7 +375,7 @@ elements.syncRefBtn?.addEventListener("click", async () => {
 
 elements.dedupeBtn?.addEventListener("click", async () => {
   if (USER_ROLE !== "admin") {
-    alert("Accès refusé : Action réservée aux administrateurs.");
+    alert("Accès refusé : Seul un administrateur peut supprimer les doublons.");
     return;
   }
   if (!confirm("Supprimer les doublons ? Seule la version la plus récente sera conservée.")) return;

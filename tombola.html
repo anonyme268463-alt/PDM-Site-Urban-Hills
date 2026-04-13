@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDM Admin - Tombola</title>
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" src="tombola.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-title">PDM <span>ADMIN</span></div>
+      <div class="brand-sub">Urban Hills</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-link" href="dashboard.html"><span>Dashboard</span></a>
+      <a class="nav-link" href="clients.html"><span>Clients</span></a>
+      <a class="nav-link" href="stock.html"><span>Stock</span></a>
+      <a class="nav-link" href="ventes.html"><span>Ventes</span></a>
+      <a class="nav-link" href="vehicles.html"><span>Véhicules</span></a>
+      <a class="nav-link" href="partenariats.html"><span>Partenaires</span></a>
+      <a class="nav-link active" href="tombola.html"><span>Tombola</span></a>
+      <a class="nav-link" href="compta.html"><span>Comptabilité</span></a>
+      <a class="nav-link" href="gestion.html"><span>Gestion</span></a>
+      <a class="nav-link" href="logs.html"><span>Logs</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-gold w-full">Déconnexion</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="page-info">
+        <h1>Tombola PDM</h1>
+        <p>Gestion des tirages au sort et récompenses</p>
+      </div>
+      <div class="top-bar-actions flex-row">
+        <button id="refreshBtn" class="btn btn-outline">Rafraîchir</button>
+        <button id="resetBtn" class="btn btn-outline btn-danger">Réinitialiser</button>
+        <button id="drawBtn" class="btn btn-gold">Tirer les Gagnants</button>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <div class="card-title">Prix du ticket</div>
+          <div class="stat-value" id="ticketPrice">$500</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Participations totales</div>
+          <div class="stat-value" id="totalTickets">0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Argent Collecté</div>
+          <div class="stat-value" id="totalPot">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Participants</div>
+          <div class="stat-value" id="totalParticipants">0</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Liste des Participants</div>
+          </div>
+          <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Nom Prénom</th>
+                  <th>Tickets</th>
+                </tr>
+              </thead>
+              <tbody id="participantsTable">
+                <tr><td colspan="2" class="muted">Chargement...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px;">
+              <input type="text" id="pName" class="input" placeholder="Nom du participant" list="clientsList">
+              <datalist id="clientsList"></datalist>
+              <input type="number" id="pTickets" class="input" style="width: 80px;" placeholder="Nb" value="1">
+              <button id="addParticipantBtn" class="btn btn-gold">Ajouter</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Gagnants du Tirage</div>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Place</th>
+                  <th>Nom Prénom</th>
+                  <th>Valeur Bon</th>
+                  <th>Utilisé</th>
+                  <th>Restant</th>
+                </tr>
+              </thead>
+              <tbody id="winnersTable">
+                <tr><td colspan="5" class="muted">Aucun tirage effectué</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+              <div class="muted">Valeur unitaire du bon: <strong id="voucherValue">$100,000</strong></div>
+              <button id="saveVouchersBtn" class="btn btn-outline btn-sm hidden">Distribuer les bons</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
