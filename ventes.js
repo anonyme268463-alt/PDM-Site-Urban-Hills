@@ -39,14 +39,21 @@ const fSeller = document.getElementById("fSeller");
 const sellerGroup = document.getElementById("sellerGroup");
 const fNotes = document.getElementById("fNotes");
 
+const voucherAlert = document.getElementById("voucherAlert");
+const useVoucherBtn = document.getElementById("useVoucherBtn");
+
 const modelsList = document.getElementById("modelsList");
 
 let CACHE = {
   tx: [], clients: [], partners: [], users: [], vehicles: [], stock: [], reservations: [],
+  vouchers: [],
   me: null, role: "staff",
   modelAlias: {}, modelSuffixAlias: {}
 };
 let editingId = null;
+let voucherToDeduct = 0;
+let voucherIdToUpdate = null;
+let activeVoucher = null;
 
 function money(n){
   return "$" + Number(n || 0).toLocaleString("en-US");
@@ -131,14 +138,15 @@ async function load(force = false){
   const colSpan = CACHE.role === "admin" ? 9 : 8;
   txTable.innerHTML = `<tr><td colspan="${colSpan}">Chargement...</td></tr>`;
   try {
-    const [txData, clientsData, partnersData, usersData, vehiclesData, stockData, resData] = await Promise.all([
+    const [txData, clientsData, partnersData, usersData, vehiclesData, stockData, resData, voucherSnap] = await Promise.all([
       getDocs(query(collection(db,"transactions"), orderBy("createdAt","desc"))).then(s => s.docs.map(d => ({id:d.id, ...d.data()}))),
       getCachedCollection("clients", force),
       getCachedCollection("partners", force),
       getCachedCollection("users", force),
       getCachedCollection("vehicles", force),
       getCachedCollection("stock", force),
-      getCachedCollection("reservations", force)
+      getCachedCollection("reservations", force),
+      getDocs(collection(db, "vouchers"))
     ]);
 
     CACHE.tx = txData;
@@ -148,6 +156,7 @@ async function load(force = false){
     CACHE.vehicles = vehiclesData;
     CACHE.stock = stockData;
     CACHE.reservations = resData;
+    CACHE.vouchers = voucherSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     for (const p of CACHE.partners) {
       const ms = await getDocs(collection(db, "partners", p.id, "members"));
@@ -267,8 +276,49 @@ if(selectAll) {
   });
 }
 
+function checkVoucher() {
+  const clientId = fClient.value;
+  voucherAlert?.classList.add("hidden");
+  activeVoucher = null;
+  voucherToDeduct = 0;
+  voucherIdToUpdate = null;
+
+  if (!clientId) return;
+
+  const v = CACHE.vouchers.find(x => x.clientId === clientId && x.active && (x.currentValue || 0) > 0);
+  if (v) {
+    activeVoucher = v;
+    if (voucherAlert) {
+      voucherAlert.classList.remove("hidden");
+      voucherAlert.querySelector("span").textContent = `Bon d'achat de ${money(v.currentValue)} disponible !`;
+    }
+  }
+}
+
+if (useVoucherBtn) {
+  useVoucherBtn.addEventListener("click", () => {
+    if (!activeVoucher) return;
+    const currentSell = Number(fSell.value || 0);
+    const vVal = Number(activeVoucher.currentValue || 0);
+
+    const deduction = Math.min(vVal, currentSell);
+    fSell.value = currentSell - deduction;
+    fNotes.value += `\nBon d'achat utilisé: -${money(deduction)}`;
+
+    voucherToDeduct = deduction;
+    voucherIdToUpdate = activeVoucher.id;
+
+    voucherAlert?.classList.add("hidden");
+  });
+}
+
 function openAdd(){
   editingId = null;
+  voucherToDeduct = 0;
+  voucherIdToUpdate = null;
+  activeVoucher = null;
+  voucherAlert?.classList.add("hidden");
+
   mTitle.textContent = "Ajouter une vente";
   const today = new Date();
   fDate.value = today.toISOString().slice(0,10);
@@ -295,6 +345,11 @@ function openEdit(id){
   const t = CACHE.tx.find(x=>x.id===id);
   if(!t || !canEdit(t)) return;
   editingId = id;
+  voucherToDeduct = 0;
+  voucherIdToUpdate = null;
+  activeVoucher = null;
+  voucherAlert?.classList.add("hidden");
+
   mTitle.textContent = "Modifier la vente";
   const d = t.createdAt?.toDate ? t.createdAt.toDate() : new Date();
   fDate.value = d.toISOString().slice(0,10);
@@ -409,7 +464,10 @@ async function autoPrice() {
   if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
 }
 fModel.addEventListener("change", autoPrice);
-fClient.addEventListener("change", autoPrice);
+fClient.addEventListener("change", () => {
+  autoPrice();
+  checkVoucher();
+});
 
 async function save(){
   const uid = auth.currentUser?.uid;
@@ -447,6 +505,21 @@ async function save(){
     if(!editingId){
       const docRef = await addDoc(collection(db,"transactions"), payload);
       await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
+
+      // Voucher management
+      if (voucherIdToUpdate && voucherToDeduct > 0) {
+        const vRef = doc(db, "vouchers", voucherIdToUpdate);
+        const vSnap = await getDoc(vRef);
+        if (vSnap.exists()) {
+          const vData = vSnap.data();
+          const newVal = Math.max(0, (vData.currentValue || 0) - voucherToDeduct);
+          await updateDoc(vRef, {
+            currentValue: newVal,
+            active: newVal > 0,
+            updatedAt: serverTimestamp()
+          });
+        }
+      }
 
       // Automatic Inventory Management
       const detail = payload.detail;

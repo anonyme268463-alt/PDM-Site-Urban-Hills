@@ -72,6 +72,21 @@ service cloud.firestore {
       allow create: if isSignedIn();
     }
 
+    match /tombola_participants/{docId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if hasAdminRole();
+    }
+
+    match /tombola_winners/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+
+    match /vouchers/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasAdminRole();
+    }
+
     // Default: Authenticated read, Admin write.
     match /{document=**} {
       allow read: if isSignedIn();

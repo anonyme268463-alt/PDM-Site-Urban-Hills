@@ -85,9 +85,11 @@
               </tbody>
             </table>
           </div>
-          <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px;">
-              <input type="text" id="pName" class="input" placeholder="Nom du participant" list="clientsList">
-              <datalist id="clientsList"></datalist>
+          <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; position: relative;">
+              <div style="flex: 1; position: relative;">
+                  <input type="text" id="pName" class="input" placeholder="Nom du participant" autocomplete="off">
+                  <div id="pSearchDropdown" class="search-dropdown hidden"></div>
+              </div>
               <input type="number" id="pTickets" class="input" style="width: 80px;" placeholder="Nb" value="1">
               <button id="addParticipantBtn" class="btn btn-gold">Ajouter</button>
           </div>
