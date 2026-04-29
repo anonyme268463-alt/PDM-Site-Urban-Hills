@@ -29,12 +29,6 @@ const elements = {
   membersTable: document.getElementById("membersTable"),
   addMemberBtn: document.getElementById("addMemberBtn"),
 
-  addPartnerModal: document.getElementById("addPartnerModal"),
-  apmClose: document.getElementById("apmClose"),
-  apmName: document.getElementById("apmName"),
-  apmCancel: document.getElementById("apmCancel"),
-  apmSave: document.getElementById("apmSave"),
-
   memberModal: document.getElementById("memberModal"),
   mmTitle: document.getElementById("mmTitle"),
   mmClose: document.getElementById("mmClose"),
@@ -53,14 +47,17 @@ let CURRENT_PARTNER_ID = null;
 let PARTNER_MEMBERS = [];
 
 function hideAllModals() {
-  elements.partnerModal.classList.add("hidden");
-  elements.addPartnerModal.classList.add("hidden");
-  elements.memberModal.classList.add("hidden");
+  elements.partnerModal?.classList.add("hidden");
+  elements.memberModal?.classList.add("hidden");
 }
+[elements.partnerModal, elements.memberModal].forEach(m => {
+  if (m) m.addEventListener("click", (e) => { if (e.target === m) hideAllModals(); });
+});
 
 // --- PARTNERS ---
 
 async function loadPartners() {
+  if (!elements.partnersTable) return;
   elements.partnersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
   try {
     const q = query(collection(db, "partners"), orderBy("name", "asc"));
@@ -81,13 +78,14 @@ async function loadPartners() {
 }
 
 function renderPartners() {
-  const searchTerm = (elements.search.value || "").trim().toLowerCase();
+  const searchTerm = (elements.search?.value || "").trim().toLowerCase();
   const filtered = ALL_PARTNERS.filter(p => (p.name || "").toLowerCase().includes(searchTerm));
 
-  elements.statPartners.textContent = filtered.length;
-  elements.statMembers.textContent = filtered.reduce((acc, p) => acc + (p.membersCount || 0), 0);
-  elements.statActive.textContent = filtered.filter(p => p.active).length;
+  if (elements.statPartners) elements.statPartners.textContent = filtered.length;
+  if (elements.statMembers) elements.statMembers.textContent = filtered.reduce((acc, p) => acc + (p.membersCount || 0), 0);
+  if (elements.statActive) elements.statActive.textContent = filtered.filter(p => p.active).length;
 
+  if (!elements.partnersTable) return;
   if (filtered.length === 0) {
     elements.partnersTable.innerHTML = '<tr><td colspan="6" class="muted">Aucun partenaire trouvé.</td></tr>';
     return;
@@ -121,6 +119,15 @@ async function openPartner(id) {
   elements.pmName.value = p.name || "";
   elements.pmActive.checked = !!p.active;
 
+  const memSec = document.getElementById("pmMembersSection");
+  if(memSec) memSec.style.display = "block";
+  const statusGrp = document.getElementById("pmActiveGroup");
+  if(statusGrp) statusGrp.style.display = "block";
+  const delBtn = document.getElementById("pmDelete");
+  if(delBtn) delBtn.style.display = "block";
+  const idRow = document.getElementById("pmIdRow");
+  if(idRow) idRow.style.display = "block";
+
   elements.partnerModal.classList.remove("hidden");
   await loadMembers(id);
 }
@@ -128,6 +135,7 @@ async function openPartner(id) {
 // --- MEMBERS ---
 
 async function loadMembers(partnerId) {
+  if (!elements.membersTable) return;
   elements.membersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
   try {
     const q = query(collection(db, "partners", partnerId, "members"), orderBy("createdAt", "desc"));
@@ -154,6 +162,7 @@ async function loadMembers(partnerId) {
 }
 
 function renderMembers() {
+  if (!elements.membersTable) return;
   if (PARTNER_MEMBERS.length === 0) {
     elements.membersTable.innerHTML = '<tr><td colspan="6" class="muted">Aucun membre pour ce partenaire.</td></tr>';
     return;
@@ -205,36 +214,44 @@ elements.refreshBtn?.addEventListener("click", () => loadPartners());
 elements.search?.addEventListener("input", renderPartners);
 
 elements.addPartnerBtn?.addEventListener("click", () => {
-  elements.apmName.value = "";
-  elements.addPartnerModal.classList.remove("hidden");
-});
+  CURRENT_PARTNER_ID = null;
+  elements.pmTitle.textContent = "Nouveau Partenaire";
+  elements.pmName.value = "";
+  elements.pmActive.checked = true;
+  elements.pmId.textContent = "-";
 
-elements.apmSave?.addEventListener("click", async () => {
-  const name = elements.apmName.value.trim();
-  if (!name) return alert("Nom requis.");
-  try {
-    await addDoc(collection(db, "partners"), {
-      name,
-      active: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    await logAction("PARTNER_ADD", `Partenaire ajouté: ${name}`);
-    hideAllModals();
-    await loadPartners();
-  } catch (e) { alert("Erreur."); }
+  const memSec = document.getElementById("pmMembersSection");
+  if(memSec) memSec.style.display = "none";
+  const statusGrp = document.getElementById("pmActiveGroup");
+  if(statusGrp) statusGrp.style.display = "none";
+  const delBtn = document.getElementById("pmDelete");
+  if(delBtn) delBtn.style.display = "none";
+  const idRow = document.getElementById("pmIdRow");
+  if(idRow) idRow.style.display = "none";
+
+  elements.partnerModal.classList.remove("hidden");
 });
 
 elements.pmSave?.addEventListener("click", async () => {
   const name = elements.pmName.value.trim();
   if (!name) return alert("Nom requis.");
   try {
-    await updateDoc(doc(db, "partners", CURRENT_PARTNER_ID), {
-      name,
-      active: elements.pmActive.checked,
-      updatedAt: serverTimestamp()
-    });
-    await logAction("PARTNER_UPDATE", `Partenaire modifié: ${name}`);
+    if (CURRENT_PARTNER_ID) {
+      await updateDoc(doc(db, "partners", CURRENT_PARTNER_ID), {
+        name,
+        active: elements.pmActive.checked,
+        updatedAt: serverTimestamp()
+      });
+      await logAction("PARTNER_UPDATE", `Partenaire modifié: ${name}`);
+    } else {
+      await addDoc(collection(db, "partners"), {
+        name,
+        active: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      await logAction("PARTNER_ADD", `Partenaire ajouté: ${name}`);
+    }
     hideAllModals();
     await loadPartners();
   } catch (e) { alert("Erreur."); }
@@ -284,7 +301,7 @@ elements.mmSave?.addEventListener("click", async () => {
   } catch (e) { alert("Erreur."); }
 });
 
-[elements.pmClose, elements.pmCancel, elements.apmClose, elements.apmCancel, elements.mmClose, elements.mmCancel].forEach(btn => {
+[elements.pmClose, elements.pmCancel, elements.mmClose, elements.mmCancel].forEach(btn => {
   btn?.addEventListener("click", hideAllModals);
 });
 

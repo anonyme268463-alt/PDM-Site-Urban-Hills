@@ -17,31 +17,20 @@ const mCount = document.getElementById("mCount");
 const mSales = document.getElementById("mSales");
 
 const addClientBtn = document.getElementById("addClientBtn");
-const addClientModal = document.getElementById("addClientModal");
-const addClientClose = document.getElementById("addClientClose");
+const upsertClientModal = document.getElementById("upsertClientModal");
+const upsertClose = document.getElementById("upsertClose");
+const upsertTitle = document.getElementById("upsertTitle");
 
-const cName = document.getElementById("cName");
-const cPhone = document.getElementById("cPhone");
-const cLicense = document.getElementById("cLicense");
-const cCar = document.getElementById("cCar");
-const cMoto = document.getElementById("cMoto");
-const cTruck = document.getElementById("cTruck");
-const cSave = document.getElementById("cSave");
-const cCancel = document.getElementById("cCancel");
-const cError = document.getElementById("cError");
-
-const editClientModal = document.getElementById("editClientModal");
-const editClientClose = document.getElementById("editClientClose");
-const editClientId = document.getElementById("editClientId");
-const editCName = document.getElementById("editCName");
-const editCPhone = document.getElementById("editCPhone");
-const editCLicense = document.getElementById("editCLicense");
-const editCCar = document.getElementById("editCCar");
-const editCMoto = document.getElementById("editCMoto");
-const editCTruck = document.getElementById("editCTruck");
-const editCSave = document.getElementById("editCSave");
-const editCCancel = document.getElementById("editCCancel");
-const editCError = document.getElementById("editCError");
+const fClientId = document.getElementById("fClientId");
+const fCName = document.getElementById("fCName");
+const fCPhone = document.getElementById("fCPhone");
+const fCLicense = document.getElementById("fCLicense");
+const fCCar = document.getElementById("fCCar");
+const fCMoto = document.getElementById("fCMoto");
+const fCTruck = document.getElementById("fCTruck");
+const upsertSave = document.getElementById("upsertSave");
+const upsertCancel = document.getElementById("upsertCancel");
+const upsertError = document.getElementById("upsertError");
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
@@ -74,13 +63,7 @@ function toDateSafe(ts) {
 
 let CACHE = { clients: [], tx: [] };
 
-async function load() {
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = "pdm-staff.html"; return; }
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (snap.exists()) renderUserBadge(snap.data());
-  });
-
+async function loadData() {
   tbody.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
   try {
     const [clientsSnap, txSnap] = await Promise.all([
@@ -191,97 +174,84 @@ if (closeModal) closeModal.addEventListener("click", closeClientModal);
 if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeClientModal(); });
 if (search) search.addEventListener("input", render);
 
-function showErr(msg) {
-  if (!cError) return;
-  cError.textContent = msg;
-  cError.style.display = msg ? "block" : "none";
+function showUpsertErr(msg) {
+  if (!upsertError) return;
+  upsertError.textContent = msg;
+  upsertError.style.display = msg ? "block" : "none";
 }
-function resetAddForm() {
-  if (cName) cName.value = "";
-  if (cPhone) cPhone.value = "";
-  if (cLicense) cLicense.value = "Oui";
-  if (cCar) cCar.checked = false;
-  if (cMoto) cMoto.checked = false;
-  if (cTruck) cTruck.checked = false;
-  showErr("");
-}
-function openAddClient() {
-  resetAddForm();
-  addClientModal?.classList.remove("hidden");
-  setTimeout(() => cName?.focus(), 50);
-}
-function closeAddClient() { addClientModal?.classList.add("hidden"); }
-if (addClientBtn) addClientBtn.addEventListener("click", openAddClient);
-if (addClientClose) addClientClose.addEventListener("click", closeAddClient);
-if (cCancel) cCancel.addEventListener("click", closeAddClient);
-if (addClientModal) addClientModal.addEventListener("click", (e) => { if (e.target === addClientModal) closeAddClient(); });
 
-if (cSave) {
-  cSave.addEventListener("click", async () => {
+function openUpsert(id = null) {
+  showUpsertErr("");
+  if (id) {
+    const c = CACHE.clients.find(x => x.id === id);
+    if (!c) return;
+    upsertTitle.textContent = "Modifier le client";
+    fClientId.value = id;
+    fCName.value = c.name || "";
+    fCPhone.value = c.phone || "";
+    fCLicense.value = c.license === "Non" || c.license === false ? "Non" : "Oui";
+    fCCar.checked = !!c.car;
+    fCMoto.checked = !!c.moto;
+    fCTruck.checked = !!c.truck;
+    upsertSave.textContent = "Mettre à jour";
+  } else {
+    upsertTitle.textContent = "Ajouter un client";
+    fClientId.value = "";
+    fCName.value = "";
+    fCPhone.value = "";
+    fCLicense.value = "Oui";
+    fCCar.checked = false;
+    fCMoto.checked = false;
+    fCTruck.checked = false;
+    upsertSave.textContent = "Enregistrer";
+  }
+  upsertClientModal.classList.remove("hidden");
+}
+
+function closeUpsert() { upsertClientModal.classList.add("hidden"); }
+
+if (addClientBtn) addClientBtn.addEventListener("click", () => openUpsert());
+if (upsertClose) upsertClose.addEventListener("click", closeUpsert);
+if (upsertCancel) upsertCancel.addEventListener("click", closeUpsert);
+if (upsertClientModal) upsertClientModal.addEventListener("click", (e) => { if (e.target === upsertClientModal) closeUpsert(); });
+
+if (upsertSave) {
+  upsertSave.addEventListener("click", async () => {
     try {
-      showErr("");
-      const name = (cName?.value || "").trim();
-      const phone = (cPhone?.value || "").trim();
-      if (!name) { showErr("Le nom est obligatoire."); return; }
-      cSave.disabled = true;
-      cSave.textContent = "Enregistrement...";
-      await addDoc(collection(db, "clients"), {
-        name, phone, license: cLicense?.value || "Oui",
-        car: !!cCar?.checked, moto: !!cMoto?.checked, truck: !!cTruck?.checked,
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-      });
-      await logAction("CLIENT_AJOUT", `Ajout client: ${name}`);
-      closeAddClient();
-      await load();
-    } catch (e) { console.error(e); showErr("Erreur lors de l'ajout."); }
-    finally { if (cSave) { cSave.disabled = false; cSave.textContent = "Enregistrer"; } }
+      showUpsertErr("");
+      const id = fClientId.value;
+      const name = fCName.value.trim();
+      const phone = fCPhone.value.trim();
+      if (!name) { showUpsertErr("Le nom est obligatoire."); return; }
+
+      upsertSave.disabled = true;
+      const payload = {
+        name, phone,
+        license: fCLicense.value,
+        car: !!fCCar.checked,
+        moto: !!fCMoto.checked,
+        truck: !!fCTruck.checked,
+        updatedAt: serverTimestamp()
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "clients", id), payload);
+        await logAction("CLIENT_MODIF", `Modif client ${id}: ${name}`);
+      } else {
+        payload.createdAt = serverTimestamp();
+        await addDoc(collection(db, "clients"), payload);
+        await logAction("CLIENT_AJOUT", `Ajout client: ${name}`);
+      }
+      closeUpsert();
+      await loadData();
+    } catch (e) { console.error(e); showUpsertErr("Erreur lors de l'enregistrement."); }
+    finally { if (upsertSave) upsertSave.disabled = false; }
   });
 }
 
-function showEditErr(msg) {
-  if (!editCError) return;
-  editCError.textContent = msg;
-  editCError.style.display = msg ? "block" : "none";
-}
-function openEditClient(id) {
-  const c = CACHE.clients.find(x => x.id === id);
-  if (!c) return;
-  editClientId.value = id;
-  editCName.value = c.name || "";
-  editCPhone.value = c.phone || "";
-  editCLicense.value = c.license === false ? "Non" : "Oui";
-  editCCar.checked = !!c.car;
-  editCMoto.checked = !!c.moto;
-  editCTruck.checked = !!c.truck;
-  showEditErr("");
-  editClientModal.classList.remove("hidden");
-}
-function closeEditClient() { editClientModal.classList.add("hidden"); }
-if (editClientClose) editClientClose.addEventListener("click", closeEditClient);
-if (editCCancel) editCCancel.addEventListener("click", closeEditClient);
-if (editClientModal) editClientModal.addEventListener("click", (e) => { if (e.target === editClientModal) closeEditClient(); });
-
-if (editCSave) {
-  editCSave.addEventListener("click", async () => {
-    try {
-      showEditErr("");
-      const id = editClientId.value;
-      const name = editCName.value.trim();
-      const phone = editCPhone.value.trim();
-      if (!name) { showEditErr("Le nom est obligatoire."); return; }
-      editCSave.disabled = true;
-      editCSave.textContent = "Mise à jour...";
-      await updateDoc(doc(db, "clients", id), {
-        name, phone, license: editCLicense.value,
-        car: !!editCCar.checked, moto: !!editCMoto.checked, truck: !!editCTruck.checked,
-        updatedAt: serverTimestamp(),
-      });
-      await logAction("CLIENT_MODIF", `Modif client ${id}: ${name}`);
-      closeEditClient();
-      await load();
-    } catch (e) { console.error(e); showEditErr("Erreur lors de la modification."); }
-    finally { if (editCSave) { editCSave.disabled = false; editCSave.textContent = "Mettre à jour"; } }
-  });
-}
-
-load();
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "pdm-staff.html"; return; }
+  const snap = await getDoc(doc(db, "users", user.uid));
+  if (snap.exists()) renderUserBadge(snap.data());
+  loadData();
+});

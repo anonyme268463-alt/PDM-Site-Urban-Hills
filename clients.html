@@ -121,27 +121,28 @@
   </div>
 </div>
 
-<!-- Modal ajout client -->
-<div id="addClientModal" class="modal-overlay hidden">
+<!-- Modal Upsert client -->
+<div id="upsertClientModal" class="modal-overlay hidden">
   <div class="modal-container" style="max-width: 500px;">
     <div class="modal-header">
       <div class="flex-row" style="justify-content: space-between; width: 100%;">
-        <h2>Ajouter un client</h2>
-        <button class="btn btn-outline btn-sm" id="addClientClose">✕</button>
+        <h2 id="upsertTitle">Client</h2>
+        <button class="btn btn-outline btn-sm" id="upsertClose">✕</button>
       </div>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="fClientId">
       <div class="form-group">
         <label>Nom Complet *</label>
-        <input id="cName" type="text" class="input" placeholder="Antonio Moretti">
+        <input id="fCName" type="text" class="input" placeholder="Antonio Moretti">
       </div>
       <div class="form-group">
         <label>Téléphone</label>
-        <input id="cPhone" type="text" class="input" placeholder="(0)896055">
+        <input id="fCPhone" type="text" class="input" placeholder="(0)896055">
       </div>
       <div class="form-group">
         <label>Permis de conduire</label>
-        <select id="cLicense" class="input">
+        <select id="fCLicense" class="input">
           <option value="Oui">Oui</option>
           <option value="Non">Non</option>
         </select>
@@ -150,70 +151,21 @@
         <label>Catégories de permis</label>
         <div class="flex-row" style="margin-top: 10px;">
           <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-            <input id="cCar" type="checkbox"> <span>Voiture</span>
+            <input id="fCCar" type="checkbox"> <span>Voiture</span>
           </label>
           <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-            <input id="cMoto" type="checkbox"> <span>Moto</span>
+            <input id="fCMoto" type="checkbox"> <span>Moto</span>
           </label>
           <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-            <input id="cTruck" type="checkbox"> <span>Camion</span>
+            <input id="fCTruck" type="checkbox"> <span>Camion</span>
           </label>
         </div>
       </div>
-      <div id="cError" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;"></div>
+      <div id="upsertError" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;"></div>
     </div>
     <div class="modal-footer">
-      <button id="cCancel" class="btn btn-outline">Annuler</button>
-      <button id="cSave" class="btn btn-gold">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal modification client -->
-<div id="editClientModal" class="modal-overlay hidden">
-  <div class="modal-container" style="max-width: 500px;">
-    <div class="modal-header">
-      <div class="flex-row" style="justify-content: space-between; width: 100%;">
-        <h2>Modifier le client</h2>
-        <button class="btn btn-outline btn-sm" id="editClientClose">✕</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="editClientId">
-      <div class="form-group">
-        <label>Nom Complet *</label>
-        <input id="editCName" type="text" class="input">
-      </div>
-      <div class="form-group">
-        <label>Téléphone</label>
-        <input id="editCPhone" type="text" class="input">
-      </div>
-      <div class="form-group">
-        <label>Permis de conduire</label>
-        <select id="editCLicense" class="input">
-          <option value="Oui">Oui</option>
-          <option value="Non">Non</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Catégories de permis</label>
-        <div class="flex-row" style="margin-top: 10px;">
-          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-            <input id="editCCar" type="checkbox"> <span>Voiture</span>
-          </label>
-          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-            <input id="editCMoto" type="checkbox"> <span>Moto</span>
-          </label>
-          <label style="display:flex; gap:8px; align-items:center; cursor:pointer;">
-            <input id="editCTruck" type="checkbox"> <span>Camion</span>
-          </label>
-        </div>
-      </div>
-      <div id="editCError" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;"></div>
-    </div>
-    <div class="modal-footer">
-      <button id="editCCancel" class="btn btn-outline">Annuler</button>
-      <button id="editCSave" class="btn btn-gold">Mettre à jour</button>
+      <button id="upsertCancel" class="btn btn-outline">Annuler</button>
+      <button id="upsertSave" class="btn btn-gold">Enregistrer</button>
     </div>
   </div>
 </div>

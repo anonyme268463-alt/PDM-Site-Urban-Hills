@@ -23,14 +23,6 @@ function formatMoney(n) {
 }
 
 async function loadDashboard() {
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = "pdm-staff.html"; return; }
-    try {
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists()) renderUserBadge(snap.data());
-    } catch(e) { console.error("Error loading user badge:", e); }
-  });
-
   lastSalesEl.innerHTML = `<tr><td colspan="5" class="muted">Chargement...</td></tr>`;
   try {
     const snapshot = await getDocs(collection(db, "transactions"));
@@ -79,4 +71,11 @@ async function loadDashboard() {
   }
 }
 
-loadDashboard();
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "pdm-staff.html"; return; }
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) renderUserBadge(snap.data());
+  } catch(e) { console.error("Error loading user badge:", e); }
+  loadDashboard();
+});

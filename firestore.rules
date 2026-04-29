@@ -12,8 +12,8 @@ service cloud.firestore {
       return isSignedIn() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              (
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').toLower() in ['admin', 'pdg', 'patron', 'direction'] ||
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').toLower() in ['admin', 'pdg', 'patron', 'direction']
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction'] ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('rank', 'staff').lower() in ['admin', 'pdg', 'patron', 'direction']
              );
     }
 
@@ -32,7 +32,7 @@ service cloud.firestore {
       allow delete: if hasAdminRole();
     }
 
-    // Transactions, Clients, Stock: Readable/Writable by staff (signed in), Deletable by admin.
+    // Transactions, Clients, Stock, Reservations: Readable/Writable by staff (signed in), Deletable by admin.
     match /transactions/{docId} {
       allow read, create: if isSignedIn();
       allow update: if hasAdminRole() ||
@@ -47,8 +47,11 @@ service cloud.firestore {
     }
 
     match /stock/{docId} {
-      allow read, create, update: if isSignedIn();
-      allow delete: if hasAdminRole();
+      allow read, create, update, delete: if isSignedIn();
+    }
+
+    match /reservations/{docId} {
+      allow read, create, update, delete: if isSignedIn();
     }
 
     match /partners/{docId} {
@@ -84,7 +87,10 @@ service cloud.firestore {
 
     match /vouchers/{docId} {
       allow read: if isSignedIn();
-      allow write: if hasAdminRole();
+      allow create: if hasAdminRole();
+      allow update: if isSignedIn() &&
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentValue', 'active', 'updatedAt']));
+      allow delete: if hasAdminRole();
     }
 
     // Default: Authenticated read, Admin write.

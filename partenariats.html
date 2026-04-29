@@ -104,7 +104,7 @@
             <label>Nom du Partenaire</label>
             <input id="pmName" type="text" class="input" placeholder="Benny's">
           </div>
-          <div class="form-group" style="margin-bottom: 12px;">
+          <div class="form-group" id="pmActiveGroup" style="margin-bottom: 12px;">
             <label style="display: flex; gap: 8px; align-items: center; cursor: pointer;">
               <input id="pmActive" type="checkbox"> <span>Actif</span>
             </label>
@@ -114,56 +114,36 @@
              <button id="pmDelete" class="btn btn-danger">Supprimer</button>
           </div>
         </div>
-        <div style="margin-top: 10px; font-size: 11px; opacity: .5;">ID: <span id="pmId">-</span></div>
+        <div id="pmIdRow" style="margin-top: 10px; font-size: 11px; opacity: .5;">ID: <span id="pmId">-</span></div>
       </div>
 
-      <div class="flex-row" style="justify-content: space-between; margin-bottom: 15px;">
-        <h3 style="font-size: 18px;">Clients & Taux</h3>
-        <button id="addMemberBtn" class="btn btn-gold btn-sm">+ Ajouter membre</button>
-      </div>
+      <div id="pmMembersSection">
+        <div class="flex-row" style="justify-content: space-between; margin-bottom: 15px;">
+          <h3 style="font-size: 18px;">Clients & Taux</h3>
+          <button id="addMemberBtn" class="btn btn-gold btn-sm">+ Ajouter membre</button>
+        </div>
 
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>ClientId</th>
-              <th>Taux (%)</th>
-              <th>Créé</th>
-              <th>MàJ</th>
-              <th style="text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="membersTable">
-            <tr><td colspan="6" class="muted">Aucun client partenaire</td></tr>
-          </tbody>
-        </table>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>ClientId</th>
+                <th>Taux (%)</th>
+                <th>Créé</th>
+                <th>MàJ</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="membersTable">
+              <tr><td colspan="6" class="muted">Aucun client partenaire</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
       <button id="pmCancel" class="btn btn-outline">Fermer</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Nouveau Partenaire -->
-<div id="addPartnerModal" class="modal-overlay hidden">
-  <div class="modal-container" style="max-width: 500px;">
-    <div class="modal-header">
-      <div class="flex-row" style="justify-content: space-between; width: 100%;">
-        <h2>Nouveau Partenaire</h2>
-        <button class="btn btn-outline btn-sm" id="apmClose">✕</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Nom du Partenaire</label>
-        <input id="apmName" type="text" class="input" placeholder="Benny&#39;s">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button id="apmCancel" class="btn btn-outline">Annuler</button>
-      <button id="apmSave" class="btn btn-gold">Créer</button>
     </div>
   </div>
 </div>
@@ -179,16 +159,16 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>Nom affiché (obligatoire si pas de ClientId)</label>
-        <input id="mmFullName" type="text" class="input" placeholder="Jean Dupont">
+        <label>Nom Complet (Optionnel si ID renseigné)</label>
+        <input id="mmFullName" type="text" class="input" placeholder="Antonio Moretti">
       </div>
       <div class="form-group">
-        <label>ID Client (optionnel)</label>
-        <input id="mmClientId" type="text" class="input" placeholder="CID-1234">
+        <label>ID Client Firestore (Optionnel)</label>
+        <input id="mmClientId" type="text" class="input" placeholder="ID unique du client">
       </div>
       <div class="form-group">
         <label>Taux de remise (%)</label>
-        <input id="mmRate" type="number" class="input" value="0" min="0" max="100">
+        <input id="mmRate" type="number" class="input" placeholder="10">
       </div>
       <div id="mmId" style="display:none;"></div>
     </div>
