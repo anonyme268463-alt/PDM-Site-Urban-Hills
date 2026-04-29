@@ -147,6 +147,7 @@ function openModal(title) {
 function closeModal() {
   elements.modal.classList.add("hidden");
 }
+if (elements.modal) elements.modal.addEventListener("click", (e) => { if (e.target === elements.modal) closeModal(); });
 
 elements.refreshBtn?.addEventListener("click", () => initData(true));
 elements.search?.addEventListener("input", render);

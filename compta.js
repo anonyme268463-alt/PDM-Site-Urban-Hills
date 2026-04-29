@@ -268,6 +268,7 @@ async function forceRefresh() {
 
 btnAddCash?.addEventListener("click", () => { cashDate.value = toDateInputValue(new Date()); cashType.value = "expense"; cashReason.value = ""; cashAmount.value = ""; cashModal.classList.remove("hidden"); });
 cashCancel?.addEventListener("click", () => cashModal.classList.add("hidden"));
+if (cashModal) cashModal.addEventListener("click", (e) => { if (e.target === cashModal) cashModal.classList.add("hidden"); });
 cashSave?.addEventListener("click", async () => {
   const d = cashDate.value ? new Date(cashDate.value + "T12:00:00") : null;
   const amount = Number(cashAmount.value);
@@ -417,6 +418,7 @@ btnPrintReport?.addEventListener("click", () => {
 document.querySelectorAll("[data-close-report]").forEach(b => {
   b.addEventListener("click", () => reportModal.classList.add("hidden"));
 });
+if (reportModal) reportModal.addEventListener("click", (e) => { if (e.target === reportModal) reportModal.classList.add("hidden"); });
 
 btnLogout?.addEventListener("click", async () => { await handleSignOut(auth); window.location.href = "pdm-staff.html"; });
 btnWeek?.addEventListener("click", async () => { setRange(getWeekRange(new Date())); await refreshAll(); });

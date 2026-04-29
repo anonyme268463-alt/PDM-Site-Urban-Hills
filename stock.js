@@ -67,6 +67,7 @@ function closeDialog() {
   dlg.classList.add("hidden");
   editTarget = null;
 }
+if (dlg) dlg.addEventListener("click", (e) => { if (e.target === dlg) closeDialog(); });
 
 function refreshStats() {
   const totalQty = rowsStock.reduce((a, r) => a + (Number(r.qty) || 0), 0);

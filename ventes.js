@@ -387,6 +387,7 @@ function openEdit(id){
 function close(){ modal.classList.add("hidden"); }
 if(closeModal) closeModal.addEventListener("click", close);
 if(cancelBtn) cancelBtn.addEventListener("click", close);
+if(modal) modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
 if(addBtn) addBtn.addEventListener("click", openAdd);
 if(refreshBtn) refreshBtn.addEventListener("click", () => load(true));
 
@@ -674,9 +675,7 @@ if(deleteSelectedBtn) deleteSelectedBtn.addEventListener("click", deleteSelected
 onAuthStateChanged(auth, u => { if(u) load(); else window.location.href = "pdm-staff.html"; });
 
 if (search) {
-  search.addEventListener("input", () => {
-    render();
-  });
+  search.addEventListener("input", render);
 }
 
 // --- CSV Import ---
