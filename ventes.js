@@ -392,77 +392,79 @@ if(addBtn) addBtn.addEventListener("click", openAdd);
 if(refreshBtn) refreshBtn.addEventListener("click", () => load(true));
 
 async function autoPrice() {
-  const modelStr = fModel.value.trim();
-  const clientId = fClient.value;
-  const clientObj = CACHE.clients.find(c => c.id === clientId);
-  const clientName = (clientObj?.name || "").trim().toLowerCase();
-  const indicator = document.getElementById("saleTypeIndicator");
+  try {
+    const modelStr = fModel.value.trim();
+    const clientId = fClient.value;
+    const clientObj = CACHE.clients.find(c => c.id === clientId);
+    const clientName = (clientObj?.name || "").trim().toLowerCase();
+    const indicator = document.getElementById("saleTypeIndicator");
 
-  if (!modelStr) {
-    fCatalogPrice.value = "";
-    fDiscountRate.value = "";
-    if (indicator) indicator.style.display = "none";
-    return;
-  }
+    if (!modelStr) {
+      fCatalogPrice.value = "";
+      fDiscountRate.value = "";
+      if (indicator) indicator.style.display = "none";
+      return;
+    }
 
-  const vInfo = resolveModelDisplay(modelStr);
-  if (!vInfo) {
-    fCatalogPrice.value = "";
-    fDiscountRate.value = "";
-    if (indicator) indicator.style.display = "none";
-    return;
-  }
+    const vInfo = resolveModelDisplay(modelStr);
+    if (!vInfo) {
+      fCatalogPrice.value = "";
+      fDiscountRate.value = "";
+      if (indicator) indicator.style.display = "none";
+      return;
+    }
 
-  const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
-  let buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
-  const discountRate = await getClientDiscount(clientId);
-  const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
+    const cataloguePrice = Number(vInfo.sellPrice ?? vInfo.price ?? 0);
+    let buyPrice = Number(vInfo.buyPrice ?? (vInfo.sellPrice != null ? vInfo.price : Math.floor(cataloguePrice * 0.5)));
+    const discountRate = await getClientDiscount(clientId);
+    const sellPrice = Math.floor(cataloguePrice * (1 - (discountRate / 100)));
 
-  let saleType = "Vente directe";
-  const normModel = modelStr.toLowerCase();
+    let saleType = "Vente directe";
+    const normModel = modelStr.toLowerCase();
 
-  // Check reservations first
-  const res = CACHE.reservations.find(r =>
-    (r.client || "").trim().toLowerCase() === clientName &&
-    ((r.model || "").toLowerCase().includes(normModel) || normModel.includes((r.model || "").toLowerCase()))
-  );
-
-  if (res) {
-    saleType = "Vente d'une réservation";
-    buyPrice = 0;
-  } else {
-    // Check stock
-    const stock = CACHE.stock.find(s =>
-      ((s.model || "").toLowerCase().includes(normModel) || normModel.includes((s.model || "").toLowerCase())) &&
-      (Number(s.qty) || 0) > 0
+    // Check reservations first
+    const res = CACHE.reservations.find(r =>
+      (r.client || "").trim().toLowerCase() === clientName &&
+      ((r.model || "").toLowerCase().includes(normModel) || normModel.includes((r.model || "").toLowerCase()))
     );
-    if (stock) {
-      saleType = "Vente depuis le stock";
+
+    if (res) {
+      saleType = "Vente d'une réservation";
       buyPrice = 0;
-    }
-  }
-
-  fCatalogPrice.value = cataloguePrice;
-  fDiscountRate.value = discountRate;
-  fBuy.value = buyPrice;
-  fSell.value = sellPrice;
-  fDetail.value = saleType;
-
-  if (indicator) {
-    indicator.textContent = saleType;
-    indicator.style.display = "block";
-    if (saleType !== "Vente directe") {
-      indicator.style.background = "rgba(46, 204, 113, 0.1)";
-      indicator.style.color = "#2ecc71";
-      indicator.style.borderColor = "#2ecc71";
     } else {
-      indicator.style.background = "rgba(212, 175, 55, 0.1)";
-      indicator.style.color = "var(--accent-gold)";
-      indicator.style.borderColor = "var(--accent-gold)";
+      // Check stock
+      const stock = CACHE.stock.find(s =>
+        ((s.model || "").toLowerCase().includes(normModel) || normModel.includes((s.model || "").toLowerCase())) &&
+        (Number(s.qty) || 0) > 0
+      );
+      if (stock) {
+        saleType = "Vente depuis le stock";
+        buyPrice = 0;
+      }
     }
-  }
 
-  if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
+    fCatalogPrice.value = cataloguePrice;
+    fDiscountRate.value = discountRate;
+    fBuy.value = buyPrice;
+    fSell.value = sellPrice;
+    fDetail.value = saleType;
+
+    if (indicator) {
+      indicator.textContent = saleType;
+      indicator.style.display = "block";
+      if (saleType !== "Vente directe") {
+        indicator.style.background = "rgba(46, 204, 113, 0.1)";
+        indicator.style.color = "#2ecc71";
+        indicator.style.borderColor = "#2ecc71";
+      } else {
+        indicator.style.background = "rgba(212, 175, 55, 0.1)";
+        indicator.style.color = "var(--accent-gold)";
+        indicator.style.borderColor = "var(--accent-gold)";
+      }
+    }
+
+    if (discountRate > 0) fNotes.value = `Remise partenaire appliquée : ${discountRate}%`;
+  } catch(e) { console.error("Error in autoPrice:", e); }
 }
 fModel.addEventListener("change", autoPrice);
 fClient.addEventListener("change", () => {
@@ -707,20 +709,33 @@ async function handleCSV(file) {
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     if (lines.length < 2) return alert("Fichier CSV vide ou invalide.");
 
-    const headers = lines[0].toLowerCase().split(",").map(h => h.trim());
+    // Detect separator
+    let sep = ",";
+    if (lines[0].includes(";")) sep = ";";
+
+    const headers = lines[0].toLowerCase().split(sep).map(h => h.trim());
     let count = 0;
+    let batch = writeBatch(db);
+    let batchCount = 0;
+    const now = new Date();
+
+    function parsePrice(v) {
+      if (!v) return 0;
+      return Number(String(v).replace(/[^0-9]/g, "")) || 0;
+    }
+
     for (let i = 1; i < lines.length; i++) {
       try {
-        const cols = lines[i].split(",").map(c => c.trim());
+        const cols = lines[i].split(sep).map(c => c.trim());
         if (cols.length < headers.length) continue;
         const row = {};
         headers.forEach((h, idx) => row[h] = cols[idx]);
 
-        const clientName = (row.client || row.nom || row["nom client"] || "").trim();
+        const clientName = (row.client || row.nom || row["nom client"] || row["client name"] || "").trim();
         const model = (row.modele || row.model || row["modèle"] || row["véhicule"] || "").trim();
-        const buyPrice = Number(row.buy || row.achat || row["prix achat"] || row["achat ($)"] || 0);
-        const sellPrice = Number(row.sell || row.vente || row["prix vente"] || row["vente ($)"] || 0);
-        const dateStr = (row.date || row["date de vente"] || "").trim();
+        const buyPrice = parsePrice(row.buy || row.achat || row["prix achat"] || row["achat ($)"]);
+        const sellPrice = parsePrice(row.sell || row.vente || row["prix vente"] || row["vente ($)"]);
+        const dateStr = (row.date || row["date de vente"] || row["date vente"] || "").trim();
         const detail = (row.detail || row.détail || row["détails"] || "Import CSV").trim();
 
         if (!clientName || !model) continue;
@@ -730,10 +745,8 @@ async function handleCSV(file) {
 
         let createdAt = new Date();
         if (dateStr) {
-          const now = new Date();
           let parts = dateStr.split(/[\/\-\s]/);
           if (parts.length >= 3) {
-            // Check for YYYY-MM-DD first
             if (parts[0].length === 4) {
               let y = parseInt(parts[0]);
               let m = parseInt(parts[1]) - 1;
@@ -746,7 +759,6 @@ async function handleCSV(file) {
               let p2 = parseInt(parts[2]);
               if (p2 < 100) p2 += 2000;
 
-              // Heuristic: DD/MM vs MM/DD. Prefer past date.
               let dateA = new Date(p2, p1 - 1, p0, 12, 0, 0); // DD/MM/YYYY
               let dateB = (p0 <= 12) ? new Date(p2, p0 - 1, p1, 12, 0, 0) : null; // MM/DD/YYYY
 
@@ -754,14 +766,13 @@ async function handleCSV(file) {
               const validB = dateB && !isNaN(dateB.getTime());
 
               if (validA && validB) {
-                // If one is in the future and the other is in the past, pick the past one.
+                // Heuristic: Prefer past date to avoid future dates (like Feb vs Dec 2026)
                 if (dateA > now && dateB <= now) {
                   createdAt = dateB;
                 } else if (dateB > now && dateA <= now) {
                   createdAt = dateA;
                 } else {
-                  // Both past or both future, default to dateA (DD/MM)
-                  createdAt = dateA;
+                  createdAt = dateA; // Default to DD/MM
                 }
               } else if (validA) {
                 createdAt = dateA;
@@ -771,9 +782,10 @@ async function handleCSV(file) {
             }
           }
         }
-        if (createdAt > new Date()) createdAt = new Date(); // Safety cap
+        if (createdAt > now) createdAt = now;
 
-        await addDoc(collection(db, "transactions"), {
+        const newDocRef = doc(collection(db, "transactions"));
+        batch.set(newDocRef, {
           clientId: client.id, clientName: client.name,
           model, buyPrice, sellPrice, detail,
           sellerId: auth.currentUser?.uid,
@@ -783,8 +795,15 @@ async function handleCSV(file) {
           updatedAt: serverTimestamp()
         });
         count++;
+        batchCount++;
+        if (batchCount >= 400) {
+          await batch.commit();
+          batch = writeBatch(db);
+          batchCount = 0;
+        }
       } catch (err) { console.error("Row error:", err); }
     }
+    if (batchCount > 0) await batch.commit();
     alert(`Import terminé : ${count} ventes ajoutées.`);
     await load(true);
   };
