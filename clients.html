@@ -45,6 +45,21 @@
     </header>
 
     <div class="content-body">
+      <div class="stats-grid">
+        <div class="card stat-card">
+          <div class="card-title">Total Clients</div>
+          <div class="stat-value" id="kpiTotal">0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">CA total</div>
+          <div class="stat-value" id="kpiCA">$0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="card-title">Total Achats</div>
+          <div class="stat-value" id="kpiCount">0</div>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom: 24px;">
         <div class="form-group" style="margin-bottom: 0;">
           <input id="search" type="text" class="input" placeholder="Rechercher par nom ou téléphone...">
@@ -101,6 +116,12 @@
           <div class="stat-value" id="mCount" style="font-size: 24px;">0</div>
         </div>
       </div>
+      <div id="mVouchersSection" class="hidden" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 12px; color: var(--accent-gold);">Bons d'achat actifs</h3>
+        <div id="mVouchersList" class="flex-row" style="gap: 12px; flex-wrap: wrap;"></div>
+      </div>
+
+      <h3 style="margin-bottom: 12px; color: var(--accent-gold);">Historique des achats</h3>
       <div class="table-container">
         <table class="table">
           <thead>
@@ -169,6 +190,8 @@
       <div id="upsertError" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;"></div>
     </div>
     <div class="modal-footer">
+      <button id="upsertDelete" class="btn btn-danger hidden">Supprimer</button>
+      <div style="flex-grow: 1;"></div>
       <button id="upsertCancel" class="btn btn-outline">Annuler</button>
       <button id="upsertSave" class="btn btn-gold">Enregistrer</button>
     </div>
