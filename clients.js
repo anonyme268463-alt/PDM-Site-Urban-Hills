@@ -1,6 +1,6 @@
 import { db, auth } from "./config.js";
 import {
-  collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, getDoc, deleteDoc
+  collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, getDoc, deleteDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
@@ -21,6 +21,10 @@ const mVouchersList = document.getElementById("mVouchersList");
 const kpiTotal = document.getElementById("kpiTotal");
 const kpiCA = document.getElementById("kpiCA");
 const kpiCount = document.getElementById("kpiCount");
+
+const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+const selectAll = document.getElementById("selectAll");
+const thSelect = document.getElementById("thSelect");
 
 const addClientBtn = document.getElementById("addClientBtn");
 const upsertClientModal = document.getElementById("upsertClientModal");
@@ -71,7 +75,8 @@ function toDateSafe(ts) {
 let CACHE = { clients: [], tx: [], vouchers: [], role: "staff" };
 
 async function loadData(force = false) {
-  tbody.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
+  const colSpan = CACHE.role === "admin" ? 10 : 9;
+  tbody.innerHTML = `<tr><td colspan="${colSpan}">Chargement...</td></tr>`;
   try {
     const [clientsData, txData, voucherSnap] = await Promise.all([
       getCachedCollection("clients", force),
@@ -110,23 +115,37 @@ function render() {
   kpiCA.textContent = money(enriched.reduce((s,c) => s + c._total, 0));
   kpiCount.textContent = String(enriched.reduce((s,c) => s + c._count, 0));
 
+  if (CACHE.role === "admin") {
+    thSelect?.classList.remove("hidden");
+    deleteSelectedBtn?.classList.remove("hidden");
+  } else {
+    thSelect?.classList.add("hidden");
+    deleteSelectedBtn?.classList.add("hidden");
+  }
+
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9">Aucun client</td></tr>`;
+    const colSpan = CACHE.role === "admin" ? 10 : 9;
+    tbody.innerHTML = `<tr><td colspan="${colSpan}">Aucun client</td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered
     .map((c) => {
+      const checkbox = CACHE.role === "admin"
+        ? `<td><input type="checkbox" class="row-select" data-id="${c.id}"></td>`
+        : "";
+
       return `
         <tr>
+          ${checkbox}
           <td>${esc(c.name || "-")}</td>
           <td>${esc(c.phone || "-")}</td>
           <td>${yesNoBadge(c.license)}</td>
           <td>${checkIcon(c.car)}</td>
           <td>${checkIcon(c.moto)}</td>
           <td>${checkIcon(c.truck)}</td>
-          <td>${count}</td>
-          <td>${money(total)}</td>
+          <td>${c._count}</td>
+          <td>${money(c._total)}</td>
           <td style="text-align: right;">
             <button class="btn btn-gold btn-sm" data-open="${c.id}">Voir</button>
             <button class="btn btn-outline btn-sm" data-edit="${c.id}">Modifier</button>
@@ -142,7 +161,55 @@ function render() {
   tbody.querySelectorAll("[data-edit]").forEach((btn) => {
     btn.addEventListener("click", () => openUpsert(btn.getAttribute("data-edit")));
   });
+
+  if(selectAll) selectAll.checked = false;
 }
+
+if(selectAll) {
+  selectAll.addEventListener("change", () => {
+    const checkboxes = tbody.querySelectorAll(".row-select");
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+  });
+}
+
+async function deleteSelected() {
+  if (CACHE.role !== "admin") {
+    alert("Accès refusé : Seul un administrateur peut supprimer plusieurs clients.");
+    return;
+  }
+  const selected = Array.from(tbody.querySelectorAll(".row-select:checked")).map(cb => cb.dataset.id);
+  if (selected.length === 0) { alert("Aucun client sélectionné."); return; }
+  if (!confirm(`Supprimer les ${selected.length} clients sélectionnés ? Les transactions ne seront pas supprimées.`)) return;
+
+  deleteSelectedBtn.disabled = true;
+  deleteSelectedBtn.textContent = "Suppression...";
+
+  try {
+    let currentBatch = writeBatch(db);
+    let count = 0;
+    for (const id of selected) {
+      currentBatch.delete(doc(db, "clients", id));
+      count++;
+      if (count >= 400) {
+        await currentBatch.commit();
+        currentBatch = writeBatch(db);
+        count = 0;
+      }
+    }
+    if (count > 0) await currentBatch.commit();
+    await logAction("CLIENT_BATCH_SUPPR", `Suppression de ${selected.length} clients`);
+    clearPdmCache("clients");
+    alert(`Success: ${selected.length} clients supprimés.`);
+    await loadData(true);
+  } catch (e) {
+    console.error(e);
+    alert("Erreur lors de la suppression groupée.");
+  } finally {
+    deleteSelectedBtn.disabled = false;
+    deleteSelectedBtn.textContent = "Supprimer Sélection";
+  }
+}
+if(deleteSelectedBtn) deleteSelectedBtn.addEventListener("click", deleteSelected);
 
 async function openClient(clientId) {
   const c = CACHE.clients.find((x) => x.id === clientId);
@@ -207,7 +274,13 @@ async function openClient(clientId) {
 function closeClientModal() { modal.classList.add("hidden"); }
 if (closeModal) closeModal.addEventListener("click", closeClientModal);
 if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeClientModal(); });
-if (search) search.addEventListener("input", render);
+if (search) {
+  let timer;
+  search.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(render, 250);
+  });
+}
 
 function showUpsertErr(msg) {
   if (!upsertError) return;
@@ -295,7 +368,11 @@ if (upsertSave) {
 if (upsertDelete) {
   upsertDelete.addEventListener("click", async () => {
     const id = fClientId.value;
-    if (!id || CACHE.role !== "admin") return;
+    if (CACHE.role !== "admin") {
+      alert("Accès refusé : Seul un administrateur peut supprimer un client.");
+      return;
+    }
+    if (!id) return;
     if (!confirm("Supprimer ce client ? Ses transactions ne seront pas supprimées.")) return;
 
     try {

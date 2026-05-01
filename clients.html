@@ -39,7 +39,8 @@
         <h1>Gestion Clients</h1>
         <p>Base de données et historique des clients</p>
       </div>
-      <div class="top-bar-actions">
+      <div class="top-bar-actions flex-row">
+        <button id="deleteSelectedBtn" class="btn btn-danger hidden">Supprimer Sélection</button>
         <button id="addClientBtn" class="btn btn-gold">+ Nouveau Client</button>
       </div>
     </header>
@@ -71,6 +72,7 @@
           <table class="table">
             <thead>
               <tr>
+                <th id="thSelect" class="hidden" style="width: 40px;"><input type="checkbox" id="selectAll"></th>
                 <th>Nom</th>
                 <th>Téléphone</th>
                 <th>Permis</th>

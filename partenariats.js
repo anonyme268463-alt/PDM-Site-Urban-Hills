@@ -5,7 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
-import { esc, checkIsAdmin, showDenyScreen, renderUserBadge, fmtDate } from "./common.js";
+import { esc, checkIsAdmin, showDenyScreen, renderUserBadge, fmtDate, getCachedCollection, clearPdmCache } from "./common.js";
 
 const elements = {
   search: document.getElementById("search"),
@@ -56,20 +56,23 @@ function hideAllModals() {
 
 // --- PARTNERS ---
 
-async function loadPartners() {
+async function loadPartners(force = false) {
   if (!elements.partnersTable) return;
   elements.partnersTable.innerHTML = '<tr><td colspan="6" class="muted">Chargement...</td></tr>';
   try {
-    const q = query(collection(db, "partners"), orderBy("name", "asc"));
-    const snap = await getDocs(q);
-    const partners = [];
-    for (const d of snap.docs) {
-      const data = { id: d.id, ...d.data() };
-      const mSnap = await getDocs(collection(db, "partners", d.id, "members"));
-      data.membersCount = mSnap.size;
-      partners.push(data);
+    const partners = await getCachedCollection("partners", force);
+    // Note: getCachedCollection doesn't handle subcollections easily.
+    // For simplicity, we'll fetch member counts if not in the cached data
+    // but the current getCachedCollection just returns the documents.
+    // Let's improve the loading logic here to be more efficient.
+
+    for (const p of partners) {
+      if (p.membersCount === undefined || force) {
+        const mSnap = await getDocs(collection(db, "partners", p.id, "members"));
+        p.membersCount = mSnap.size;
+      }
     }
-    ALL_PARTNERS = partners;
+    ALL_PARTNERS = partners.sort((a,b) => (a.name || "").localeCompare(b.name || ""));
     renderPartners();
   } catch (err) {
     console.error("Partners error:", err);
@@ -210,7 +213,7 @@ function renderMembers() {
 
 // --- EVENTS ---
 
-elements.refreshBtn?.addEventListener("click", () => loadPartners());
+elements.refreshBtn?.addEventListener("click", () => loadPartners(true));
 elements.search?.addEventListener("input", renderPartners);
 
 elements.addPartnerBtn?.addEventListener("click", () => {
@@ -252,8 +255,9 @@ elements.pmSave?.addEventListener("click", async () => {
       });
       await logAction("PARTNER_ADD", `Partenaire ajouté: ${name}`);
     }
+    clearPdmCache("partners");
     hideAllModals();
-    await loadPartners();
+    await loadPartners(true);
   } catch (e) { alert("Erreur."); }
 });
 
@@ -262,8 +266,9 @@ elements.pmDelete?.addEventListener("click", async () => {
   try {
     await deleteDoc(doc(db, "partners", CURRENT_PARTNER_ID));
     await logAction("PARTNER_DELETE", `Partenaire supprimé: ${CURRENT_PARTNER_ID}`);
+    clearPdmCache("partners");
     hideAllModals();
-    await loadPartners();
+    await loadPartners(true);
   } catch (e) { alert("Erreur."); }
 });
 
