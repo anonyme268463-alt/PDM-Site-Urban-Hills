@@ -224,6 +224,12 @@ if (upsertSave) {
       const phone = fCPhone.value.trim();
       if (!name) { showUpsertErr("Le nom est obligatoire."); return; }
 
+      // Check for at least one uppercase letter
+      if (!/[A-Z]/.test(name)) {
+        showUpsertErr("Le nom et prénom doit contenir au moins une majuscule.");
+        return;
+      }
+
       upsertSave.disabled = true;
       const payload = {
         name, phone,
