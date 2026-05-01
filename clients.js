@@ -1,10 +1,10 @@
 import { db, auth } from "./config.js";
 import {
-  collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, getDoc
+  collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, getDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { logAction } from "./logger.js";
-import { esc, renderUserBadge } from "./common.js";
+import { esc, renderUserBadge, getCachedCollection, normRole, clearPdmCache } from "./common.js";
 
 const tbody = document.getElementById("clientsTable");
 const search = document.getElementById("search");
@@ -15,6 +15,12 @@ const mTotal = document.getElementById("mTotal");
 const mProfit = document.getElementById("mProfit");
 const mCount = document.getElementById("mCount");
 const mSales = document.getElementById("mSales");
+const mVouchersSection = document.getElementById("mVouchersSection");
+const mVouchersList = document.getElementById("mVouchersList");
+
+const kpiTotal = document.getElementById("kpiTotal");
+const kpiCA = document.getElementById("kpiCA");
+const kpiCount = document.getElementById("kpiCount");
 
 const addClientBtn = document.getElementById("addClientBtn");
 const upsertClientModal = document.getElementById("upsertClientModal");
@@ -30,6 +36,7 @@ const fCMoto = document.getElementById("fCMoto");
 const fCTruck = document.getElementById("fCTruck");
 const upsertSave = document.getElementById("upsertSave");
 const upsertCancel = document.getElementById("upsertCancel");
+const upsertDelete = document.getElementById("upsertDelete");
 const upsertError = document.getElementById("upsertError");
 
 const logoutBtn = document.getElementById("logoutBtn");
@@ -61,18 +68,19 @@ function toDateSafe(ts) {
   return null;
 }
 
-let CACHE = { clients: [], tx: [] };
+let CACHE = { clients: [], tx: [], vouchers: [], role: "staff" };
 
-async function loadData() {
+async function loadData(force = false) {
   tbody.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
   try {
-    const [clientsSnap, txSnap] = await Promise.all([
-      getDocs(collection(db, "clients")),
-      getDocs(collection(db, "transactions")),
+    const [clientsData, txData, voucherSnap] = await Promise.all([
+      getCachedCollection("clients", force),
+      getCachedCollection("transactions", force),
+      getDocs(collection(db, "vouchers"))
     ]);
-    const clients = clientsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    const tx = txSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    CACHE = { clients, tx };
+    CACHE.clients = clientsData;
+    CACHE.tx = txData;
+    CACHE.vouchers = voucherSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
   } catch(e) {
     console.error(e);
@@ -82,11 +90,25 @@ async function loadData() {
 
 function render() {
   const q = (search?.value || "").trim().toLowerCase();
-  const filtered = CACHE.clients.filter((c) => {
+
+  const enriched = CACHE.clients.map(c => {
+    const sales = CACHE.tx.filter(t => t.clientId === c.id);
+    return {
+      ...c,
+      _count: sales.length,
+      _total: sales.reduce((s, t) => s + Number(t.sellPrice || 0), 0)
+    };
+  });
+
+  const filtered = enriched.filter((c) => {
     const name = (c.name || "").toLowerCase();
     const phone = (c.phone || "").toLowerCase();
     return !q || name.includes(q) || phone.includes(q);
-  });
+  }).sort((a,b) => (b._total - a._total));
+
+  kpiTotal.textContent = String(enriched.length);
+  kpiCA.textContent = money(enriched.reduce((s,c) => s + c._total, 0));
+  kpiCount.textContent = String(enriched.reduce((s,c) => s + c._count, 0));
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9">Aucun client</td></tr>`;
@@ -95,9 +117,6 @@ function render() {
 
   tbody.innerHTML = filtered
     .map((c) => {
-      const sales = CACHE.tx.filter((t) => t.clientId === c.id);
-      const count = sales.length;
-      const total = sales.reduce((s, t) => s + Number(t.sellPrice || 0), 0);
       return `
         <tr>
           <td>${esc(c.name || "-")}</td>
@@ -125,9 +144,25 @@ function render() {
   });
 }
 
-function openClient(clientId) {
+async function openClient(clientId) {
   const c = CACHE.clients.find((x) => x.id === clientId);
   if (!c) return;
+
+  // Vouchers
+  const vouchers = CACHE.vouchers.filter(v => v.clientId === clientId && v.active && (v.currentValue || 0) > 0);
+  if (vouchers.length > 0) {
+    mVouchersSection.classList.remove("hidden");
+    mVouchersList.innerHTML = vouchers.map(v => `
+      <div class="card" style="padding: 10px; border: 1px solid var(--accent-gold); background: rgba(212,175,55,0.05); min-width: 150px;">
+        <div class="muted" style="font-size: 10px; text-transform: uppercase;">Valeur restante</div>
+        <div style="font-weight: 700; color: var(--accent-gold); font-size: 18px;">${money(v.currentValue)}</div>
+        <div class="muted" style="font-size: 9px;">Original: ${money(v.initialValue)}</div>
+      </div>
+    `).join("");
+  } else {
+    mVouchersSection.classList.add("hidden");
+  }
+
   const sales = CACHE.tx
     .filter((t) => t.clientId === clientId)
     .map((t) => {
@@ -194,7 +229,9 @@ function openUpsert(id = null) {
     fCMoto.checked = !!c.moto;
     fCTruck.checked = !!c.truck;
     upsertSave.textContent = "Mettre à jour";
+    if (CACHE.role === "admin") upsertDelete.classList.remove("hidden");
   } else {
+    upsertDelete.classList.add("hidden");
     upsertTitle.textContent = "Ajouter un client";
     fClientId.value = "";
     fCName.value = "";
@@ -224,7 +261,6 @@ if (upsertSave) {
       const phone = fCPhone.value.trim();
       if (!name) { showUpsertErr("Le nom est obligatoire."); return; }
 
-      // Check for at least one uppercase letter
       if (!/[A-Z]/.test(name)) {
         showUpsertErr("Le nom et prénom doit contenir au moins une majuscule.");
         return;
@@ -248,16 +284,39 @@ if (upsertSave) {
         await addDoc(collection(db, "clients"), payload);
         await logAction("CLIENT_AJOUT", `Ajout client: ${name}`);
       }
+      clearPdmCache("clients");
       closeUpsert();
-      await loadData();
+      await loadData(true);
     } catch (e) { console.error(e); showUpsertErr("Erreur lors de l'enregistrement."); }
     finally { if (upsertSave) upsertSave.disabled = false; }
+  });
+}
+
+if (upsertDelete) {
+  upsertDelete.addEventListener("click", async () => {
+    const id = fClientId.value;
+    if (!id || CACHE.role !== "admin") return;
+    if (!confirm("Supprimer ce client ? Ses transactions ne seront pas supprimées.")) return;
+
+    try {
+      upsertDelete.disabled = true;
+      await deleteDoc(doc(db, "clients", id));
+      await logAction("CLIENT_SUPPR", `Suppression client ${id}`);
+      clearPdmCache("clients");
+      closeUpsert();
+      await loadData(true);
+    } catch (e) { console.error(e); alert("Erreur lors de la suppression."); }
+    finally { if (upsertDelete) upsertDelete.disabled = false; }
   });
 }
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "pdm-staff.html"; return; }
   const snap = await getDoc(doc(db, "users", user.uid));
-  if (snap.exists()) renderUserBadge(snap.data());
+  if (snap.exists()) {
+    const data = snap.data();
+    CACHE.role = normRole(data.role || data.rank);
+    renderUserBadge(data);
+  }
   loadData();
 });
