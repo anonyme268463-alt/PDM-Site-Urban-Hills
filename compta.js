@@ -424,7 +424,13 @@ btnLogout?.addEventListener("click", async () => { await handleSignOut(auth); wi
 btnWeek?.addEventListener("click", async () => { setRange(getWeekRange(new Date())); await refreshAll(); });
 btnApply?.addEventListener("click", async () => { const r = parseDateInputs(); if (!r) return alert("Dates requises."); setRange(r); await refreshAll(); });
 btnRefresh?.addEventListener("click", forceRefresh);
-qInput?.addEventListener("input", applySearchFilter);
+if (qInput) {
+  let timer;
+  qInput.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(applySearchFilter, 250);
+  });
+}
 cashTbody?.addEventListener("click", async (e) => { const id = e.target?.dataset?.del; if (!id || !confirm("Supprimer ?")) return; await deleteDoc(doc(db, "cashbook", id)); await forceRefresh(); });
 
 onAuthStateChanged(auth, async (u) => {

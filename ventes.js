@@ -134,7 +134,7 @@ async function getClientDiscount(clientId) {
 }
 
 async function load(force = false){
-  await loadMe();
+  if (!CACHE.me) await loadMe();
   const colSpan = CACHE.role === "admin" ? 9 : 8;
   txTable.innerHTML = `<tr><td colspan="${colSpan}">Chargement...</td></tr>`;
   try {
@@ -508,6 +508,7 @@ async function save(){
     if(!editingId){
       const docRef = await addDoc(collection(db,"transactions"), payload);
       await logAction("VENTE_AJOUT", `Ajout vente: ${payload.model} pour ${payload.clientName} ($${payload.sellPrice})`);
+      clearPdmCache("transactions");
 
       // Voucher management
       if (voucherIdToUpdate && voucherToDeduct > 0) {
@@ -530,37 +531,38 @@ async function save(){
       const normClient = payload.clientName.toLowerCase();
 
       if (detail === "Vente depuis le stock") {
-        const stockSnap = await getDocs(collection(db, "stock"));
-        const stockItem = stockSnap.docs.find(d => {
-          const s = d.data();
-          const sModel = (s.brand + " " + s.model).toLowerCase();
-          return sModel.includes(normModel) || normModel.includes(sModel) || (s.model.toLowerCase() === normModel);
+        const stockItem = CACHE.stock.find(s => {
+          const sFull = (s.brand + " " + s.model).toLowerCase();
+          const sModel = (s.model || "").toLowerCase();
+          return sFull === normModel || sModel === normModel || normModel.includes(sFull);
         });
         if (stockItem) {
-          const currentQty = Number(stockItem.data().qty || 0);
+          const currentQty = Number(stockItem.qty || 0);
           if (currentQty <= 1) {
             await deleteDoc(doc(db, "stock", stockItem.id));
           } else {
             await updateDoc(doc(db, "stock", stockItem.id), { qty: currentQty - 1 });
           }
+          clearPdmCache("stock");
         }
       } else if (detail === "Vente d'une réservation") {
-        const resSnap = await getDocs(collection(db, "reservations"));
-        const resItem = resSnap.docs.find(d => {
-          const r = d.data();
-          const rModel = (r.brand + " " + r.model).toLowerCase();
+        const resItem = CACHE.reservations.find(r => {
+          const rFull = (r.brand + " " + r.model).toLowerCase();
+          const rModel = (r.model || "").toLowerCase();
           const rClient = (r.client || "").toLowerCase();
-          const modelMatch = rModel.includes(normModel) || normModel.includes(rModel) || (r.model.toLowerCase() === normModel);
+          const modelMatch = rFull === normModel || rModel === normModel || normModel.includes(rFull);
           const clientMatch = rClient.includes(normClient) || normClient.includes(rClient);
           return modelMatch && clientMatch;
         });
         if (resItem) {
           await deleteDoc(doc(db, "reservations", resItem.id));
+          clearPdmCache("reservations");
         }
       }
     } else {
       await updateDoc(doc(db,"transactions", editingId), payload);
       await logAction("VENTE_MODIF", `Modif vente ${editingId}: ${payload.model} pour ${payload.clientName}`);
+      clearPdmCache("transactions");
     }
     close();
     await load(true);
@@ -573,6 +575,7 @@ async function removeTx(id){
   try {
     await deleteDoc(doc(db,"transactions",id));
     await logAction("VENTE_SUPPR", `Suppression vente ${id}`);
+    clearPdmCache("transactions");
     await load(true);
   } catch(e) { console.error(e); alert("Erreur lors de la suppression."); }
 }
@@ -625,6 +628,7 @@ async function dedupeSales() {
     }
     if (batchCount > 0) await currentBatch.commit();
     alert(`Nettoyage terminé : ${deleted} doublons supprimés.`);
+    clearPdmCache("transactions");
     await load(true);
   } catch (err) {
     console.error("Dedupe error:", err);
@@ -663,6 +667,7 @@ async function deleteSelected() {
     if (count > 0) await currentBatch.commit();
     await logAction("VENTE_BATCH_SUPPR", `Suppression de ${selected.length} ventes`);
     alert(`Success: ${selected.length} ventes supprimées.`);
+    clearPdmCache("transactions");
     await load(true);
   } catch (e) {
     console.error(e);
@@ -677,7 +682,11 @@ if(deleteSelectedBtn) deleteSelectedBtn.addEventListener("click", deleteSelected
 onAuthStateChanged(auth, u => { if(u) load(); else window.location.href = "pdm-staff.html"; });
 
 if (search) {
-  search.addEventListener("input", render);
+  let timer;
+  search.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(render, 250);
+  });
 }
 
 // --- CSV Import ---
@@ -805,6 +814,7 @@ async function handleCSV(file) {
     }
     if (batchCount > 0) await batch.commit();
     alert(`Import terminé : ${count} ventes ajoutées.`);
+    clearPdmCache("transactions");
     await load(true);
   };
   reader.readAsText(file);
