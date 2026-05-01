@@ -121,7 +121,7 @@ function render() {
     btn.addEventListener("click", () => openClient(btn.getAttribute("data-open")));
   });
   tbody.querySelectorAll("[data-edit]").forEach((btn) => {
-    btn.addEventListener("click", () => openEditClient(btn.getAttribute("data-edit")));
+    btn.addEventListener("click", () => openUpsert(btn.getAttribute("data-edit")));
   });
 }
 
