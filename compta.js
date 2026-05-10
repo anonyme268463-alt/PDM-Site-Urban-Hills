@@ -94,7 +94,7 @@ function renderCashbook(list) {
   cashTbody.innerHTML = list.map(c => `
     <tr>
       <td>${c.date?.toDate ? c.date.toDate().toLocaleDateString() : "-"}</td>
-      <td><span class="badge ${c.type === "expense" ? "badge-danger" : "badge-success"}">${c.type === "expense" ? "Dépense" : "Autre"}</span></td>
+      <td><span class="badge ${c.type === "expense" ? "badge-danger" : "badge-success"}">${c.type === "expense" ? "Dépense" : "Gain"}</span></td>
       <td>${esc(c.reason)}</td>
       <td>${fmtMoney(c.amount)}</td>
       <td style="text-align:right;"><button class="btn btn-danger btn-sm" data-del="${c.__id}">Suppr</button></td>
