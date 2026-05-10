@@ -314,7 +314,7 @@ async function saveWinners() {
         if (revenue > 0) {
           await addDoc(collection(db, "cashbook"), {
             date: serverTimestamp(),
-            type: "other",
+            type: "income",
             reason: `Revenus Tombola (${totalTickets} tickets)`,
             amount: revenue,
             createdAt: serverTimestamp(),

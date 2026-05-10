@@ -106,9 +106,9 @@ function calculateBalanceAt(transactions, cashEntries, endTs) {
   const txs = transactions.filter(t => (t.createdAt?.toMillis?.() || 0) <= endTs);
   const cash = cashEntries.filter(c => (c.date?.toMillis?.() || 0) <= endTs);
 
-  const profit = txs.reduce((s, t) => s + (t.profit || 0), 0);
-  const other = cash.filter(c => c.type !== "expense").reduce((s, c) => s + (c.amount || 0), 0);
-  const expense = cash.filter(c => c.type === "expense").reduce((s, c) => s + (c.amount || 0), 0);
+  const profit = txs.reduce((s, t) => s + Number(t.profit || 0), 0);
+  const other = cash.filter(c => c.type !== "expense").reduce((s, c) => s + Number(c.amount || 0), 0);
+  const expense = cash.filter(c => c.type === "expense").reduce((s, c) => s + Number(c.amount || 0), 0);
 
   // To be accurate we need to subtract salaries.
   // For historical balance, we need to calculate salaries week by week?
@@ -126,7 +126,7 @@ function renderKpis() {
   const ca = txRows.reduce((s, tx) => s + Number(tx.sellPrice || 0), 0);
   const profit = txRows.reduce((s, tx) => s + Number(tx.profit || 0), 0);
   const expense = cashRows.filter(c => c.type === "expense").reduce((s, c) => s + Number(c.amount || 0), 0);
-  const other = cashRows.filter(c => c.type === "other").reduce((s, c) => s + Number(c.amount || 0), 0);
+  const other = cashRows.filter(c => c.type !== "expense").reduce((s, c) => s + Number(c.amount || 0), 0);
   const salaries = calculateSalariesForPeriod(txRows).reduce((s, r) => s + r.salary, 0);
   const net = profit - expense + other - salaries;
 
